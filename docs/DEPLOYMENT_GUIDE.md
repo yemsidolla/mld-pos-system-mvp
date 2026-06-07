@@ -85,6 +85,68 @@ curl -fsS http://your-domain.example/health/
 
 12. Enable HTTPS before using camera scanning on phones or tablets. Browser camera access works on `localhost` during development, but production device camera access requires HTTPS.
 
+## VPS With External Nginx
+
+Use this mode when Nginx is installed on the VPS host and Docker should run only PostgreSQL and Django.
+
+1. Set `.env` for the real HTTPS domain:
+
+```env
+DJANGO_DEBUG=False
+DJANGO_ALLOWED_HOSTS=melodu-pos.khlovepet.com,localhost,127.0.0.1,web
+DJANGO_CSRF_TRUSTED_ORIGINS=https://melodu-pos.khlovepet.com
+DJANGO_SESSION_COOKIE_SECURE=True
+DJANGO_CSRF_COOKIE_SECURE=True
+WEB_HOST_PORT=8001
+```
+
+2. Start PostgreSQL and Django with the external-Nginx override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml up -d --build postgres web
+```
+
+3. Run migrations and collect static files:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py collectstatic --noinput
+```
+
+4. Point host Nginx to the Django port:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name melodu-pos.khlovepet.com;
+
+    ssl_certificate     /etc/letsencrypt/live/khlovepet.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/khlovepet.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+```
+
+5. Reload host Nginx:
+
+```bash
+nginx -t
+systemctl reload nginx
+```
+
+Do not run the Docker `nginx` service in this mode. If it was already started, stop it:
+
+```bash
+docker compose stop nginx
+docker compose rm -f nginx
+```
+
 ## Backup
 
 Database backup:
