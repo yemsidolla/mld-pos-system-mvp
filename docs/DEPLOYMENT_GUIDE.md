@@ -123,6 +123,14 @@ server {
     ssl_certificate     /etc/letsencrypt/live/khlovepet.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/khlovepet.com/privkey.pem;
 
+    location /static/ {
+        alias /opt/mld-pos-system-mvp/data/static/;
+    }
+
+    location /media/ {
+        alias /opt/mld-pos-system-mvp/data/media/;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:8001;
         proxy_set_header Host $host;
