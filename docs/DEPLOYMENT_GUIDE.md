@@ -113,7 +113,7 @@ docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec w
 docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py collectstatic --noinput
 ```
 
-4. Point host Nginx to the Django port:
+4. Point host Nginx to the Django port. In this mode, Nginx is only a reverse proxy. Django/Gunicorn serves collected static files through WhiteNoise.
 
 ```nginx
 server {
@@ -122,14 +122,6 @@ server {
 
     ssl_certificate     /etc/letsencrypt/live/khlovepet.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/khlovepet.com/privkey.pem;
-
-    location /static/ {
-        alias /opt/mld-pos-system-mvp/data/static/;
-    }
-
-    location /media/ {
-        alias /opt/mld-pos-system-mvp/data/media/;
-    }
 
     location / {
         proxy_pass http://127.0.0.1:8001;
