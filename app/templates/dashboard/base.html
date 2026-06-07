@@ -1,0 +1,84 @@
+{% load i18n static %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% trans "Dashboard" %}{% endblock %} | Melodu POS</title>
+    <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="melodu-app">
+<a class="skip-link" href="#main-content">{% trans "Skip to content" %}</a>
+<aside class="app-sidebar" aria-label="{% trans 'Primary navigation' %}">
+    <a class="brand" href="{% url 'dashboard-home' %}">
+        <span class="brand-mark">M</span>
+        <span>
+            <strong>Melodu</strong>
+            <small>{% trans "Pet Store POS" %}</small>
+        </span>
+    </a>
+    <nav class="nav-list">
+        {% for item in dashboard_nav_items %}
+            <a class="nav-item {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">
+                <span>{{ item.label }}</span>
+            </a>
+        {% endfor %}
+    </nav>
+    <div class="sidebar-footer">
+        <a class="nav-item compact" href="{% url 'admin:index' %}">{% trans "Django Admin" %}</a>
+        <span class="version">v{{ app_version }}</span>
+    </div>
+</aside>
+
+<div class="app-frame">
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">{% block page_eyebrow %}{% trans "Melodu Dashboard" %}{% endblock %}</p>
+            <h1>{% block page_title %}{% trans "Dashboard" %}{% endblock %}</h1>
+            <p class="page-subtitle">{% block page_subtitle %}{% trans "Daily operations, inventory, and reports." %}{% endblock %}</p>
+        </div>
+        <div class="topbar-actions">
+            {% block header_actions %}{% endblock %}
+            <form class="language-form" action="{% url 'set_language' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <label class="sr-only" for="language-select">{% trans "Language" %}</label>
+                <select id="language-select" name="language" onchange="this.form.submit()">
+                    {% get_current_language as CURRENT_LANGUAGE %}
+                    {% get_available_languages as AVAILABLE_LANGUAGES %}
+                    {% for code, name in AVAILABLE_LANGUAGES %}
+                        <option value="{{ code }}" {% if code == CURRENT_LANGUAGE %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </header>
+
+    <main id="main-content" class="content-shell">
+        {% if messages %}
+            <section class="message-stack" aria-live="polite">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<nav class="mobile-nav" aria-label="{% trans 'Mobile navigation' %}">
+    {% for item in dashboard_nav_items|slice:":5" %}
+        <a class="{% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">{{ item.label }}</a>
+    {% endfor %}
+</nav>
+
+{% include "dashboard/scanner_modal.html" %}
+<script src="{% static 'core/js/dashboard.js' %}"></script>
+<script src="{% static 'core/vendor/html5-qrcode.min.js' %}"></script>
+<script src="{% static 'core/js/scanner.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

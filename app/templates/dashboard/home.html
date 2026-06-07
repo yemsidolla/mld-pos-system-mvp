@@ -1,0 +1,95 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Dashboard" %}{% endblock %}
+{% block page_title %}{% trans "Dashboard" %}{% endblock %}
+{% block page_subtitle %}{% trans "A calm control room for sales, inventory, receiving, and reports." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn btn-primary" href="{% url 'pos-sale' %}">{% trans "Open POS" %}</a>
+    {% if dashboard_is_admin %}
+        <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="metric-grid">
+    {% if dashboard_is_admin %}
+        <article class="metric-card"><span>{% trans "Active Products" %}</span><strong>{{ stats.products }}</strong></article>
+        <article class="metric-card"><span>{% trans "Active Batches" %}</span><strong>{{ stats.active_batches }}</strong></article>
+        <article class="metric-card"><span>{% trans "Low Stock" %}</span><strong>{{ stats.low_stock_products }}</strong></article>
+        <article class="metric-card"><span>{% trans "Sales Today" %}</span><strong>{{ stats.today_sales }}</strong></article>
+    {% else %}
+        <article class="metric-card"><span>{% trans "Your Sales Today" %}</span><strong>{{ stats.today_sales }}</strong></article>
+        <article class="metric-card"><span>{% trans "POS Ready" %}</span><strong>{% trans "Yes" %}</strong></article>
+    {% endif %}
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Quick Actions" %}</h2>
+                <p>{% trans "Frequent workflows for today." %}</p>
+            </div>
+        </header>
+        <div class="action-grid">
+            <a class="action-card" href="{% url 'pos-sale' %}"><strong>{% trans "POS Sale" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
+            {% if dashboard_is_admin %}
+                <a class="action-card" href="{% url 'stock-in' %}"><strong>{% trans "Stock-In" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
+                <a class="action-card" href="{% url 'batch-upload' %}"><strong>{% trans "Batch Upload" %}</strong><span>{% trans "Import master data and receiving rows." %}</span></a>
+                <a class="action-card" href="{% url 'inventory-summary' %}"><strong>{% trans "Inventory" %}</strong><span>{% trans "Review batches, expiry, and stock levels." %}</span></a>
+            {% endif %}
+        </div>
+    </article>
+
+    <article class="panel">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Recent Sales" %}</h2>
+                <p>{% trans "Latest completed sales." %}</p>
+            </div>
+            {% if dashboard_is_admin %}<a href="{% url 'sales-history' %}">{% trans "View all" %}</a>{% endif %}
+        </header>
+        <table class="data-table">
+            <thead><tr><th>{% trans "Sale" %}</th><th>{% trans "Cashier" %}</th><th>{% trans "Total" %}</th></tr></thead>
+            <tbody>
+            {% for sale in recent_sales %}
+                <tr>
+                    <td>{{ sale.sale_no }}</td>
+                    <td>{{ sale.cashier.username }}</td>
+                    <td>{{ sale.final_amount }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3" class="empty-cell">{% trans "No recent sales yet." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    {% if dashboard_is_admin %}
+    <article class="panel">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Recent Uploads" %}</h2>
+                <p>{% trans "Latest batch upload previews and commits." %}</p>
+            </div>
+            <a href="{% url 'batch-upload' %}">{% trans "Open" %}</a>
+        </header>
+        <table class="data-table">
+            <thead><tr><th>{% trans "Target" %}</th><th>{% trans "Status" %}</th><th>{% trans "File" %}</th></tr></thead>
+            <tbody>
+            {% for job in recent_uploads %}
+                <tr>
+                    <td>{{ job.get_target_display }}</td>
+                    <td><span class="badge">{{ job.status }}</span></td>
+                    <td>{{ job.original_filename }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3" class="empty-cell">{% trans "No upload jobs yet." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </article>
+    {% endif %}
+</section>
+{% endblock %}

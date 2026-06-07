@@ -1,0 +1,47 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Stock-In" %}{% endblock %}
+{% block page_title %}{% trans "Stock-In" %}{% endblock %}
+{% block page_subtitle %}{% trans "Receive stock into a new batch using the approved inventory service." %}{% endblock %}
+{% block header_actions %}
+    <button class="btn btn-primary" type="button" data-scan-target="#stock-in-product-code" data-scan-select-target="#id_product" data-scan-select-match="product" data-scan-context="stock_in">{% trans "Scan Product" %}</button>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Receive Stock" %}</h2>
+            <p>{% trans "Scan or choose the product, then enter supplier, expiry, quantity, and prices." %}</p>
+        </div>
+    </header>
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="form-stack scan-lookup">
+        <div>
+            <label for="stock-in-product-code">{% trans "Scan Product Code or Barcode" %}</label>
+            <div class="input-row">
+                <input id="stock-in-product-code" type="text" autocomplete="off">
+                <button class="btn" type="button" data-scan-target="#stock-in-product-code" data-scan-select-target="#id_product" data-scan-select-match="product" data-scan-context="stock_in">{% trans "Scan" %}</button>
+            </div>
+        </div>
+    </div>
+    <form class="form-stack" method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-success" type="submit">{% trans "Receive Stock" %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

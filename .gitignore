@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.Python
+.venv/
+venv/
+env/
+
+# Django
+*.sqlite3
+staticfiles/
+
+# Environment
+.env
+
+# Local data and generated files
+backups/
+data/postgres/*
+data/media/*
+data/static/*
+data/logs/*
+!data/postgres/.gitkeep
+!data/media/.gitkeep
+!data/static/.gitkeep
+!data/logs/.gitkeep
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

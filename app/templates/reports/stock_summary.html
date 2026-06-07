@@ -1,0 +1,21 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Stock Summary Report" %}{% endblock %}
+{% block page_title %}{% trans "Stock Summary Report" %}{% endblock %}
+{% block page_subtitle %}{% trans "Available stock compared with product minimum stock." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <table class="data-table">
+        <thead><tr><th>{% trans "Product" %}</th><th>{% trans "Product Code" %}</th><th>{% trans "Total Available" %}</th><th>{% trans "Min Stock" %}</th></tr></thead>
+        <tbody>
+        {% for product in products %}
+            <tr><td>{{ product.name }}</td><td>{{ product.product_code }}</td><td>{{ product.total_available }}</td><td>{{ product.min_stock }}</td></tr>
+        {% empty %}
+            <tr><td colspan="4" class="empty-cell">{% trans "No products found." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

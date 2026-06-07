@@ -1,0 +1,31 @@
+{% load i18n %}
+<div class="scanner-modal" data-scanner-modal hidden>
+    <div class="scanner-backdrop" data-scanner-close></div>
+    <section class="scanner-panel" role="dialog" aria-modal="true" aria-labelledby="scanner-title">
+        <header class="scanner-header">
+            <div>
+                <p class="eyebrow">{% trans "Camera scanner" %}</p>
+                <h2 id="scanner-title">{% trans "Scan barcode or QR" %}</h2>
+            </div>
+            <button class="icon-button" type="button" data-scanner-close aria-label="{% trans 'Close scanner' %}">×</button>
+        </header>
+        <div class="scanner-status" data-scanner-status>{% trans "Use the camera, upload an image, or type the code manually." %}</div>
+        <div id="melodu-scanner-reader" class="scanner-reader"></div>
+        <div class="scanner-actions">
+            <button class="btn btn-primary" type="button" data-scanner-start>{% trans "Open Camera" %}</button>
+            <button class="btn" type="button" data-scanner-stop>{% trans "Stop Camera" %}</button>
+            <label class="btn btn-secondary file-button">
+                {% trans "Upload Image" %}
+                <input type="file" accept="image/*" data-scanner-file>
+            </label>
+        </div>
+        <div class="manual-scan">
+            <label for="manual-scan-value">{% trans "Manual code" %}</label>
+            <div class="input-row">
+                <input id="manual-scan-value" type="text" data-scanner-manual autocomplete="off">
+                <button class="btn btn-primary" type="button" data-scanner-apply>{% trans "Apply" %}</button>
+            </div>
+        </div>
+        <div class="scanner-result" data-scanner-result></div>
+    </section>
+</div>

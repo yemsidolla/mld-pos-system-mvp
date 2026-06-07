@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-melodu_pos}
+      POSTGRES_USER: ${POSTGRES_USER:-melodu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melodu_dev_password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/django/Dockerfile
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-phase-0-dev-secret-key-change-me}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web,nginx}
+      POSTGRES_DB: ${POSTGRES_DB:-melodu_pos}
+      POSTGRES_USER: ${POSTGRES_USER:-melodu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-melodu_dev_password}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      TIME_ZONE: ${TIME_ZONE:-Asia/Phnom_Penh}
+      DATA_ROOT: /vol
+      DJANGO_STATIC_ROOT: /vol/static
+      DJANGO_MEDIA_ROOT: /vol/media
+      DJANGO_LOG_DIR: /vol/logs
+    volumes:
+      - ./data/static:/vol/static
+      - ./data/media:/vol/media
+      - ./data/logs:/vol/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8000:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./data/static:/vol/static:ro
+      - ./data/media:/vol/media:ro
+    depends_on:
+      web:
+        condition: service_healthy

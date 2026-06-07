@@ -1,0 +1,92 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Inventory" %}{% endblock %}
+{% block page_title %}{% trans "Inventory" %}{% endblock %}
+{% block page_subtitle %}{% trans "Search products and batches, then drill into stock adjustments and expiry control." %}{% endblock %}
+{% block header_actions %}
+    <button class="btn btn-primary" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan Search" %}</button>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Inventory Lookup" %}</h2>
+            <p>{% trans "Scan or type a product code, barcode, batch number, or custom code." %}</p>
+        </div>
+    </header>
+    <div class="input-row">
+        <input id="inventory-search" type="text" data-table-filter="[data-inventory-row]" placeholder="{% trans 'Search inventory' %}" autocomplete="off">
+        <button class="btn" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan" %}</button>
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Product Stock Summary" %}</h2>
+            <p>{% trans "Total available stock by product." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>{% trans "Product" %}</th>
+                <th>{% trans "Product Code" %}</th>
+                <th>{% trans "Total Available" %}</th>
+                <th>{% trans "Min Stock" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                <tr data-inventory-row>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.product_code }}</td>
+                    <td>{{ product.total_available|default:0 }}</td>
+                    <td>{{ product.min_stock }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="empty-cell">{% trans "No stock batches found." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Batch Stock Detail" %}</h2>
+            <p>{% trans "Batch-level inventory, expiry, and status." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>{% trans "Batch" %}</th>
+                <th>{% trans "Product" %}</th>
+                <th>{% trans "Expiry" %}</th>
+                <th>{% trans "Available" %}</th>
+                <th>{% trans "Status" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for batch in batches %}
+                <tr data-inventory-row>
+                    <td><a href="{% url 'stock-batch-detail' batch.id %}">{{ batch.batch_no }}</a><br><span class="muted">{{ batch.custom_code }}</span></td>
+                    <td>{{ batch.product.name }}<br><span class="muted">{{ batch.product.product_code }}</span></td>
+                    <td>{{ batch.expiry_date }}</td>
+                    <td>{{ batch.quantity_available }}</td>
+                    <td><span class="badge">{{ batch.status }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="empty-cell">{% trans "No stock batches found." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "System Health" %}{% endblock %}
+{% block page_title %}{% trans "System Health" %}{% endblock %}
+{% block page_subtitle %}{% trans "Operational checks for database, disk, logs, and recent activity." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'live-logs' %}">{% trans "Live Logs" %}</a>
+    <a class="btn" href="{% url 'admin:index' %}">{% trans "Django Admin" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <table class="data-table">
+        <tbody>
+        <tr><th>{% trans "Database Status" %}</th><td><span class="badge">{{ database_status }}</span></td></tr>
+        <tr><th>{% trans "App Version" %}</th><td>{{ app_version }}</td></tr>
+        <tr><th>{% trans "Disk Total" %}</th><td>{{ disk_total }}</td></tr>
+        <tr><th>{% trans "Disk Used" %}</th><td>{{ disk_used }}</td></tr>
+        <tr><th>{% trans "Disk Free" %}</th><td>{{ disk_free }}</td></tr>
+        <tr><th>{% trans "Log Writable Status" %}</th><td><span class="badge">{{ log_writable_status }}</span></td></tr>
+        <tr><th>{% trans "Last Sale Time" %}</th><td>{{ last_sale_time|default:"" }}</td></tr>
+        <tr><th>{% trans "Last Stock-In Time" %}</th><td>{{ last_stock_in_time|default:"" }}</td></tr>
+        <tr><th>{% trans "Last Error" %}</th><td>{{ last_error }}</td></tr>
+        </tbody>
+    </table>
+</section>
+{% endblock %}

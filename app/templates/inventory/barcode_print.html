@@ -1,0 +1,80 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Barcode / QR Print" %}{% endblock %}
+{% block page_title %}{% trans "Barcode / QR Print" %}{% endblock %}
+{% block page_subtitle %}{% trans "Preview and print labels for active stock batches." %}{% endblock %}
+{% block header_actions %}
+    <button class="btn btn-primary no-print" type="button" data-scan-target="#label-batch-code" data-scan-select-target="#id_stock_batch" data-scan-select-match="stock_batch" data-scan-context="barcode_print">{% trans "Scan Batch" %}</button>
+{% endblock %}
+
+{% block content %}
+<section class="panel no-print">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Label Setup" %}</h2>
+            <p>{% trans "Scan a Melodu code or choose a stock batch." %}</p>
+        </div>
+    </header>
+    <div class="form-stack scan-lookup">
+        <div>
+            <label for="label-batch-code">{% trans "Scan Batch Code" %}</label>
+            <div class="input-row">
+                <input id="label-batch-code" type="text" autocomplete="off">
+                <button class="btn" type="button" data-scan-target="#label-batch-code" data-scan-select-target="#id_stock_batch" data-scan-select-match="stock_batch" data-scan-context="barcode_print">{% trans "Scan" %}</button>
+            </div>
+        </div>
+    </div>
+    <form class="form-stack" method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
+            <button class="btn btn-success" type="submit" name="action" value="print">{% trans "Record Print" %}</button>
+        </div>
+    </form>
+</section>
+
+{% if stock_batch %}
+    <section class="panel">
+        <div class="label-sheet">
+            {% for _ in labels %}
+                <article class="print-label">
+                    <div class="store">Melodu Pet Store</div>
+                    <div class="product">{{ stock_batch.product.name }}</div>
+                    <div>{% trans "Price" %}: {{ stock_batch.selling_price }}</div>
+                    <div>{% trans "Expiry Date" %}: {{ stock_batch.expiry_date }}</div>
+                    <div>{% trans "Batch Number" %}: {{ stock_batch.batch_no }}</div>
+                    <div class="codes">
+                        {% if stock_batch.barcode_image %}
+                            <img class="barcode" src="{{ stock_batch.barcode_image.url }}" alt="Barcode {{ stock_batch.batch_no }}">
+                        {% endif %}
+                        {% if stock_batch.qr_image %}
+                            <img class="qr" src="{{ stock_batch.qr_image.url }}" alt="QR {{ stock_batch.batch_no }}">
+                        {% endif %}
+                    </div>
+                    <div>{{ stock_batch.custom_code }}</div>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if print_recorded %}
+<script>
+    window.addEventListener("load", function () {
+        window.print();
+    });
+</script>
+{% endif %}
+{% endblock %}

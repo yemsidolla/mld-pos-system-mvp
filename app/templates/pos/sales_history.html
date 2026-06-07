@@ -1,0 +1,67 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sales History" %}{% endblock %}
+{% block page_title %}{% trans "Sales History" %}{% endblock %}
+{% block page_subtitle %}{% trans "Filter, inspect, and cancel completed sales when required." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Filters" %}</h2>
+            <p>{% trans "Narrow sales by date, cashier, or payment method." %}</p>
+        </div>
+    </header>
+    <form class="form-stack" method="get">
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Sales" %}</h2>
+            <p>{% trans "Completed and cancelled sale records." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>{% trans "Sale No" %}</th>
+                <th>{% trans "Date" %}</th>
+                <th>{% trans "Cashier" %}</th>
+                <th>{% trans "Payment" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Final" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for sale in sales %}
+                <tr>
+                    <td><a href="{% url 'sale-detail' sale.id %}">{{ sale.sale_no }}</a></td>
+                    <td>{{ sale.created_at }}</td>
+                    <td>{{ sale.cashier.username }}</td>
+                    <td>{{ sale.payment_method }}</td>
+                    <td><span class="badge">{{ sale.status }}</span></td>
+                    <td>{{ sale.final_amount }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty-cell">{% trans "No sales found." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

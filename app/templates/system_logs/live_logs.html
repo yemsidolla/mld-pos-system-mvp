@@ -1,0 +1,18 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block extra_head %}<meta http-equiv="refresh" content="5">{% endblock %}
+{% block title %}{% trans "Live Backend Logs" %}{% endblock %}
+{% block page_title %}{% trans "Live Backend Logs" %}{% endblock %}
+{% block page_subtitle %}{% trans "Auto-refreshing sanitized application and error logs." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <h2>{% trans "Errors" %}</h2>
+    <pre class="log-block error-log">{% for line in error_lines %}{{ line }}
+{% empty %}{% trans "No error logs found." %}{% endfor %}</pre>
+    <h2>{% trans "Application" %}</h2>
+    <pre class="log-block">{% for line in app_lines %}{{ line }}
+{% empty %}{% trans "No application logs found." %}{% endfor %}</pre>
+</section>
+{% endblock %}

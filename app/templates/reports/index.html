@@ -1,0 +1,19 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Reports" %}{% endblock %}
+{% block page_title %}{% trans "Reports" %}{% endblock %}
+{% block page_subtitle %}{% trans "Simple HTML reports for sales, inventory, expiry, and staff performance." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="action-grid">
+        <a class="action-card" href="{% url 'daily-sales-report' %}"><strong>{% trans "Daily Sales Report" %}</strong><span>{% trans "Sales count and totals by date." %}</span></a>
+        <a class="action-card" href="{% url 'stock-summary-report' %}"><strong>{% trans "Stock Summary Report" %}</strong><span>{% trans "Available stock by product." %}</span></a>
+        <a class="action-card" href="{% url 'low-stock-report' %}"><strong>{% trans "Low Stock Report" %}</strong><span>{% trans "Products at or below minimum stock." %}</span></a>
+        <a class="action-card" href="{% url 'expiry-report' %}"><strong>{% trans "Expiry Report" %}</strong><span>{% trans "Expired, critical, and warning batches." %}</span></a>
+        <a class="action-card" href="{% url 'stock-movement-report' %}"><strong>{% trans "Stock Movement Report" %}</strong><span>{% trans "Trace inventory movements." %}</span></a>
+        <a class="action-card" href="{% url 'staff-sales-report' %}"><strong>{% trans "Staff Sales Report" %}</strong><span>{% trans "Completed sales by cashier." %}</span></a>
+    </div>
+</section>
+{% endblock %}

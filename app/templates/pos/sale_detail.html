@@ -1,0 +1,72 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sale" %} {{ sale.sale_no }}{% endblock %}
+{% block page_title %}{% trans "Sale" %} {{ sale.sale_no }}{% endblock %}
+{% block page_subtitle %}{{ sale.created_at }} · {{ sale.cashier.username }}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'sales-history' %}">{% trans "Back to Sales" %}</a>
+    <a class="btn btn-primary" href="{% url 'sale-receipt' sale.id %}">{% trans "Receipt" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="metric-grid">
+    <article class="metric-card"><span>{% trans "Status" %}</span><strong class="small-value">{{ sale.status }}</strong></article>
+    <article class="metric-card"><span>{% trans "Payment" %}</span><strong class="small-value">{{ sale.payment_method }}</strong></article>
+    <article class="metric-card"><span>{% trans "Total" %}</span><strong>{{ sale.total_amount }}</strong></article>
+    <article class="metric-card"><span>{% trans "Final" %}</span><strong>{{ sale.final_amount }}</strong></article>
+</section>
+
+{% if sale.cancel_reason %}
+    <section class="panel">
+        <h2>{% trans "Cancel Reason" %}</h2>
+        <p>{{ sale.cancel_reason }}</p>
+    </section>
+{% endif %}
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Sale Items" %}</h2>
+            <p>{% trans "Each item is linked to the exact stock batch sold." %}</p>
+        </div>
+    </header>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>{% trans "Product" %}</th>
+            <th>{% trans "Batch" %}</th>
+            <th>{% trans "Qty" %}</th>
+            <th>{% trans "Subtotal" %}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in sale.items.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.stock_batch.batch_no }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.subtotal }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+{% if sale.status == "COMPLETED" %}
+    <section class="panel">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Cancel Sale" %}</h2>
+                <p>{% trans "Cancellation restores stock to the original batches and requires a reason." %}</p>
+            </div>
+        </header>
+        <form class="form-stack" method="post" action="{% url 'sale-cancel' sale.id %}">
+            {% csrf_token %}
+            {{ cancel_form.reason.label_tag }}
+            {{ cancel_form.reason }}
+            <button class="btn btn-danger" type="submit" data-confirm-message="{% trans 'Cancel this completed sale?' %}">{% trans "Cancel Sale" %}</button>
+        </form>
+    </section>
+{% endif %}
+{% endblock %}

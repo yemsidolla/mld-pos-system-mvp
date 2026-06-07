@@ -1,0 +1,21 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Staff Sales Report" %}{% endblock %}
+{% block page_title %}{% trans "Staff Sales Report" %}{% endblock %}
+{% block page_subtitle %}{% trans "Completed sale counts and totals by cashier." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <table class="data-table">
+        <thead><tr><th>{% trans "Staff" %}</th><th>{% trans "Sales Count" %}</th><th>{% trans "Total Sales" %}</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+            <tr><td>{{ row.cashier__username }}</td><td>{{ row.sale_count }}</td><td>{{ row.total_sales }}</td></tr>
+        {% empty %}
+            <tr><td colspan="3" class="empty-cell">{% trans "No staff sales found." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

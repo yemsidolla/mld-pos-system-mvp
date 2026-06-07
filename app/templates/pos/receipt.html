@@ -1,0 +1,46 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Receipt" %} {{ sale.sale_no }}{% endblock %}
+{% block page_title %}{% trans "Receipt" %} {{ sale.sale_no }}{% endblock %}
+{% block page_subtitle %}{% trans "Printable customer receipt." %}{% endblock %}
+{% block header_actions %}
+    <button class="btn btn-primary no-print" onclick="window.print()">{% trans "Print" %}</button>
+{% endblock %}
+
+{% block content %}
+<section class="panel receipt-panel">
+    <div class="receipt-header">
+        <h2 class="receipt-title">Melodu Pet Store</h2>
+        <p class="muted receipt-meta">
+            {% trans "Receipt" %} {{ sale.sale_no }}<br>
+            {{ sale.created_at }}<br>
+            {% trans "Cashier" %}: {{ sale.cashier.username }}
+        </p>
+    </div>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>{% trans "Item" %}</th>
+            <th>{% trans "Qty" %}</th>
+            <th>{% trans "Total" %}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in sale.items.all %}
+            <tr>
+                <td>{{ item.product.name }}<br><span class="muted">{{ item.stock_batch.batch_no }}</span></td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.subtotal }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div class="form-stack receipt-totals">
+        <div class="input-row"><strong>{% trans "Total" %}</strong><span class="amount">{{ sale.total_amount }}</span></div>
+        <div class="input-row"><strong>{% trans "Discount" %}</strong><span class="amount">{{ sale.discount_amount }}</span></div>
+        <div class="input-row"><strong>{% trans "Final" %}</strong><span class="final-amount">{{ sale.final_amount }}</span></div>
+        <div class="input-row"><strong>{% trans "Payment" %}</strong><span class="amount">{{ sale.payment_method }}</span></div>
+    </div>
+</section>
+{% endblock %}

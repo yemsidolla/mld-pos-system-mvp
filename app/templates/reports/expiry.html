@@ -1,0 +1,21 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Expiry Report" %}{% endblock %}
+{% block page_title %}{% trans "Expiry Report" %}{% endblock %}
+{% block page_subtitle %}{% trans "Batches due within the warning window or already expired." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <table class="data-table">
+        <thead><tr><th>{% trans "Batch" %}</th><th>{% trans "Product" %}</th><th>{% trans "Expiry" %}</th><th>{% trans "Status" %}</th><th>{% trans "Available" %}</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+            <tr><td>{{ row.batch.batch_no }}</td><td>{{ row.batch.product.name }}</td><td>{{ row.batch.expiry_date }}</td><td><span class="badge">{{ row.expiry_status }}</span></td><td>{{ row.batch.quantity_available }}</td></tr>
+        {% empty %}
+            <tr><td colspan="5" class="empty-cell">{% trans "No expiring batches found." %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

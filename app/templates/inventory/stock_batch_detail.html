@@ -1,0 +1,71 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ stock_batch.batch_no }}{% endblock %}
+{% block page_title %}{{ stock_batch.batch_no }}{% endblock %}
+{% block page_subtitle %}{{ stock_batch.product.name }} · {{ stock_batch.custom_code }}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'inventory-summary' %}">{% trans "Back to Inventory" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="metric-grid">
+    <article class="metric-card"><span>{% trans "Product" %}</span><strong class="small-value">{{ stock_batch.product.name }}</strong></article>
+    <article class="metric-card"><span>{% trans "Expiry Status" %}</span><strong class="small-value">{{ expiry_status }}</strong></article>
+    <article class="metric-card"><span>{% trans "Available" %}</span><strong>{{ stock_batch.quantity_available }}</strong></article>
+    <article class="metric-card"><span>{% trans "Status" %}</span><strong class="small-value">{{ stock_batch.status }}</strong></article>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Batch Detail" %}</h2>
+            <p>{% trans "Supplier, expiry, quantities, and prices." %}</p>
+        </div>
+    </header>
+    <div class="form-grid">
+        <div><strong>{% trans "Supplier" %}</strong><br>{{ stock_batch.supplier.name }}</div>
+        <div><strong>{% trans "Expiry" %}</strong><br>{{ stock_batch.expiry_date }}</div>
+        <div><strong>{% trans "Received" %}</strong><br>{{ stock_batch.quantity_received }}</div>
+        <div><strong>{% trans "Price" %}</strong><br>{{ stock_batch.selling_price }}</div>
+        <div><strong>{% trans "Cost" %}</strong><br>{{ stock_batch.cost_price }}</div>
+        <div><strong>{% trans "Custom Code" %}</strong><br>{{ stock_batch.custom_code }}</div>
+    </div>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <h2>{% trans "Inventory Adjustment" %}</h2>
+        <form class="form-stack" method="post">
+            {% csrf_token %}
+            {{ adjustment_form.delta_quantity.label_tag }}
+            {{ adjustment_form.delta_quantity }}
+            {{ adjustment_form.reason.label_tag }}
+            {{ adjustment_form.reason }}
+            <button class="btn btn-primary" type="submit" name="action" value="adjust">{% trans "Record Adjustment" %}</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <h2>{% trans "Damaged Stock" %}</h2>
+        <form class="form-stack" method="post">
+            {% csrf_token %}
+            {{ damage_form.quantity.label_tag }}
+            {{ damage_form.quantity }}
+            {{ damage_form.reason.label_tag }}
+            {{ damage_form.reason }}
+            <button class="btn btn-danger" type="submit" name="action" value="damage">{% trans "Record Damage" %}</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <h2>{% trans "Expired Stock" %}</h2>
+        <form class="form-stack" method="post">
+            {% csrf_token %}
+            {{ expired_form.reason.label_tag }}
+            {{ expired_form.reason }}
+            <button class="btn btn-danger" type="submit" name="action" value="expire">{% trans "Mark Expired" %}</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

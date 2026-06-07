@@ -1,0 +1,70 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Batch Upload" %}{% endblock %}
+{% block page_title %}{% trans "Batch Upload" %}{% endblock %}
+{% block page_subtitle %}{% trans "Upload CSV or XLSX, validate rows, edit the preview, then commit safely." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Upload File" %}</h2>
+            <p>{% trans "Choose a target and upload a template-compatible CSV or XLSX file." %}</p>
+        </div>
+    </header>
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="form-stack" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div>{{ form.target.label_tag }}{{ form.target }}{{ form.target.errors }}</div>
+            <div>{{ form.file.label_tag }}{{ form.file }}{{ form.file.errors }}</div>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% trans "Upload And Preview" %}</button>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Templates" %}</h2>
+            <p>{% trans "Download the schema for each supported upload target." %}</p>
+        </div>
+    </header>
+    <div class="form-actions">
+        {% for value, label in targets %}
+            <a class="btn" href="{% url 'batch-upload-template' value %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Recent Uploads" %}</h2>
+            <p>{% trans "Database-backed previews and committed jobs." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr><th>{% trans "ID" %}</th><th>{% trans "Target" %}</th><th>{% trans "Status" %}</th><th>{% trans "File" %}</th><th>{% trans "Uploaded By" %}</th><th>{% trans "Date" %}</th></tr></thead>
+            <tbody>
+            {% for job in jobs %}
+                <tr>
+                    <td><a href="{% url 'batch-upload-detail' job.id %}">{{ job.id }}</a></td>
+                    <td>{{ job.get_target_display }}</td>
+                    <td><span class="badge">{{ job.status }}</span></td>
+                    <td>{{ job.original_filename }}</td>
+                    <td>{{ job.uploaded_by.username }}</td>
+                    <td>{{ job.created_at }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty-cell">{% trans "No upload jobs yet." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "POS Sale" %}{% endblock %}
+{% block page_title %}{% trans "POS Sale" %}{% endblock %}
+{% block page_subtitle %}{% trans "Scan a barcode or QR code, choose the correct stock batch, and complete checkout." %}{% endblock %}
+{% block header_actions %}
+    <button class="btn btn-primary" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% trans "Scan With Camera" %}</button>
+{% endblock %}
+
+{% block content %}
+<div class="pos-layout">
+    <section class="panel">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Scan Item" %}</h2>
+                <p>{% trans "Use a scanner, camera, uploaded image, or manual code." %}</p>
+            </div>
+        </header>
+        <form class="form-stack" method="post">
+            {% csrf_token %}
+            <div>
+                {{ scan_form.scan_value.label_tag }}
+                <div class="input-row">
+                    {{ scan_form.scan_value }}
+                    <button class="btn" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% trans "Scan" %}</button>
+                </div>
+                {{ scan_form.scan_value.errors }}
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit" name="action" value="scan">{% trans "Lookup" %}</button>
+            </div>
+        </form>
+
+        {% if scanned_product %}
+            <section class="panel panel-spaced">
+                <header class="panel-header">
+                    <div>
+                        <h2>{{ scanned_product.name }}</h2>
+                        <p>{{ scanned_product.product_code }} · {{ scanned_product.original_barcode }}</p>
+                    </div>
+                </header>
+                <div class="table-scroll">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>{% trans "Batch" %}</th>
+                            <th>{% trans "Expiry" %}</th>
+                            <th>{% trans "Available" %}</th>
+                            <th>{% trans "Price" %}</th>
+                            <th>{% trans "Quantity" %}</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for batch in available_batches %}
+                            <tr>
+                                <td>{{ batch.batch_no }}</td>
+                                <td>{{ batch.expiry_date }}</td>
+                                <td>{{ batch.quantity_available }}</td>
+                                <td>{{ batch.selling_price }}</td>
+                                <td colspan="2">
+                                    <form class="input-row" method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="stock_batch_id" value="{{ batch.id }}">
+                                        <input type="number" name="quantity" min="1" value="1" aria-label="{% trans 'Quantity' %}">
+                                        <button class="btn btn-primary" type="submit" name="action" value="add_batch">{% trans "Add" %}</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="empty-cell">{% trans "No sellable batches." %}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
+    </section>
+
+    <aside class="panel">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Cart" %}</h2>
+                <p>{% trans "Batch-level sale items." %}</p>
+            </div>
+        </header>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>{% trans "Item" %}</th>
+                <th>{% trans "Qty" %}</th>
+                <th>{% trans "Subtotal" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in cart_rows %}
+                <tr>
+                    <td>{{ row.stock_batch.product.name }}<br><span class="muted">{{ row.stock_batch.batch_no }}</span></td>
+                    <td>{{ row.quantity }}</td>
+                    <td>{{ row.subtotal }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="3" class="empty-cell">{% trans "Cart is empty." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="cart-total">{{ cart_total }}</div>
+        <form class="form-stack" method="post">
+            {% csrf_token %}
+            <div>
+                {{ confirm_form.payment_method.label_tag }}
+                {{ confirm_form.payment_method }}
+            </div>
+            <div>
+                {{ confirm_form.discount_amount.label_tag }}
+                {{ confirm_form.discount_amount }}
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-success" type="submit" name="action" value="confirm">{% trans "Confirm Sale" %}</button>
+                <button class="btn" type="submit" name="action" value="clear">{% trans "Clear" %}</button>
+            </div>
+        </form>
+    </aside>
+</div>
+{% endblock %}
