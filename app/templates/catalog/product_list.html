@@ -1,0 +1,92 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Products" %}{% endblock %}
+{% block page_title %}{% trans "Products" %}{% endblock %}
+{% block page_subtitle %}{% trans "Create, search, and maintain product master data for daily store operations." %}{% endblock %}
+{% block header_actions %}
+    <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% trans "Scan Search" %}</button>
+    <a class="btn" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
+    <a class="btn btn-primary" href="{% url 'product-create' %}">{% trans "New Product" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Find Products" %}</h2>
+            <p>{% blocktrans count count=product_count %}{{ count }} product found.{% plural %}{{ count }} products found.{% endblocktrans %}</p>
+        </div>
+    </header>
+    <form class="form-stack" method="get">
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {% if field.name == "q" %}
+                        <div class="input-row">
+                            {{ field }}
+                            <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% trans "Scan" %}</button>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+            <a class="btn" href="{% url 'product-list' %}">{% trans "Reset" %}</a>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Product Catalog" %}</h2>
+            <p>{% trans "Products are master data. Sellable quantity is managed by stock batches." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Code" %}</th>
+                    <th>{% trans "Product" %}</th>
+                    <th>{% trans "Barcode" %}</th>
+                    <th>{% trans "Category" %}</th>
+                    <th>{% trans "Brand" %}</th>
+                    <th>{% trans "Price" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Action" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ product.product_code }}</td>
+                    <td><strong>{{ product.name }}</strong><br><span class="muted">{{ product.unit }}</span></td>
+                    <td>{{ product.original_barcode|default:"-" }}</td>
+                    <td>{{ product.category|default:"-" }}</td>
+                    <td>{{ product.brand|default:"-" }}</td>
+                    <td>{{ product.default_selling_price }}</td>
+                    <td>
+                        {% if product.is_active %}
+                            <span class="badge badge-success">{% trans "Active" %}</span>
+                        {% else %}
+                            <span class="badge badge-danger">{% trans "Inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td><a class="btn" href="{% url 'product-edit' product.id %}">{% trans "Edit" %}</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8" class="empty-cell">{% trans "No products found." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+

@@ -17,6 +17,7 @@ def dashboard_context(request):
         nav_items.extend(
             [
                 {"label": "Stock-In", "url_name": "stock-in", "href": "/dashboard/stock-in/"},
+                {"label": "Products", "url_name": "product-list", "href": "/dashboard/products/"},
                 {"label": "Inventory", "url_name": "inventory-summary", "href": "/dashboard/inventory/"},
                 {"label": "Batch Upload", "url_name": "batch-upload", "href": "/dashboard/batch-upload/"},
                 {"label": "Labels", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"},

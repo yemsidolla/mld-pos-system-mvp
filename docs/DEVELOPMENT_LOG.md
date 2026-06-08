@@ -158,6 +158,15 @@
 - Updated Docker build dependencies to include gettext and compile translation messages.
 - Added tests for dashboard home, role-aware navigation, language settings, scan resolver behavior, scanner placement, and dashboard URL resolution.
 
+### Dashboard Product Management
+
+- Added admin-only product management at `/dashboard/products/`.
+- Added product search, category, brand, and active status filters.
+- Added dashboard product create and edit forms with barcode scan input support.
+- Added product create/update audit log creation.
+- Added navigation and dashboard quick-action links for product management.
+- Added tests for product rendering, filtering, create, edit, audit creation, scan controls, and cashier access blocking.
+
 ### Verification
 
 - `docker compose exec -T web python manage.py check`

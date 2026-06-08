@@ -48,6 +48,8 @@ Version 1 does not include Next.js, Node.js, Redis, Celery, customer accounts, l
 - Product image upload is available through Django Admin.
 - Django Admin supports product search by name, product code, and original barcode.
 - Django Admin supports product filtering by active status, category, and brand.
+- Product management is available in the Melodu dashboard at `/dashboard/products/` for Admin users.
+- The dashboard product page supports search, category, brand, active status filters, create, edit, and barcode scan input.
 
 ### Phase 2: Audit Foundation
 

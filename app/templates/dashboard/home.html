@@ -36,6 +36,7 @@
             <a class="action-card" href="{% url 'pos-sale' %}"><strong>{% trans "POS Sale" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
             {% if dashboard_is_admin %}
                 <a class="action-card" href="{% url 'stock-in' %}"><strong>{% trans "Stock-In" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
+                <a class="action-card" href="{% url 'product-list' %}"><strong>{% trans "Products" %}</strong><span>{% trans "Create, search, and update product master data." %}</span></a>
                 <a class="action-card" href="{% url 'batch-upload' %}"><strong>{% trans "Batch Upload" %}</strong><span>{% trans "Import master data and receiving rows." %}</span></a>
                 <a class="action-card" href="{% url 'inventory-summary' %}"><strong>{% trans "Inventory" %}</strong><span>{% trans "Review batches, expiry, and stock levels." %}</span></a>
             {% endif %}

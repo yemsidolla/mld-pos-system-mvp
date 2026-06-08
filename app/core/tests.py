@@ -46,6 +46,7 @@ class DashboardShellTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Melodu Dashboard")
+        self.assertContains(response, "Products")
         self.assertContains(response, "Batch Upload")
         self.assertContains(response, "Django Admin")
 

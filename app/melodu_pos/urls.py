@@ -12,6 +12,7 @@ from batch_upload.views import (
     batch_upload_row_update_view,
     batch_upload_template_view,
 )
+from catalog.views import product_create_view, product_edit_view, product_list_view
 from core.views import dashboard_home_view, health_check, scan_resolve_view
 from inventory.views import barcode_print_view, inventory_summary_view, stock_batch_detail_view, stock_in_view
 from pos.views import pos_sale_view, sale_cancel_view, sale_detail_view, sale_receipt_view, sales_history_view
@@ -32,6 +33,9 @@ urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
     path("dashboard/", dashboard_home_view, name="dashboard-home"),
     path("dashboard/api/scan/resolve/", scan_resolve_view, name="scan-resolve"),
+    path("dashboard/products/", product_list_view, name="product-list"),
+    path("dashboard/products/new/", product_create_view, name="product-create"),
+    path("dashboard/products/<int:product_id>/edit/", product_edit_view, name="product-edit"),
     path("dashboard/batch-upload/", batch_upload_index_view, name="batch-upload"),
     path("dashboard/batch-upload/templates/<str:target>/", batch_upload_template_view, name="batch-upload-template"),
     path("dashboard/batch-upload/jobs/<int:job_id>/", batch_upload_detail_view, name="batch-upload-detail"),

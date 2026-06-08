@@ -33,6 +33,7 @@ Statuses: Pending, AI Planned, AI Generated, Human Reviewing, Fix Required, Test
 | Create Supplier model | Done |
 | Create Product model | Done |
 | Register models in Django Admin | Done |
+| Add dashboard product management page | Done |
 | Add admin search and filters | Done |
 | Add original barcode field | Done |
 | Add product active/inactive status | Done |

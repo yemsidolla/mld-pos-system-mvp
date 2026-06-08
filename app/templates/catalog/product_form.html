@@ -1,0 +1,48 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% if mode == "create" %}{% trans "New Product" %}{% else %}{% trans "Edit Product" %}{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "create" %}{% trans "New Product" %}{% else %}{% trans "Edit Product" %}{% endif %}{% endblock %}
+{% block page_subtitle %}{% trans "Maintain product master data. Stock quantity remains controlled by batches." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'product-list' %}">{% trans "Back to Products" %}</a>
+    <button class="btn btn-primary" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% trans "Scan Barcode" %}</button>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% if mode == "create" %}{% trans "Create Product" %}{% else %}{{ product.name }}{% endif %}</h2>
+            <p>{% trans "Use product code as the stable identifier. Original barcode must be unique when provided." %}</p>
+        </div>
+    </header>
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <form class="form-stack" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {% if field.name == "original_barcode" %}
+                        <div class="input-row">
+                            {{ field }}
+                            <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% trans "Scan" %}</button>
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                    {{ field.errors }}
+                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-success" type="submit">{% if mode == "create" %}{% trans "Create Product" %}{% else %}{% trans "Save Product" %}{% endif %}</button>
+            <a class="btn" href="{% url 'product-list' %}">{% trans "Cancel" %}</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

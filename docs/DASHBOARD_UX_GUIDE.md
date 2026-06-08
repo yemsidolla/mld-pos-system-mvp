@@ -14,6 +14,7 @@ Django Admin remains available at `/admin/` for raw model inspection, user/group
 ## Role Behavior
 
 - Admin users can access POS, stock-in, inventory, batch upload, label printing, sales, reports, system health, live logs, and Django Admin.
+- Admin users can manage products at `/dashboard/products/` for daily catalog updates.
 - Cashier users can access POS and cashier dashboard links only.
 - Business rules still live in Python services; the dashboard does not bypass them.
 
