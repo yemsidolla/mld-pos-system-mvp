@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -34,3 +36,41 @@ class RoleTests(TestCase):
         response = self.client.get(reverse("admin:index"))
 
         self.assertEqual(response.status_code, 403)
+
+    def test_set_user_role_assigns_dashboard_admin_without_django_admin(self):
+        user = get_user_model().objects.create_user(username="manager", password="Admin123", is_staff=False)
+
+        call_command("set_user_role", "manager", "admin")
+        user.refresh_from_db()
+
+        self.assertTrue(user.groups.filter(name=ADMIN_GROUP).exists())
+        self.assertTrue(user.is_active)
+        self.assertFalse(user.is_staff)
+        self.assertTrue(is_admin_user(user))
+
+    def test_set_user_role_can_grant_django_admin_to_admin_role(self):
+        user = get_user_model().objects.create_user(username="owner", password="Admin123", is_staff=False)
+
+        call_command("set_user_role", "owner", "admin", "--django-admin")
+        user.refresh_from_db()
+
+        self.assertTrue(user.groups.filter(name=ADMIN_GROUP).exists())
+        self.assertTrue(user.is_staff)
+
+    def test_set_user_role_assigns_cashier_and_removes_staff(self):
+        user = get_user_model().objects.create_user(username="cashier2", password="Admin123", is_staff=True)
+        user.groups.add(Group.objects.get(name=ADMIN_GROUP))
+
+        call_command("set_user_role", "cashier2", "cashier")
+        user.refresh_from_db()
+
+        self.assertTrue(user.groups.filter(name=CASHIER_GROUP).exists())
+        self.assertFalse(user.groups.filter(name=ADMIN_GROUP).exists())
+        self.assertFalse(user.is_staff)
+        self.assertTrue(is_cashier_user(user))
+
+    def test_set_user_role_rejects_django_admin_for_cashier(self):
+        get_user_model().objects.create_user(username="cashier3", password="Admin123")
+
+        with self.assertRaises(CommandError):
+            call_command("set_user_role", "cashier3", "cashier", "--django-admin")

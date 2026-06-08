@@ -77,6 +77,13 @@ docker compose -f docker-compose.prod.yml exec web python manage.py createsuperu
 docker compose -f docker-compose.prod.yml exec web python manage.py setup_roles --admin-username admin
 ```
 
+For additional users, see `docs/USER_MANAGEMENT_GUIDE.md`. The short version:
+
+```bash
+docker compose -f docker-compose.prod.yml exec web python manage.py set_user_role USERNAME admin --django-admin
+docker compose -f docker-compose.prod.yml exec web python manage.py set_user_role USERNAME cashier
+```
+
 11. Confirm health:
 
 ```bash
