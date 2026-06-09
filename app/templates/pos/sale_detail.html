@@ -7,6 +7,12 @@
 {% block header_actions %}
     <a class="btn" href="{% url 'sales-history' %}">{% trans "Back to Sales" %}</a>
     <a class="btn btn-primary" href="{% url 'sale-receipt' sale.id %}">{% trans "Receipt" %}</a>
+    {% if dashboard_is_admin %}
+        <form class="reprint-form" method="post" action="{% url 'sale-reprint' sale.id %}" style="display:inline">
+            {% csrf_token %}
+            <button class="btn" type="submit">{% trans "Reprint Receipt" %}</button>
+        </form>
+    {% endif %}
 {% endblock %}
 
 {% block content %}

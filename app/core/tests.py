@@ -8,8 +8,10 @@ from django.contrib.auth.models import AnonymousUser, Group
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
+from audit.models import AuditLog
 from batch_upload.models import BatchUploadJob, BatchUploadRow
 from catalog.models import Product, Supplier
+from core.models import StoreSetting
 from core.permissions import ADMIN_GROUP, CASHIER_GROUP
 from core.views import dashboard_server_error_view
 from inventory.models import StockBatch
@@ -312,3 +314,73 @@ class ScannerPlacementTests(TestCase):
 
         self.assertContains(response, 'data-scan-context="batch_upload"')
         self.assertContains(response, 'row-')
+
+
+class StoreSettingTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="settings-owner", password="Admin123", is_staff=True, is_superuser=True
+        )
+        self.cashier = get_user_model().objects.create_user(username="settings-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get_or_create(name=CASHIER_GROUP)[0])
+
+    def test_load_returns_single_default_row(self):
+        first = StoreSetting.load()
+        second = StoreSetting.load()
+        self.assertEqual(first.pk, 1)
+        self.assertEqual(second.pk, 1)
+        self.assertEqual(StoreSetting.objects.count(), 1)
+        self.assertEqual(first.receipt_paper_width_mm, 80)
+
+    def test_save_always_uses_single_row(self):
+        setting = StoreSetting.load()
+        setting.store_name = "Changed"
+        setting.save()
+        again = StoreSetting.load()
+        again.store_name = "Second"
+        again.save()
+        self.assertEqual(StoreSetting.objects.count(), 1)
+        self.assertEqual(StoreSetting.load().store_name, "Second")
+
+    def test_owner_can_open_settings_but_cashier_cannot(self):
+        self.client.force_login(self.owner)
+        self.assertEqual(self.client.get(reverse("store-settings")).status_code, 200)
+
+        self.client.force_login(self.cashier)
+        self.assertEqual(self.client.get(reverse("store-settings")).status_code, 403)
+
+    def test_update_settings_persists_and_audits(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("store-settings"),
+            {
+                "store_name": "Khlove Pet",
+                "address": "Phnom Penh",
+                "phone": "012000111",
+                "receipt_header": "",
+                "receipt_footer": "Thank you!",
+                "receipt_paper_width_mm": "80",
+                "receipt_font_size_px": "12",
+                "currency_symbol": "$",
+            },
+        )
+        self.assertRedirects(response, reverse("store-settings"))
+        self.assertEqual(StoreSetting.load().store_name, "Khlove Pet")
+        self.assertTrue(
+            AuditLog.objects.filter(action=AuditLog.Action.SETTING_CHANGE, module="core").exists()
+        )
+
+    def test_invalid_paper_width_is_rejected(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("store-settings"),
+            {
+                "store_name": "Store",
+                "receipt_footer": "Thanks",
+                "receipt_paper_width_mm": "5",
+                "receipt_font_size_px": "12",
+                "currency_symbol": "$",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "between 40mm and 120mm")

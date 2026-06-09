@@ -227,3 +227,7 @@ def sales_history_required(view_func):
 
 def system_required(view_func):
     return dashboard_role_required(can_view_system)(view_func)
+
+
+def settings_required(view_func):
+    return dashboard_role_required(can_manage_settings)(view_func)

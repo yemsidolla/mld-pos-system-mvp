@@ -31,7 +31,14 @@ from catalog.views import (
     supplier_edit_view,
     supplier_list_view,
 )
-from core.views import dashboard_home_view, dashboard_login_view, dashboard_logout_view, health_check, scan_resolve_view
+from core.views import (
+    dashboard_home_view,
+    dashboard_login_view,
+    dashboard_logout_view,
+    health_check,
+    scan_resolve_view,
+    store_settings_view,
+)
 from inventory.views import barcode_print_view, inventory_summary_view, stock_batch_detail_view, stock_in_view
 from pos.views import (
     pos_sale_view,
@@ -41,6 +48,7 @@ from pos.views import (
     sale_cancel_view,
     sale_detail_view,
     sale_receipt_view,
+    sale_reprint_view,
     sales_history_view,
 )
 from reports.views import (
@@ -104,6 +112,8 @@ urlpatterns = [
     path("dashboard/inventory/batches/<int:batch_id>/", stock_batch_detail_view, name="stock-batch-detail"),
     path("dashboard/pos/", pos_sale_view, name="pos-sale"),
     path("dashboard/pos/receipt/<int:sale_id>/", sale_receipt_view, name="sale-receipt"),
+    path("dashboard/sales/<int:sale_id>/reprint/", sale_reprint_view, name="sale-reprint"),
+    path("dashboard/settings/", store_settings_view, name="store-settings"),
     path("dashboard/promotions/", promotion_list_view, name="promotion-list"),
     path("dashboard/promotions/new/", promotion_create_view, name="promotion-create"),
     path("dashboard/promotions/<int:promotion_id>/edit/", promotion_edit_view, name="promotion-edit"),

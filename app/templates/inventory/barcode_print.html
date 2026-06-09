@@ -48,7 +48,7 @@
         <div class="label-sheet">
             {% for _ in labels %}
                 <article class="print-label">
-                    <div class="store">Melodu Pet Store</div>
+                    <div class="store">{{ store_setting.store_name|default:"Melodu Pet Store" }}</div>
                     <div class="product">{{ stock_batch.product.name }}</div>
                     <div>{% trans "Price" %}: {{ stock_batch.selling_price }}</div>
                     <div>{% trans "Expiry Date" %}: {{ stock_batch.expiry_date }}</div>

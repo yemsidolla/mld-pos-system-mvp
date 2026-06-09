@@ -539,3 +539,57 @@ class SalesCancellationTests(TestCase):
         self.assertContains(response, "Access denied", status_code=403)
         sale.refresh_from_db()
         self.assertEqual(sale.status, Sale.Status.COMPLETED)
+
+
+class ReceiptTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="receipt-admin", password="Admin123", is_staff=True, is_superuser=True
+        )
+        self.cashier = get_user_model().objects.create_user(username="receipt-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get_or_create(name=CASHIER_GROUP)[0])
+        self.sale = Sale.objects.create(
+            sale_no="S2606090001",
+            cashier=self.cashier,
+            total_amount=Decimal("2.50"),
+            final_amount=Decimal("2.50"),
+        )
+
+    def test_receipt_uses_store_name_and_is_standalone(self):
+        from core.models import StoreSetting
+
+        setting = StoreSetting.load()
+        setting.store_name = "Khlove Pet Store"
+        setting.save()
+        self.client.force_login(self.cashier)
+
+        response = self.client.get(reverse("sale-receipt", kwargs={"sale_id": self.sale.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Khlove Pet Store")
+        self.assertContains(response, "S2606090001")
+        # Thermal receipt is standalone (no dashboard sidebar shell).
+        self.assertNotContains(response, "app-sidebar")
+
+    def test_admin_reprint_audits_and_redirects(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse("sale-reprint", kwargs={"sale_id": self.sale.id}))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('sale-receipt', kwargs={'sale_id': self.sale.id})}?print=1",
+            fetch_redirect_response=False,
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action=AuditLog.Action.RECEIPT_PRINT, object_id=str(self.sale.pk)
+            ).exists()
+        )
+
+    def test_cashier_cannot_reprint(self):
+        self.client.force_login(self.cashier)
+
+        response = self.client.post(reverse("sale-reprint", kwargs={"sale_id": self.sale.id}))
+
+        self.assertEqual(response.status_code, 403)

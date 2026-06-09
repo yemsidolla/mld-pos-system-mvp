@@ -25,6 +25,7 @@ class AuditLog(models.Model):
         PROMOTION_BELOW_COST_SALE = "PROMOTION_BELOW_COST_SALE", "Promotion below-cost sale"
         BARCODE_GENERATE = "BARCODE_GENERATE", "Barcode generate"
         BARCODE_PRINT = "BARCODE_PRINT", "Barcode print"
+        RECEIPT_PRINT = "RECEIPT_PRINT", "Receipt print"
         ROLE_CHANGE = "ROLE_CHANGE", "Role change"
         SETTING_CHANGE = "SETTING_CHANGE", "Setting change"
 

@@ -7,6 +7,7 @@ from django.urls import reverse
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from inventory.models import StockBatch
+from core.models import StoreSetting
 from core.permissions import admin_required, pos_required, sales_history_required
 
 from .forms import CancelSaleForm, ConfirmSaleForm, PromotionForm, SaleFilterForm, ScanForm
@@ -190,7 +191,32 @@ def pos_sale_view(request):
 @pos_required
 def sale_receipt_view(request, sale_id):
     sale = get_object_or_404(Sale.objects.prefetch_related("items__product", "items__stock_batch"), pk=sale_id)
-    return render(request, "pos/receipt.html", {"sale": sale})
+    return render(
+        request,
+        "pos/receipt.html",
+        {
+            "sale": sale,
+            "store": StoreSetting.load(),
+            "auto_print": request.GET.get("print") == "1",
+        },
+    )
+
+
+@admin_required
+def sale_reprint_view(request, sale_id):
+    sale = get_object_or_404(Sale, pk=sale_id)
+    if request.method != "POST":
+        return redirect("sale-detail", sale_id=sale.id)
+    create_audit_log(
+        action=AuditLog.Action.RECEIPT_PRINT,
+        module="pos",
+        request=request,
+        object_type="Sale",
+        object_id=sale.pk,
+        object_display=sale.sale_no,
+        new_value={"reprint": True},
+    )
+    return redirect(f"{reverse('sale-receipt', args=[sale.id])}?print=1")
 
 
 @sales_history_required

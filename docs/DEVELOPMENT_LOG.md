@@ -2,6 +2,23 @@
 
 ## 2026-06-09
 
+### V4 Phase 3: Printer Settings & 80mm Receipt
+
+- Added the `core.StoreSetting` singleton (store identity plus receipt/printer
+  configuration), defaulting receipts to 80mm; exposed it through an
+  Owner/Manager Settings page (`/dashboard/settings/`) and Django Admin (single,
+  non-deletable row). Settings edits are audited as `SETTING_CHANGE`.
+- Replaced the dashboard-chrome receipt with a standalone thermal receipt
+  template whose width, font size, store name/address/phone/logo, header, and
+  footer come from the settings; dashboard labels now use the configured store
+  name instead of a hardcoded value.
+- Added an audited `RECEIPT_PRINT` reprint action from the sale detail page
+  (Owner/Manager), and a Settings navigation link.
+- Browser printing remains the supported path (no ESC-POS dependency).
+- Documented in `docs/PRINTER_RECEIPT_GUIDE.md`.
+- Verified: `manage.py check` clean; full suite 175 tests passing (was 167);
+  migrations apply cleanly.
+
 ### V4 Phase 2: Product Classification
 
 - Added `catalog.ProductTag` (flexible tags) and optional `animal_type` and

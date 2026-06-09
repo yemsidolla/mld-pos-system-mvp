@@ -21,11 +21,17 @@ from inventory.models import StockBatch
 from pos.models import Sale
 from pos.services import parse_custom_code
 
+from audit.models import AuditLog
+from audit.services import create_audit_log
+
+from .forms import StoreSettingForm
+from .models import StoreSetting
 from .permissions import (
     can_access_dashboard,
     dashboard_required,
     is_admin_user,
     is_cashier_user,
+    settings_required,
 )
 
 
@@ -68,6 +74,44 @@ def dashboard_logout_view(request):
         auth_logout(request)
     messages.success(request, "You have logged out successfully.")
     return redirect(settings.LOGOUT_REDIRECT_URL)
+
+
+def _store_setting_snapshot(setting):
+    return {
+        "store_name": setting.store_name,
+        "address": setting.address,
+        "phone": setting.phone,
+        "receipt_header": setting.receipt_header,
+        "receipt_footer": setting.receipt_footer,
+        "receipt_paper_width_mm": setting.receipt_paper_width_mm,
+        "receipt_font_size_px": setting.receipt_font_size_px,
+        "show_logo_on_receipt": setting.show_logo_on_receipt,
+        "currency_symbol": setting.currency_symbol,
+    }
+
+
+@settings_required
+def store_settings_view(request):
+    setting = StoreSetting.load()
+    old_value = _store_setting_snapshot(setting)
+    form = StoreSettingForm(request.POST or None, request.FILES or None, instance=setting)
+
+    if request.method == "POST" and form.is_valid():
+        setting = form.save()
+        create_audit_log(
+            action=AuditLog.Action.SETTING_CHANGE,
+            module="core",
+            request=request,
+            object_type="StoreSetting",
+            object_id=setting.pk,
+            object_display=setting.store_name,
+            old_value=old_value,
+            new_value=_store_setting_snapshot(setting),
+        )
+        messages.success(request, "Store settings were updated.")
+        return redirect("store-settings")
+
+    return render(request, "core/store_settings.html", {"form": form, "setting": setting})
 
 
 def _error_context(request, status_code, title, message):

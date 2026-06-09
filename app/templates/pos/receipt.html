@@ -1,50 +1,96 @@
-{% extends "dashboard/base.html" %}
-{% load i18n %}
+{% load i18n %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% trans "Receipt" %} {{ sale.sale_no }}</title>
+    <style>
+        :root { --paper: {{ store.receipt_paper_width_mm|default:80 }}mm; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #f1f1f1;
+            font-family: "Courier New", monospace;
+            font-size: {{ store.receipt_font_size_px|default:12 }}px;
+            color: #000;
+        }
+        .receipt {
+            width: var(--paper);
+            max-width: 100%;
+            margin: 12px auto;
+            padding: 6mm 4mm;
+            background: #fff;
+        }
+        .center { text-align: center; }
+        .store-name { font-weight: bold; font-size: 1.25em; margin: 0; }
+        .muted { color: #333; }
+        hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        td { vertical-align: top; padding: 1px 0; }
+        .right { text-align: right; }
+        .totals td { padding: 1px 0; }
+        .grand { font-weight: bold; font-size: 1.1em; }
+        .logo { max-width: 60%; max-height: 80px; margin-bottom: 4px; }
+        .toolbar { text-align: center; margin: 10px; }
+        .btn {
+            display: inline-block; padding: 8px 16px; border: 1px solid #333;
+            background: #fff; border-radius: 6px; cursor: pointer; text-decoration: none; color: #000;
+        }
+        @media print {
+            body { background: #fff; }
+            .receipt { margin: 0; width: var(--paper); }
+            .no-print { display: none !important; }
+            @page { margin: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="toolbar no-print">
+    <button class="btn" onclick="window.print()">{% trans "Print" %}</button>
+    <a class="btn" href="{% url 'sale-detail' sale.id %}">{% trans "Back" %}</a>
+</div>
 
-{% block title %}{% trans "Receipt" %} {{ sale.sale_no }}{% endblock %}
-{% block page_title %}{% trans "Receipt" %} {{ sale.sale_no }}{% endblock %}
-{% block page_subtitle %}{% trans "Printable customer receipt." %}{% endblock %}
-{% block header_actions %}
-    <button class="btn btn-primary no-print" onclick="window.print()">{% trans "Print" %}</button>
-{% endblock %}
-
-{% block content %}
-<section class="panel receipt-panel">
-    <div class="receipt-header">
-        <h2 class="receipt-title">Melodu Pet Store</h2>
-        <p class="muted receipt-meta">
-            {% trans "Receipt" %} {{ sale.sale_no }}<br>
-            {{ sale.created_at }}<br>
-            {% trans "Cashier" %}: {{ sale.cashier.username }}
-        </p>
+<div class="receipt">
+    <div class="center">
+        {% if store.show_logo_on_receipt and store.logo %}
+            <img class="logo" src="{{ store.logo.url }}" alt="{{ store.store_name }}">
+        {% endif %}
+        <p class="store-name">{{ store.store_name }}</p>
+        {% if store.address %}<div class="muted">{{ store.address }}</div>{% endif %}
+        {% if store.phone %}<div class="muted">{{ store.phone }}</div>{% endif %}
+        {% if store.receipt_header %}<div>{{ store.receipt_header }}</div>{% endif %}
     </div>
-    <table class="data-table">
-        <thead>
-        <tr>
-            <th>{% trans "Item" %}</th>
-            <th>{% trans "Qty" %}</th>
-            <th>{% trans "Total" %}</th>
-        </tr>
-        </thead>
+    <hr>
+    <div>{% trans "Receipt" %}: {{ sale.sale_no }}</div>
+    <div>{{ sale.created_at }}</div>
+    <div>{% trans "Cashier" %}: {{ sale.cashier.username }}</div>
+    <hr>
+    <table>
         <tbody>
         {% for item in sale.items.all %}
             <tr>
-                <td>
-                    {{ item.product.name }}<br>
-                    <span class="muted">{{ item.stock_batch.batch_no }}</span>
-                    {% if item.promotion_name_at_sale %}<br><span class="badge badge-success">{{ item.promotion_name_at_sale }}</span>{% endif %}
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.subtotal }}</td>
+                <td colspan="2">{{ item.product.name }}{% if item.promotion_name_at_sale %} *{% endif %}</td>
+            </tr>
+            <tr>
+                <td>{{ item.quantity }} x {{ store.currency_symbol }}{{ item.final_unit_price }}</td>
+                <td class="right">{{ store.currency_symbol }}{{ item.subtotal }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
-    <div class="form-stack receipt-totals">
-        <div class="input-row"><strong>{% trans "Total" %}</strong><span class="amount">{{ sale.total_amount }}</span></div>
-        <div class="input-row"><strong>{% trans "Discount" %}</strong><span class="amount">{{ sale.discount_amount }}</span></div>
-        <div class="input-row"><strong>{% trans "Final" %}</strong><span class="final-amount">{{ sale.final_amount }}</span></div>
-        <div class="input-row"><strong>{% trans "Payment" %}</strong><span class="amount">{{ sale.payment_method }}</span></div>
-    </div>
-</section>
-{% endblock %}
+    <hr>
+    <table class="totals">
+        <tr><td>{% trans "Total" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.total_amount }}</td></tr>
+        <tr><td>{% trans "Discount" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.discount_amount }}</td></tr>
+        <tr class="grand"><td>{% trans "Final" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.final_amount }}</td></tr>
+        <tr><td>{% trans "Payment" %}</td><td class="right">{{ sale.payment_method }}</td></tr>
+    </table>
+    <hr>
+    {% if store.receipt_footer %}<div class="center">{{ store.receipt_footer }}</div>{% endif %}
+</div>
+
+{% if auto_print %}
+<script>window.addEventListener("load", function () { window.print(); });</script>
+{% endif %}
+</body>
+</html>

@@ -1,10 +1,12 @@
 from django.conf import settings
 
+from .models import StoreSetting
 from .permissions import (
     can_access_pos,
     can_manage_catalog,
     can_manage_inventory,
     can_manage_promotions,
+    can_manage_settings,
     can_manage_users,
     can_view_reports,
     can_view_sales_history,
@@ -53,8 +55,15 @@ def dashboard_context(request):
         nav_items.append({"label": "Reports", "url_name": "reports-index", "href": "/dashboard/reports/"})
     if user and can_manage_users(user):
         nav_items.append({"label": "Users", "url_name": "user-list", "href": "/dashboard/users/"})
+    if user and can_manage_settings(user):
+        nav_items.append({"label": "Settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
     if user and can_view_system(user):
         nav_items.append({"label": "System", "url_name": "system-health", "href": "/dashboard/system-health/"})
+
+    try:
+        store_setting = StoreSetting.load()
+    except Exception:  # pragma: no cover - defensive (e.g. before migrations)
+        store_setting = None
 
     return {
         "app_version": getattr(settings, "APP_VERSION", "dev"),
@@ -63,5 +72,6 @@ def dashboard_context(request):
         "dashboard_is_cashier": is_cashier,
         "dashboard_role": role,
         "dashboard_role_label": role_label(role) if role else "",
+        "store_setting": store_setting,
         "supported_languages": settings.LANGUAGES,
     }

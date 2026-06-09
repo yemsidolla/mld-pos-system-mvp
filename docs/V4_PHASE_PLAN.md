@@ -19,7 +19,7 @@ no ESC-POS library).
 | --- | --- | --- |
 | 1 | User Management & Permissions | Implemented |
 | 2 | Product Classification (tags, animal type, life stage) | Implemented |
-| 3 | Printer Settings & 80mm Receipt | Planned |
+| 3 | Printer Settings & 80mm Receipt | Implemented |
 | 4 | Label Template System | Planned |
 | 5 | Promotion Label Printing | Planned |
 | 6 | Safe Data Reset / Admin Maintenance | Planned |
@@ -85,9 +85,13 @@ agreed with the owner and will be restated at the start of each phase branch.
   filters and a tag section; product audit records the tag list. Batch upload
   adds optional `animal_type`, `life_stage`, `tags` columns (auto-creates tags,
   validates choices) and stays backward compatible with files that omit them.
-- **Phase 3 — Printer Settings & 80mm Receipt:** singleton store/printer
-  settings, de-hardcoded store info, a standalone thermal 80mm receipt template,
-  browser print first, reprint permission + print audit.
+- **Phase 3 — Printer Settings & 80mm Receipt (implemented):** added singleton
+  `core.StoreSetting` (store identity + receipt config, 80mm default) with an
+  Owner/Manager Settings page (`/dashboard/settings/`, audited `SETTING_CHANGE`)
+  and Django Admin entry. Replaced the receipt with a standalone thermal
+  template driven by the configured paper width/font and store info; labels now
+  use the configured store name. Added an audited `RECEIPT_PRINT` reprint action
+  (Owner/Manager) from sale detail. Browser print only; no ESC-POS dependency.
 - **Phase 4 — Label Template System:** `LabelTemplate` (paper size, orientation,
   field toggles); preset layouts (no drag-and-drop); batch printing + preview.
 - **Phase 5 — Promotion Label Printing:** promotion labels (old/new price,

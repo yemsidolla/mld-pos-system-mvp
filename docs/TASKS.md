@@ -318,3 +318,17 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Auto-create tags and validate classification on upload | AI Generated |
 | Include tag list in product audit snapshots | AI Generated |
 | Add V4 Phase 2 tests and documentation | AI Generated |
+
+## V4 Phase 3: Printer Settings & 80mm Receipt
+
+| Task | Status |
+| --- | --- |
+| Add `core.StoreSetting` singleton model and migration | AI Generated |
+| Add Owner/Manager store settings page with audit | AI Generated |
+| Default receipt paper width to 80mm | AI Generated |
+| Add standalone thermal receipt template driven by settings | AI Generated |
+| De-hardcode store name on receipts and labels | AI Generated |
+| Add audited reprint action and `RECEIPT_PRINT` audit type | AI Generated |
+| Register StoreSetting in Django Admin as a singleton | AI Generated |
+| Add Settings navigation link | AI Generated |
+| Add V4 Phase 3 tests and documentation | AI Generated |
