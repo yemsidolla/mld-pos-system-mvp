@@ -1,10 +1,14 @@
+import os
 from datetime import date
 from decimal import Decimal
 from tempfile import TemporaryDirectory
+from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
@@ -384,3 +388,134 @@ class StoreSettingTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "between 40mm and 120mm")
+
+
+class ResetBusinessDataCommandTests(TestCase):
+    def setUp(self):
+        from pos.models import Sale, SaleItem
+
+        self.owner = get_user_model().objects.create_user(
+            username="reset-owner", password="Admin123", is_staff=True, is_superuser=True
+        )
+        self.supplier = Supplier.objects.create(name="Pet Wholesale")
+        self.product = Product.objects.create(
+            product_code="P001",
+            original_barcode="8851234567890",
+            name="Cat Food",
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            self.batch, _movement = receive_stock(
+                product=self.product,
+                supplier=self.supplier,
+                quantity=10,
+                expiry_date=date(2027, 6, 1),
+                actual_unit_cost=Decimal("1.50"),
+                selling_price=Decimal("2.50"),
+                received_by=self.owner,
+            )
+        self.sale = Sale.objects.create(
+            sale_no="S2606090001",
+            cashier=self.owner,
+            total_amount=Decimal("2.50"),
+            final_amount=Decimal("2.50"),
+        )
+        SaleItem.objects.create(
+            sale=self.sale,
+            product=self.product,
+            stock_batch=self.batch,
+            quantity=1,
+            unit_price=Decimal("2.50"),
+            subtotal=Decimal("2.50"),
+        )
+
+    def test_dry_run_deletes_nothing(self):
+        from pos.models import Sale
+
+        call_command("reset_business_data", "--scope", "sales")
+        self.assertEqual(Sale.objects.count(), 1)
+        self.assertEqual(StockBatch.objects.count(), 1)
+
+    def test_execute_requires_environment_flag(self):
+        with self.assertRaisesMessage(CommandError, "ALLOW_DATA_RESET"):
+            call_command(
+                "reset_business_data",
+                "--scope",
+                "sales",
+                "--confirm",
+                "--phrase",
+                "RESET sales",
+                "--backup-confirmed",
+            )
+
+    def test_execute_requires_exact_phrase(self):
+        with mock.patch.dict(os.environ, {"ALLOW_DATA_RESET": "1"}):
+            with self.assertRaisesMessage(CommandError, "phrase"):
+                call_command(
+                    "reset_business_data",
+                    "--scope",
+                    "sales",
+                    "--confirm",
+                    "--phrase",
+                    "WRONG",
+                    "--backup-confirmed",
+                )
+
+    def test_execute_requires_backup_confirmation(self):
+        with mock.patch.dict(os.environ, {"ALLOW_DATA_RESET": "1"}):
+            with self.assertRaisesMessage(CommandError, "backup"):
+                call_command(
+                    "reset_business_data",
+                    "--scope",
+                    "sales",
+                    "--confirm",
+                    "--phrase",
+                    "RESET sales",
+                )
+
+    def test_sales_scope_clears_sales_but_keeps_catalog_and_audits(self):
+        from pos.models import Sale, SaleItem
+
+        with mock.patch.dict(os.environ, {"ALLOW_DATA_RESET": "1"}):
+            call_command(
+                "reset_business_data",
+                "--scope",
+                "sales",
+                "--confirm",
+                "--phrase",
+                "RESET sales",
+                "--backup-confirmed",
+            )
+
+        self.assertEqual(Sale.objects.count(), 0)
+        self.assertEqual(SaleItem.objects.count(), 0)
+        # Catalog and stock master data survive a sales-only reset.
+        self.assertEqual(Product.objects.count(), 1)
+        self.assertEqual(StockBatch.objects.count(), 1)
+        # Users are never deleted; before/after audit entries are recorded.
+        self.assertTrue(get_user_model().objects.filter(username="reset-owner").exists())
+        self.assertEqual(
+            AuditLog.objects.filter(action=AuditLog.Action.DATA_RESET).count(), 2
+        )
+
+    def test_all_scope_clears_catalog_but_preserves_owner_and_audit(self):
+        from pos.models import Sale
+
+        with mock.patch.dict(os.environ, {"ALLOW_DATA_RESET": "1"}):
+            call_command(
+                "reset_business_data",
+                "--scope",
+                "all",
+                "--confirm",
+                "--phrase",
+                "RESET all",
+                "--backup-confirmed",
+            )
+
+        self.assertEqual(Sale.objects.count(), 0)
+        self.assertEqual(StockBatch.objects.count(), 0)
+        self.assertEqual(Product.objects.count(), 0)
+        self.assertEqual(Supplier.objects.count(), 0)
+        self.assertTrue(get_user_model().objects.filter(username="reset-owner").exists())
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.DATA_RESET).exists())

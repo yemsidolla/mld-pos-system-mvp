@@ -359,3 +359,16 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Audit promotion label printing | AI Generated |
 | Add Promotion Labels navigation | AI Generated |
 | Add V4 Phase 5 tests and documentation | AI Generated |
+
+## V4 Phase 6: Safe Data Reset / Admin Maintenance
+
+| Task | Status |
+| --- | --- |
+| Add `reset_business_data` management command with scopes | AI Generated |
+| Default to dry run; require --confirm to execute | AI Generated |
+| Guard execution with ALLOW_DATA_RESET env flag | AI Generated |
+| Require exact "RESET <scope>" phrase and backup acknowledgement | AI Generated |
+| Run deletions in a single transaction in FK-safe order | AI Generated |
+| Preserve users, settings, templates, and audit logs | AI Generated |
+| Audit DATA_RESET before and after | AI Generated |
+| Add V4 Phase 6 tests and runbook documentation | AI Generated |

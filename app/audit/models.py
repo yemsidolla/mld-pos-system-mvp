@@ -28,6 +28,7 @@ class AuditLog(models.Model):
         RECEIPT_PRINT = "RECEIPT_PRINT", "Receipt print"
         ROLE_CHANGE = "ROLE_CHANGE", "Role change"
         SETTING_CHANGE = "SETTING_CHANGE", "Setting change"
+        DATA_RESET = "DATA_RESET", "Data reset"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -22,7 +22,7 @@ no ESC-POS library).
 | 3 | Printer Settings & 80mm Receipt | Implemented |
 | 4 | Label Template System | Implemented |
 | 5 | Promotion Label Printing | Implemented |
-| 6 | Safe Data Reset / Admin Maintenance | Planned |
+| 6 | Safe Data Reset / Admin Maintenance | Implemented |
 
 Dependencies: 5 needs 4; 4 benefits from 2; 6 needs 1. Phases 1–3 are largely
 independent.
@@ -104,6 +104,9 @@ agreed with the owner and will be restated at the start of each phase branch.
   the shared `calculate_promotion_price`, and prints old/new price + savings +
   period labels using a Promotion/Custom template. Seeds a default promotion
   template; printing is audited (`BARCODE_PRINT`, promotion reference).
-- **Phase 6 — Safe Data Reset:** `reset_business_data` management command first
-  (dry-run, exact-phrase confirm, env-flag guard, mandatory backup, audit
-  before/after, Owner-only); dashboard UI only later if approved.
+- **Phase 6 — Safe Data Reset (implemented):** `reset_business_data` management
+  command with scopes (sales/movements/batches/demo/catalog/all), dry-run by
+  default, `ALLOW_DATA_RESET=1` env guard, exact `RESET <scope>` phrase,
+  `--backup-confirmed` acknowledgement, single transaction, and `DATA_RESET`
+  audit before/after. Never deletes users, settings, label templates, or audit
+  logs. No dashboard UI (CLI only). See `docs/RESET_ADMIN_RUNBOOK.md`.

@@ -2,6 +2,19 @@
 
 ## 2026-06-09
 
+### V4 Phase 6: Safe Data Reset / Admin Maintenance
+
+- Added the `reset_business_data` management command (Owner-level, CLI only) to
+  safely clear business data with scopes: sales, movements, batches, demo,
+  catalog, all. Deletions run in a single transaction in foreign-key-safe order.
+- Layered safety: dry run by default; execution requires `ALLOW_DATA_RESET=1`,
+  the exact phrase `RESET <scope>`, and `--backup-confirmed`. A `DATA_RESET`
+  audit entry is written before and after. Users, roles, store settings, label
+  templates, and audit logs are never deleted.
+- No dashboard UI (intentional); documented in `docs/RESET_ADMIN_RUNBOOK.md`.
+- Verified: `manage.py check` clean; full suite 190 tests passing (was 184);
+  migrations apply cleanly.
+
 ### V4 Phase 5: Promotion Label Printing
 
 - Added a Promotion Labels page (`/dashboard/labels/promotions/`, Owner/Manager/
