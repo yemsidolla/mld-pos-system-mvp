@@ -51,7 +51,8 @@ class StockInServiceTests(TestCase):
                 supplier=self.supplier,
                 quantity=10,
                 expiry_date=date(2027, 6, 1),
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
+                landed_unit_cost=Decimal("1.75"),
                 selling_price=Decimal("2.50"),
                 received_by=self.user,
             )
@@ -59,6 +60,8 @@ class StockInServiceTests(TestCase):
             self.assertEqual(stock_batch.batch_no[:3], "B26")
             self.assertEqual(stock_batch.quantity_received, 10)
             self.assertEqual(stock_batch.quantity_available, 10)
+            self.assertEqual(stock_batch.actual_unit_cost, Decimal("1.50"))
+            self.assertEqual(stock_batch.landed_unit_cost, Decimal("1.75"))
             self.assertEqual(stock_batch.status, StockBatch.Status.ACTIVE)
             self.assertEqual(stock_batch.custom_code, f"8851234567890-M-270601-{stock_batch.batch_no}")
             self.assertTrue(stock_batch.barcode_image.name.endswith(".png"))
@@ -66,6 +69,7 @@ class StockInServiceTests(TestCase):
             self.assertEqual(movement.movement_type, InventoryMovement.MovementType.STOCK_IN)
             self.assertEqual(movement.quantity, 10)
             self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.STOCK_IN).exists())
+            self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.STOCK_BATCH_COST_CHANGE).exists())
 
     def test_stock_in_requires_product_original_barcode(self):
         self.product.original_barcode = None
@@ -77,7 +81,7 @@ class StockInServiceTests(TestCase):
                 supplier=self.supplier,
                 quantity=10,
                 expiry_date=date(2027, 6, 1),
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
                 selling_price=Decimal("2.50"),
                 received_by=self.user,
             )
@@ -92,7 +96,7 @@ class StockInServiceTests(TestCase):
                 supplier=self.supplier,
                 quantity=10,
                 expiry_date=date(2027, 6, 1),
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
                 selling_price=Decimal("2.50"),
                 received_by=self.user,
             )
@@ -105,7 +109,7 @@ class StockInServiceTests(TestCase):
             expiry_date=date(2027, 6, 1),
             quantity_received=5,
             quantity_available=6,
-            cost_price=Decimal("1.50"),
+            actual_unit_cost=Decimal("1.50"),
             selling_price=Decimal("2.50"),
             custom_code="8851234567890-M-270601-B260001",
             received_by=self.user,
@@ -129,6 +133,8 @@ class StockInPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Stock-In")
+        self.assertContains(response, "Actual Unit Cost")
+        self.assertContains(response, "Landed Unit Cost")
 
     def test_stock_in_page_renders_supplier_quick_add_control(self):
         user = get_user_model().objects.create_user(
@@ -174,7 +180,7 @@ class BarcodePrintPageTests(TestCase):
             supplier=self.supplier,
             quantity=10,
             expiry_date=date(2027, 6, 1),
-            cost_price=Decimal("1.50"),
+            actual_unit_cost=Decimal("1.50"),
             selling_price=Decimal("2.50"),
             received_by=self.user,
         )
@@ -245,7 +251,7 @@ class InventoryAdjustmentTests(TestCase):
                 supplier=self.supplier,
                 quantity=quantity,
                 expiry_date=expiry_date,
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
                 selling_price=Decimal("2.50"),
                 received_by=self.admin,
             )

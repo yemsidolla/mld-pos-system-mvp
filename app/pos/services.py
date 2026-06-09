@@ -9,9 +9,11 @@ from django.utils import timezone
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from catalog.models import Product
+from core.permissions import is_admin_user
 from inventory.models import InventoryMovement, StockBatch
 
 from .models import Sale, SaleItem
+from .pricing import allocate_discount, choose_best_promotion, get_cost_snapshot, money
 
 
 @dataclass(frozen=True)
@@ -141,7 +143,15 @@ def generate_sale_no(today=None):
 
 
 @transaction.atomic
-def confirm_sale(*, cart_items, cashier, payment_method=Sale.PaymentMethod.CASH, discount_amount=Decimal("0.00"), request=None):
+def confirm_sale(
+    *,
+    cart_items,
+    cashier,
+    payment_method=Sale.PaymentMethod.CASH,
+    discount_amount=Decimal("0.00"),
+    override_reason="",
+    request=None,
+):
     if not cart_items:
         raise ValidationError("Cart is empty.")
 
@@ -150,7 +160,7 @@ def confirm_sale(*, cart_items, cashier, payment_method=Sale.PaymentMethod.CASH,
     locked_batches = {
         batch.id: batch
         for batch in StockBatch.objects.select_for_update()
-        .select_related("product")
+        .select_related("product", "supplier")
         .filter(id__in=batch_ids)
     }
 
@@ -164,34 +174,96 @@ def confirm_sale(*, cart_items, cashier, payment_method=Sale.PaymentMethod.CASH,
         if stock_batch is None:
             raise ValidationError("Stock batch does not exist.")
         validate_sellable_batch(stock_batch, quantity=quantity)
-        subtotal = stock_batch.selling_price * quantity
-        total_amount += subtotal
-        normalized_items.append((stock_batch, quantity, subtotal))
+        cost_snapshot = get_cost_snapshot(stock_batch)
+        promotion_price = choose_best_promotion(stock_batch)
+        original_line_total = money(promotion_price.original_unit_price * quantity)
+        promotion_line_total = money(promotion_price.final_unit_price * quantity)
+        promotion_discount_total = money(promotion_price.discount_per_unit * quantity)
+        total_amount += original_line_total
+        normalized_items.append(
+            {
+                "stock_batch": stock_batch,
+                "quantity": quantity,
+                "cost_snapshot": cost_snapshot,
+                "promotion_price": promotion_price,
+                "original_line_total": original_line_total,
+                "promotion_line_total": promotion_line_total,
+                "promotion_discount_total": promotion_discount_total,
+            }
+        )
 
-    discount_amount = Decimal(discount_amount or "0.00")
+    discount_amount = money(discount_amount or "0.00")
     if discount_amount < 0:
         raise ValidationError("Discount cannot be negative.")
-    if discount_amount > total_amount:
+    promotion_discount_amount = sum((item["promotion_discount_total"] for item in normalized_items), Decimal("0.00"))
+    pre_manual_total = sum((item["promotion_line_total"] for item in normalized_items), Decimal("0.00"))
+    if discount_amount > pre_manual_total:
         raise ValidationError("Discount cannot exceed total amount.")
+
+    manual_allocations = allocate_discount(
+        discount_amount,
+        [item["promotion_line_total"] for item in normalized_items],
+    )
+    below_cost_items = []
+    for item, manual_discount in zip(normalized_items, manual_allocations):
+        item["manual_discount_total"] = manual_discount
+        item["line_discount_total"] = money(item["promotion_discount_total"] + manual_discount)
+        item["final_line_total"] = money(item["promotion_line_total"] - manual_discount)
+        item["final_unit_price"] = money(item["final_line_total"] / item["quantity"])
+        item["below_cost"] = item["final_line_total"] < money(item["cost_snapshot"].cost_basis * item["quantity"])
+        item["below_cost_allowed_by_promotion"] = bool(
+            item["below_cost"]
+            and item["promotion_price"].promotion
+            and item["promotion_price"].promotion.allow_below_cost
+            and manual_discount == 0
+        )
+        if item["below_cost"] and not item["below_cost_allowed_by_promotion"]:
+            below_cost_items.append(item)
+
+    override_reason = (override_reason or "").strip()
+    override_user = None
+    if below_cost_items:
+        if not is_admin_user(cashier):
+            raise ValidationError("Manager approval required for this price.")
+        if not override_reason:
+            raise ValidationError("Override reason is required for below-cost sale.")
+        override_user = cashier
+
+    final_amount = sum((item["final_line_total"] for item in normalized_items), Decimal("0.00"))
 
     sale = Sale.objects.create(
         sale_no=generate_sale_no(),
         cashier=cashier,
         total_amount=total_amount,
-        discount_amount=discount_amount,
-        final_amount=total_amount - discount_amount,
+        discount_amount=money(promotion_discount_amount + discount_amount),
+        final_amount=money(final_amount),
         payment_method=payment_method,
         status=Sale.Status.COMPLETED,
     )
 
-    for stock_batch, quantity, subtotal in normalized_items:
+    for item in normalized_items:
+        stock_batch = item["stock_batch"]
+        quantity = item["quantity"]
+        cost_snapshot = item["cost_snapshot"]
+        promotion = item["promotion_price"].promotion
         SaleItem.objects.create(
             sale=sale,
             product=stock_batch.product,
             stock_batch=stock_batch,
             quantity=quantity,
-            unit_price=stock_batch.selling_price,
-            subtotal=subtotal,
+            unit_price=item["promotion_price"].original_unit_price,
+            reference_cost_at_sale=cost_snapshot.reference_unit_cost,
+            actual_cost_at_sale=cost_snapshot.actual_unit_cost,
+            landed_cost_at_sale=cost_snapshot.landed_unit_cost,
+            cost_basis_at_sale=cost_snapshot.cost_basis,
+            original_unit_price=item["promotion_price"].original_unit_price,
+            final_unit_price=item["final_unit_price"],
+            discount_amount=item["line_discount_total"],
+            promotion=promotion,
+            promotion_name_at_sale=promotion.name if promotion else "",
+            override_by=override_user if item["below_cost"] and not item["below_cost_allowed_by_promotion"] else None,
+            override_reason=override_reason if item["below_cost"] and not item["below_cost_allowed_by_promotion"] else "",
+            subtotal=item["final_line_total"],
         )
         stock_batch.quantity_available -= quantity
         if stock_batch.quantity_available == 0:
@@ -209,6 +281,63 @@ def confirm_sale(*, cart_items, cashier, payment_method=Sale.PaymentMethod.CASH,
             created_by=cashier,
         )
 
+    below_cost_payload = [
+        {
+            "product": item["stock_batch"].product.product_code,
+            "stock_batch": item["stock_batch"].batch_no,
+            "reference_cost": str(item["cost_snapshot"].reference_unit_cost),
+            "actual_cost": str(item["cost_snapshot"].actual_unit_cost),
+            "landed_cost": str(item["cost_snapshot"].landed_unit_cost)
+            if item["cost_snapshot"].landed_unit_cost is not None
+            else None,
+            "cost_basis": str(item["cost_snapshot"].cost_basis),
+            "final_unit_price": str(item["final_unit_price"]),
+            "promotion": item["promotion_price"].promotion_name,
+            "override_user": override_user.username if override_user else "",
+            "override_reason": override_reason if override_user else "",
+        }
+        for item in normalized_items
+        if item["below_cost"]
+    ]
+    if below_cost_payload:
+        create_audit_log(
+            action=AuditLog.Action.BELOW_COST_SALE,
+            module="pos",
+            user=cashier,
+            request=request,
+            object_type="Sale",
+            object_id=sale.pk,
+            object_display=sale.sale_no,
+            new_value={"items": below_cost_payload},
+        )
+    if override_user:
+        create_audit_log(
+            action=AuditLog.Action.SALE_OVERRIDE,
+            module="pos",
+            user=override_user,
+            request=request,
+            object_type="Sale",
+            object_id=sale.pk,
+            object_display=sale.sale_no,
+            new_value={"reason": override_reason, "items": below_cost_payload},
+        )
+    promotion_below_cost_payload = [
+        item
+        for item in below_cost_payload
+        if item["promotion"] and not item["override_user"]
+    ]
+    if promotion_below_cost_payload:
+        create_audit_log(
+            action=AuditLog.Action.PROMOTION_BELOW_COST_SALE,
+            module="pos",
+            user=cashier,
+            request=request,
+            object_type="Sale",
+            object_id=sale.pk,
+            object_display=sale.sale_no,
+            new_value={"items": promotion_below_cost_payload},
+        )
+
     create_audit_log(
         action=AuditLog.Action.SALE_CREATE,
         module="pos",
@@ -224,6 +353,7 @@ def confirm_sale(*, cart_items, cashier, payment_method=Sale.PaymentMethod.CASH,
             "final_amount": str(sale.final_amount),
             "payment_method": sale.payment_method,
             "items": sale.items.aggregate(total_quantity=Sum("quantity"))["total_quantity"],
+            "below_cost_items": len(below_cost_payload),
         },
     )
 

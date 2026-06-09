@@ -12,6 +12,8 @@ class StockBatchAdmin(admin.ModelAdmin):
         "expiry_date",
         "quantity_received",
         "quantity_available",
+        "actual_unit_cost",
+        "landed_unit_cost",
         "selling_price",
         "status",
         "received_by",

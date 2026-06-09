@@ -220,3 +220,15 @@
 - Hid the Django Admin link from non-admin dashboard users.
 - Hardened invalid daily sales report dates and invalid batch-upload template targets.
 - Improved POS empty states, unavailable-stock text, checkout button copy, success messaging, and double-submit protection.
+
+### V3 Phase 1 Cost Guardrails, Promotions, And Responsive POS
+
+- Added supplier/product reference costs for vendor-specific expected cost tracking.
+- Replaced stock batch `cost_price` with `actual_unit_cost` and optional `landed_unit_cost`.
+- Added SaleItem snapshots for cost basis, cost components, original/final price, discounts, promotions, and admin override details.
+- Added below-cost sale protection so cashier users are blocked and Admin users must provide an override reason.
+- Added simple Admin-managed product/category promotions with percentage, fixed amount, and fixed final price discounts.
+- Added best valid promotion selection with no stacking and an explicit `allow_below_cost` flag.
+- Added audit logs for cost changes, stock batch cost changes, below-cost sales, promotion below-cost sales, promotion changes, and admin overrides.
+- Improved POS responsiveness with promotion labels, touch-friendly quantity steppers, a sticky desktop cart, clearer empty states, and double-submit protection.
+- Confirmed local and production compose service lists still include only `postgres` and `web`.

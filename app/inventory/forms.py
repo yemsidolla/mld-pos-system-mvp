@@ -10,7 +10,15 @@ class StockInForm(forms.Form):
     supplier = forms.ModelChoiceField(queryset=Supplier.objects.none())
     quantity = forms.IntegerField(min_value=1)
     expiry_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
-    cost_price = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2)
+    actual_unit_cost = forms.DecimalField(label="Actual Unit Cost", min_value=0, max_digits=12, decimal_places=2)
+    landed_unit_cost = forms.DecimalField(
+        label="Landed Unit Cost",
+        required=False,
+        min_value=0,
+        max_digits=12,
+        decimal_places=2,
+        help_text="Optional. Use actual cost plus shipping, import, or extra costs.",
+    )
     selling_price = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2)
     note = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 3}))
 

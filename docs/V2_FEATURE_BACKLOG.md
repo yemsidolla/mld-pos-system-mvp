@@ -77,6 +77,8 @@ Required decisions before implementation:
 
 ## Priority 4: Promotions And Discount Rules
 
+Status: superseded by V3 Phase 1 basic promotions.
+
 Goal:
 
 - Replace manual discount entry with controlled promotion rules.
@@ -88,6 +90,14 @@ Required decisions before implementation:
 - Expiry dates.
 - Role allowed to create promotions.
 - Audit requirements.
+
+Delivered in V3 Phase 1:
+
+- Admin-managed product/category promotions.
+- Percentage, fixed amount, and fixed final price discounts.
+- No stacking; best valid promotion wins.
+- Below-cost promotion requires explicit `allow_below_cost`.
+- Promotion audit logs.
 
 ## Priority 5: Multi-Branch Stock
 

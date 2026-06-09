@@ -1,0 +1,62 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Reference Costs" %}{% endblock %}
+{% block page_title %}{% trans "Reference Costs" %}{% endblock %}
+{% block page_subtitle %}{% trans "Vendor-specific expected cost for each product." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn btn-primary" href="{% url 'supplier-product-cost-create' %}">{% trans "New Reference Cost" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Find Reference Costs" %}</h2>
+            <p>{% blocktrans count count=cost_count %}{{ count }} reference cost found.{% plural %}{{ count }} reference costs found.{% endblocktrans %}</p>
+        </div>
+    </header>
+    <form class="form-stack" method="get">
+        <div class="input-row">
+            <input type="search" name="q" value="{{ query }}" placeholder="{% trans 'Search product or supplier' %}">
+            <button class="btn btn-primary" type="submit">{% trans "Search" %}</button>
+            <a class="btn" href="{% url 'supplier-product-cost-list' %}">{% trans "Reset" %}</a>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>{% trans "Product" %}</th>
+                <th>{% trans "Supplier" %}</th>
+                <th>{% trans "Reference Cost" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Action" %}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for cost in costs %}
+                <tr>
+                    <td>{{ cost.product.name }}<br><span class="muted">{{ cost.product.product_code }}</span></td>
+                    <td>{{ cost.supplier.name }}</td>
+                    <td>{{ cost.reference_unit_cost }}</td>
+                    <td>
+                        {% if cost.is_active %}
+                            <span class="badge badge-success">{% trans "Active" %}</span>
+                        {% else %}
+                            <span class="badge badge-danger">{% trans "Inactive" %}</span>
+                        {% endif %}
+                    </td>
+                    <td><a class="btn" href="{% url 'supplier-product-cost-edit' cost.id %}">{% trans "Edit" %}</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="empty-cell">{% trans "No reference costs found." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

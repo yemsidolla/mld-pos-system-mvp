@@ -66,9 +66,10 @@ def receive_stock(
     supplier,
     quantity,
     expiry_date,
-    cost_price,
+    actual_unit_cost,
     selling_price,
     received_by,
+    landed_unit_cost=None,
     request=None,
     note="",
 ):
@@ -90,7 +91,8 @@ def receive_stock(
         expiry_date=expiry_date,
         quantity_received=quantity,
         quantity_available=quantity,
-        cost_price=Decimal(cost_price),
+        actual_unit_cost=Decimal(actual_unit_cost),
+        landed_unit_cost=Decimal(landed_unit_cost) if landed_unit_cost not in (None, "") else None,
         selling_price=Decimal(selling_price),
         custom_code=custom_code,
         received_by=received_by,
@@ -125,7 +127,26 @@ def receive_stock(
             "supplier": supplier.name,
             "quantity": quantity,
             "expiry_date": expiry_date.isoformat(),
+            "actual_unit_cost": str(stock_batch.actual_unit_cost),
+            "landed_unit_cost": str(stock_batch.landed_unit_cost) if stock_batch.landed_unit_cost is not None else None,
+            "selling_price": str(stock_batch.selling_price),
             "custom_code": custom_code,
+        },
+    )
+    create_audit_log(
+        action=AuditLog.Action.STOCK_BATCH_COST_CHANGE,
+        module="inventory",
+        user=received_by,
+        request=request,
+        object_type="StockBatch",
+        object_id=stock_batch.pk,
+        object_display=stock_batch.batch_no,
+        new_value={
+            "product": product.product_code,
+            "supplier": supplier.name,
+            "actual_unit_cost": str(stock_batch.actual_unit_cost),
+            "landed_unit_cost": str(stock_batch.landed_unit_cost) if stock_batch.landed_unit_cost is not None else None,
+            "selling_price": str(stock_batch.selling_price),
         },
     )
 

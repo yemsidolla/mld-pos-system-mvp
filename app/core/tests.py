@@ -50,6 +50,8 @@ class DashboardShellTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Melodu Dashboard")
         self.assertContains(response, "Products")
+        self.assertContains(response, "Costs")
+        self.assertContains(response, "Promotions")
         self.assertContains(response, "Batch Upload")
         self.assertContains(response, "Django Admin")
 
@@ -60,6 +62,8 @@ class DashboardShellTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "POS")
+        self.assertNotContains(response, "Costs")
+        self.assertNotContains(response, "Promotions")
         self.assertNotContains(response, "Batch Upload")
         self.assertNotContains(response, "Django Admin")
 
@@ -218,7 +222,7 @@ class ScanResolveTests(TestCase):
                 supplier=self.supplier,
                 quantity=10,
                 expiry_date=date(2027, 6, 1),
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
                 selling_price=Decimal("2.50"),
                 received_by=self.admin,
             )

@@ -58,8 +58,17 @@ class BatchUploadParsingTests(TestCase):
     def test_xlsx_parsing_reads_headers_rows_and_dates(self):
         upload = xlsx_upload(
             "stock_in.xlsx",
-            ["product_code", "supplier", "quantity", "expiry_date", "cost_price", "selling_price", "note"],
-            [["P001", "Pet Wholesale", 5, "2027-06-01", "1.50", "2.50", "Initial stock"]],
+            [
+                "product_code",
+                "supplier",
+                "quantity",
+                "expiry_date",
+                "actual_unit_cost",
+                "landed_unit_cost",
+                "selling_price",
+                "note",
+            ],
+            [["P001", "Pet Wholesale", 5, "2027-06-01", "1.50", "1.75", "2.50", "Initial stock"]],
         )
 
         headers, rows = parse_upload_file(upload)
@@ -225,8 +234,8 @@ class BatchUploadServiceTests(TestCase):
     def test_stock_in_upload_uses_receive_stock_outputs(self):
         upload = csv_upload(
             "stock_in.csv",
-            "product_code,supplier,quantity,expiry_date,cost_price,selling_price,note\n"
-            "P001,Pet Wholesale,7,2027-06-01,1.60,2.70,Bulk stock\n",
+            "product_code,supplier,quantity,expiry_date,actual_unit_cost,landed_unit_cost,selling_price,note\n"
+            "P001,Pet Wholesale,7,2027-06-01,1.60,1.85,2.70,Bulk stock\n",
         )
         job = create_upload_job(target=BatchUploadJob.Target.STOCK_IN, uploaded_file=upload, uploaded_by=self.admin)
         self.assertEqual(job.rows.get().validation_errors, [])
@@ -237,6 +246,8 @@ class BatchUploadServiceTests(TestCase):
         stock_batch = StockBatch.objects.get(product=self.product)
         self.assertEqual(stock_batch.quantity_received, 7)
         self.assertEqual(stock_batch.quantity_available, 7)
+        self.assertEqual(stock_batch.actual_unit_cost, Decimal("1.60"))
+        self.assertEqual(stock_batch.landed_unit_cost, Decimal("1.85"))
         self.assertEqual(stock_batch.custom_code, f"8851234567890-M-270601-{stock_batch.batch_no}")
         self.assertTrue(stock_batch.barcode_image.name.endswith(".png"))
         self.assertTrue(stock_batch.qr_image.name.endswith(".png"))
@@ -244,11 +255,23 @@ class BatchUploadServiceTests(TestCase):
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.STOCK_IN).exists())
         self.assertTrue(AuditLog.objects.filter(module="batch_upload").exists())
 
+    def test_stock_in_upload_accepts_missing_optional_landed_cost_column(self):
+        upload = csv_upload(
+            "stock_in.csv",
+            "product_code,supplier,quantity,expiry_date,actual_unit_cost,selling_price,note\n"
+            "P001,Pet Wholesale,7,2027-06-01,1.60,2.70,Bulk stock\n",
+        )
+
+        job = create_upload_job(target=BatchUploadJob.Target.STOCK_IN, uploaded_file=upload, uploaded_by=self.admin)
+
+        self.assertEqual(job.rows.get().validation_errors, [])
+        self.assertEqual(job.rows.get().normalized_data["landed_unit_cost"], "")
+
     def test_invalid_rows_cannot_be_committed(self):
         upload = csv_upload(
             "stock_in.csv",
-            "product_code,supplier,quantity,expiry_date,cost_price,selling_price,note\n"
-            "MISSING,Pet Wholesale,7,2027-06-01,1.60,2.70,Bulk stock\n",
+            "product_code,supplier,quantity,expiry_date,actual_unit_cost,landed_unit_cost,selling_price,note\n"
+            "MISSING,Pet Wholesale,7,2027-06-01,1.60,,2.70,Bulk stock\n",
         )
         job = create_upload_job(target=BatchUploadJob.Target.STOCK_IN, uploaded_file=upload, uploaded_by=self.admin)
 

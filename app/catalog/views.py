@@ -21,8 +21,9 @@ from .forms import (
     QuickCategoryForm,
     QuickSupplierForm,
     SupplierForm,
+    SupplierProductCostForm,
 )
-from .models import Brand, Category, Product, Supplier
+from .models import Brand, Category, Product, Supplier, SupplierProductCost
 
 
 QUICK_CREATE_FORMS = {
@@ -244,7 +245,17 @@ def product_create_view(request):
             object_type="Product",
             object_id=product.pk,
             object_display=str(product),
-            new_value={"product_code": product.product_code, "name": product.name},
+            new_value=_model_snapshot(product, ProductForm.Meta.fields),
+        )
+        create_audit_log(
+            action=AuditLog.Action.COST_CHANGE,
+            module="catalog",
+            user=request.user,
+            request=request,
+            object_type="Product",
+            object_id=product.pk,
+            object_display=str(product),
+            new_value={"default_cost_price": str(product.default_cost_price)},
         )
         messages.success(request, f"Product {product.product_code} was created.")
         return redirect("product-list")
@@ -259,6 +270,8 @@ def product_edit_view(request, product_id):
         "product_code": product.product_code,
         "original_barcode": product.original_barcode,
         "name": product.name,
+        "default_cost_price": str(product.default_cost_price),
+        "default_selling_price": str(product.default_selling_price),
         "is_active": product.is_active,
     }
     form = ProductForm(request.POST or None, request.FILES or None, instance=product)
@@ -278,9 +291,23 @@ def product_edit_view(request, product_id):
                 "product_code": product.product_code,
                 "original_barcode": product.original_barcode,
                 "name": product.name,
+                "default_cost_price": str(product.default_cost_price),
+                "default_selling_price": str(product.default_selling_price),
                 "is_active": product.is_active,
             },
         )
+        if old_value["default_cost_price"] != str(product.default_cost_price):
+            create_audit_log(
+                action=AuditLog.Action.COST_CHANGE,
+                module="catalog",
+                user=request.user,
+                request=request,
+                object_type="Product",
+                object_id=product.pk,
+                object_display=str(product),
+                old_value={"default_cost_price": old_value["default_cost_price"]},
+                new_value={"default_cost_price": str(product.default_cost_price)},
+            )
         messages.success(request, f"Product {product.product_code} was updated.")
         return redirect("product-list")
 
@@ -437,3 +464,64 @@ def supplier_edit_view(request, supplier_id):
         list_url_name="supplier-list",
         object_type="Supplier",
     )
+
+
+@admin_required
+def supplier_product_cost_list_view(request):
+    query = request.GET.get("q", "").strip()
+    costs = SupplierProductCost.objects.select_related("product", "supplier").order_by("product__name", "supplier__name")
+    if query:
+        costs = costs.filter(
+            Q(product__name__icontains=query)
+            | Q(product__product_code__icontains=query)
+            | Q(supplier__name__icontains=query)
+        )
+    return render(
+        request,
+        "catalog/supplier_product_cost_list.html",
+        {
+            "costs": costs,
+            "query": query,
+            "cost_count": costs.count(),
+        },
+    )
+
+
+def _supplier_product_cost_form_view(request, *, instance, mode):
+    old_value = _model_snapshot(instance, SupplierProductCostForm.Meta.fields)
+    form = SupplierProductCostForm(request.POST or None, instance=instance)
+    if request.method == "POST" and form.is_valid():
+        cost = form.save()
+        create_audit_log(
+            action=AuditLog.Action.COST_CHANGE,
+            module="catalog",
+            user=request.user,
+            request=request,
+            object_type="SupplierProductCost",
+            object_id=cost.pk,
+            object_display=str(cost),
+            old_value=old_value,
+            new_value=_model_snapshot(cost, SupplierProductCostForm.Meta.fields),
+        )
+        messages.success(request, "Supplier reference cost was saved.")
+        return redirect("supplier-product-cost-list")
+    return render(
+        request,
+        "catalog/supplier_product_cost_form.html",
+        {
+            "form": form,
+            "mode": mode,
+            "object": instance,
+        },
+    )
+
+
+@admin_required
+def supplier_product_cost_create_view(request):
+    return _supplier_product_cost_form_view(request, instance=None, mode="create")
+
+
+@admin_required
+def supplier_product_cost_edit_view(request, cost_id):
+    cost = get_object_or_404(SupplierProductCost, pk=cost_id)
+    return _supplier_product_cost_form_view(request, instance=cost, mode="edit")

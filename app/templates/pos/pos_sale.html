@@ -71,7 +71,9 @@
                                     <form class="input-row" method="post">
                                         {% csrf_token %}
                                         <input type="hidden" name="stock_batch_id" value="{{ batch.id }}">
-                                        <input type="number" name="quantity" min="1" value="1" aria-label="{% trans 'Quantity' %}">
+                                        <button class="quantity-stepper" type="button" data-quantity-step="-1" aria-label="{% trans 'Decrease quantity' %}" title="{% trans 'Decrease quantity' %}">-</button>
+                                        <input type="number" name="quantity" min="1" max="{{ batch.quantity_available }}" value="1" aria-label="{% trans 'Quantity' %}" data-quantity-input>
+                                        <button class="quantity-stepper" type="button" data-quantity-step="1" aria-label="{% trans 'Increase quantity' %}" title="{% trans 'Increase quantity' %}">+</button>
                                         <button class="btn btn-primary" type="submit" name="action" value="add_batch">{% trans "Add" %}</button>
                                     </form>
                                 </td>
@@ -90,48 +92,66 @@
         {% endif %}
     </section>
 
-    <aside class="panel">
+    <aside class="panel pos-cart-panel">
         <header class="panel-header">
             <div>
                 <h2>{% trans "Cart" %}</h2>
                 <p>{% trans "Batch-level sale items." %}</p>
             </div>
         </header>
-        <table class="data-table" aria-live="polite">
-            <thead>
-            <tr>
-                <th>{% trans "Item" %}</th>
-                <th>{% trans "Qty" %}</th>
-                <th>{% trans "Subtotal" %}</th>
-                <th>{% trans "Action" %}</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in cart_rows %}
+        <div class="table-scroll pos-cart-scroll">
+            <table class="data-table" aria-live="polite">
+                <thead>
                 <tr>
-                    <td>{{ row.stock_batch.product.name }}<br><span class="muted">{{ row.stock_batch.batch_no }}</span></td>
-                    <td>
-                        <form class="input-row compact-row" method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
-                            <input class="quantity-input" type="number" name="quantity" min="1" max="{{ row.stock_batch.quantity_available }}" value="{{ row.quantity }}" aria-label="{% trans 'Quantity' %}">
-                            <button class="btn" type="submit" name="action" value="update_item">{% trans "Update" %}</button>
-                        </form>
-                    </td>
-                    <td>{{ row.subtotal }}</td>
-                    <td>
-                        <form method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
-                            <button class="btn btn-danger" type="submit" name="action" value="remove_item">{% trans "Remove" %}</button>
-                        </form>
-                    </td>
+                    <th>{% trans "Item" %}</th>
+                    <th>{% trans "Qty" %}</th>
+                    <th>{% trans "Promo" %}</th>
+                    <th>{% trans "Subtotal" %}</th>
+                    <th>{% trans "Action" %}</th>
                 </tr>
-            {% empty %}
-                <tr><td colspan="4" class="empty-cell">{% trans "Cart is empty. Add a sellable batch before checkout." %}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for row in cart_rows %}
+                    <tr>
+                        <td>
+                            {{ row.stock_batch.product.name }}<br>
+                            <span class="muted">{{ row.stock_batch.batch_no }}</span>
+                            {% if row.final_unit_price != row.original_unit_price %}
+                                <br><span class="muted">{% trans "Unit" %}: {{ row.final_unit_price }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form class="input-row compact-row" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
+                                <button class="quantity-stepper" type="button" data-quantity-step="-1" aria-label="{% trans 'Decrease quantity' %}" title="{% trans 'Decrease quantity' %}">-</button>
+                                <input class="quantity-input" type="number" name="quantity" min="1" max="{{ row.stock_batch.quantity_available }}" value="{{ row.quantity }}" aria-label="{% trans 'Quantity' %}" data-quantity-input>
+                                <button class="quantity-stepper" type="button" data-quantity-step="1" aria-label="{% trans 'Increase quantity' %}" title="{% trans 'Increase quantity' %}">+</button>
+                                <button class="btn" type="submit" name="action" value="update_item">{% trans "Update" %}</button>
+                            </form>
+                        </td>
+                        <td>
+                            {% if row.promotion_name %}
+                                <span class="badge badge-success">{{ row.promotion_name }}</span>
+                            {% else %}
+                                <span class="muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ row.subtotal }}</td>
+                        <td>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
+                                <button class="btn btn-danger" type="submit" name="action" value="remove_item">{% trans "Remove" %}</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="5" class="empty-cell">{% trans "Cart is empty. Add a sellable batch before checkout." %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
         <div class="cart-total"><span>{% trans "Cart Total" %}</span>{{ cart_total }}</div>
         <form class="form-stack" method="post" data-disable-on-submit>
             {% csrf_token %}
@@ -143,6 +163,13 @@
                 {{ confirm_form.discount_amount.label_tag }}
                 {{ confirm_form.discount_amount }}
             </div>
+            {% if dashboard_is_admin %}
+                <div>
+                    {{ confirm_form.override_reason.label_tag }}
+                    {{ confirm_form.override_reason }}
+                    <p class="muted">{% trans "Required only when approving a below-cost sale." %}</p>
+                </div>
+            {% endif %}
             <div class="form-actions">
                 <button class="btn btn-success" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}" {% if not cart_rows %}disabled{% endif %}>{% trans "Complete Sale" %}</button>
                 <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}">{% trans "Clear Cart" %}</button>

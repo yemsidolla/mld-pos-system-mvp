@@ -52,6 +52,23 @@ class Supplier(TimeStampedModel):
         return self.name
 
 
+class SupplierProductCost(TimeStampedModel):
+    product = models.ForeignKey("Product", on_delete=models.CASCADE, related_name="supplier_costs")
+    supplier = models.ForeignKey("Supplier", on_delete=models.CASCADE, related_name="product_costs")
+    reference_unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["product__name", "supplier__name"]
+        constraints = [
+            models.UniqueConstraint(fields=["product", "supplier"], name="unique_supplier_product_cost"),
+        ]
+
+    def __str__(self):
+        return f"{self.product} - {self.supplier}"
+
+
 class Product(TimeStampedModel):
     product_code = models.CharField(max_length=40, unique=True)
     original_barcode = models.CharField(

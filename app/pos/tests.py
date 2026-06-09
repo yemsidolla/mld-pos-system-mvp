@@ -10,38 +10,50 @@ from django.urls import reverse
 from django.utils import timezone
 
 from audit.models import AuditLog
-from catalog.models import Product, Supplier
+from catalog.models import Category, Product, Supplier, SupplierProductCost
 from core.permissions import CASHIER_GROUP
 from inventory.models import InventoryMovement, StockBatch
 from inventory.services import receive_stock
 
-from .models import Sale, SaleItem
+from .models import Promotion, Sale, SaleItem
 from .services import cancel_sale, confirm_sale, parse_custom_code, scan_code
 
 
 class PosServiceTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="cashier", password="Admin123", is_staff=True)
+        self.admin = get_user_model().objects.create_user(
+            username="manager",
+            password="Admin123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.category = Category.objects.create(name="Food")
         self.supplier = Supplier.objects.create(name="Pet Wholesale")
         self.product = Product.objects.create(
             product_code="P001",
             original_barcode="8851234567890",
             name="Cat Food",
+            category=self.category,
             default_cost_price=Decimal("1.50"),
             default_selling_price=Decimal("2.50"),
         )
 
-    def create_batch(self, quantity=10, expiry_date=None):
+    def create_batch(self, quantity=10, expiry_date=None, actual_unit_cost=Decimal("1.50"), selling_price=Decimal("2.50"), landed_unit_cost=None):
         expiry_date = expiry_date or date(2027, 6, 1)
+        kwargs = {}
+        if landed_unit_cost is not None:
+            kwargs["landed_unit_cost"] = landed_unit_cost
         with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
             stock_batch, _movement = receive_stock(
                 product=self.product,
                 supplier=self.supplier,
                 quantity=quantity,
                 expiry_date=expiry_date,
-                cost_price=Decimal("1.50"),
-                selling_price=Decimal("2.50"),
+                actual_unit_cost=actual_unit_cost,
+                selling_price=selling_price,
                 received_by=self.user,
+                **kwargs,
             )
         return StockBatch.objects.get(pk=stock_batch.pk)
 
@@ -95,6 +107,165 @@ class PosServiceTests(TestCase):
         self.assertTrue(InventoryMovement.objects.filter(movement_type=InventoryMovement.MovementType.SALE).exists())
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.SALE_CREATE).exists())
 
+    def test_sale_item_snapshots_costs_prices_and_batch(self):
+        stock_batch = self.create_batch(
+            actual_unit_cost=Decimal("1.60"),
+            landed_unit_cost=Decimal("1.85"),
+            selling_price=Decimal("2.50"),
+        )
+
+        sale = confirm_sale(
+            cart_items=[{"stock_batch": stock_batch, "quantity": 2}],
+            cashier=self.user,
+        )
+
+        item = sale.items.get()
+        self.assertEqual(item.stock_batch, stock_batch)
+        self.assertEqual(item.reference_cost_at_sale, Decimal("1.50"))
+        self.assertEqual(item.actual_cost_at_sale, Decimal("1.60"))
+        self.assertEqual(item.landed_cost_at_sale, Decimal("1.85"))
+        self.assertEqual(item.cost_basis_at_sale, Decimal("1.85"))
+        self.assertEqual(item.original_unit_price, Decimal("2.50"))
+        self.assertEqual(item.final_unit_price, Decimal("2.50"))
+        self.assertEqual(item.discount_amount, Decimal("0.00"))
+        self.assertEqual(item.subtotal, Decimal("5.00"))
+
+    def test_cost_basis_falls_back_to_supplier_reference_when_batch_cost_is_zero(self):
+        SupplierProductCost.objects.create(
+            product=self.product,
+            supplier=self.supplier,
+            reference_unit_cost=Decimal("2.00"),
+        )
+        stock_batch = self.create_batch(actual_unit_cost=Decimal("0.00"), selling_price=Decimal("2.10"))
+
+        sale = confirm_sale(
+            cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+            cashier=self.user,
+        )
+
+        self.assertEqual(sale.items.get().reference_cost_at_sale, Decimal("2.00"))
+        self.assertEqual(sale.items.get().cost_basis_at_sale, Decimal("2.00"))
+
+    def test_cashier_cannot_sell_below_cost(self):
+        stock_batch = self.create_batch(actual_unit_cost=Decimal("2.50"), selling_price=Decimal("2.00"))
+
+        with self.assertRaisesMessage(ValidationError, "Manager approval required for this price."):
+            confirm_sale(
+                cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+                cashier=self.user,
+            )
+
+        stock_batch.refresh_from_db()
+        self.assertEqual(stock_batch.quantity_available, 10)
+        self.assertEqual(Sale.objects.count(), 0)
+
+    def test_admin_override_below_cost_requires_reason_and_is_audited(self):
+        stock_batch = self.create_batch(actual_unit_cost=Decimal("2.50"), selling_price=Decimal("2.00"))
+
+        with self.assertRaisesMessage(ValidationError, "Override reason is required for below-cost sale."):
+            confirm_sale(
+                cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+                cashier=self.admin,
+            )
+
+        sale = confirm_sale(
+            cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+            cashier=self.admin,
+            override_reason="Manager approved clearance price",
+        )
+
+        item = sale.items.get()
+        self.assertEqual(item.override_by, self.admin)
+        self.assertEqual(item.override_reason, "Manager approved clearance price")
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.BELOW_COST_SALE, object_id=sale.pk).exists())
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.SALE_OVERRIDE, object_id=sale.pk).exists())
+
+    def test_product_promotion_discount_is_applied_and_snapshotted(self):
+        Promotion.objects.create(
+            name="Cat food 20 off",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("20.00"),
+            start_date=timezone.localdate() - timedelta(days=1),
+            end_date=timezone.localdate() + timedelta(days=1),
+            product=self.product,
+            created_by=self.admin,
+        )
+        stock_batch = self.create_batch(actual_unit_cost=Decimal("1.50"), selling_price=Decimal("2.50"))
+
+        sale = confirm_sale(
+            cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+            cashier=self.user,
+        )
+
+        item = sale.items.get()
+        self.assertEqual(item.promotion_name_at_sale, "Cat food 20 off")
+        self.assertEqual(item.original_unit_price, Decimal("2.50"))
+        self.assertEqual(item.final_unit_price, Decimal("2.00"))
+        self.assertEqual(item.discount_amount, Decimal("0.50"))
+        self.assertEqual(sale.discount_amount, Decimal("0.50"))
+        self.assertEqual(sale.final_amount, Decimal("2.00"))
+
+    def test_below_cost_promotion_requires_explicit_allowance(self):
+        promotion = Promotion.objects.create(
+            name="Clearance final price",
+            discount_type=Promotion.DiscountType.FIXED_FINAL_PRICE,
+            value=Decimal("1.00"),
+            start_date=timezone.localdate() - timedelta(days=1),
+            end_date=timezone.localdate() + timedelta(days=1),
+            product=self.product,
+            allow_below_cost=False,
+            created_by=self.admin,
+        )
+        stock_batch = self.create_batch(actual_unit_cost=Decimal("1.50"), selling_price=Decimal("2.50"))
+
+        with self.assertRaisesMessage(ValidationError, "Manager approval required for this price."):
+            confirm_sale(
+                cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+                cashier=self.user,
+            )
+
+        promotion.allow_below_cost = True
+        promotion.save(update_fields=["allow_below_cost"])
+        sale = confirm_sale(
+            cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+            cashier=self.user,
+        )
+
+        item = sale.items.get()
+        self.assertIsNone(item.override_by)
+        self.assertEqual(item.final_unit_price, Decimal("1.00"))
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.PROMOTION_BELOW_COST_SALE, object_id=sale.pk).exists())
+
+    def test_best_valid_promotion_uses_lowest_price_without_stacking(self):
+        Promotion.objects.create(
+            name="Small category discount",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("10.00"),
+            start_date=timezone.localdate() - timedelta(days=1),
+            end_date=timezone.localdate() + timedelta(days=1),
+            category=self.category,
+            created_by=self.admin,
+        )
+        Promotion.objects.create(
+            name="Product final price",
+            discount_type=Promotion.DiscountType.FIXED_FINAL_PRICE,
+            value=Decimal("1.75"),
+            start_date=timezone.localdate() - timedelta(days=1),
+            end_date=timezone.localdate() + timedelta(days=1),
+            product=self.product,
+            created_by=self.admin,
+        )
+        stock_batch = self.create_batch(actual_unit_cost=Decimal("1.50"), selling_price=Decimal("2.50"))
+
+        sale = confirm_sale(
+            cart_items=[{"stock_batch": stock_batch, "quantity": 1}],
+            cashier=self.user,
+        )
+
+        item = sale.items.get()
+        self.assertEqual(item.promotion_name_at_sale, "Product final price")
+        self.assertEqual(item.final_unit_price, Decimal("1.75"))
+
     def test_stock_cannot_become_negative(self):
         stock_batch = self.create_batch(quantity=2)
 
@@ -141,7 +312,7 @@ class PosPageTests(TestCase):
                 supplier=self.supplier,
                 quantity=quantity,
                 expiry_date=date(2027, 6, 1),
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
                 selling_price=Decimal("2.50"),
                 received_by=self.cashier,
             )
@@ -208,6 +379,84 @@ class PosPageTests(TestCase):
         self.assertEqual(self.client.session["pos_cart"], [])
 
 
+class PromotionDashboardTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="promotion-admin",
+            password="Admin123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.cashier = get_user_model().objects.create_user(username="promotion-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get(name=CASHIER_GROUP))
+        self.category = Category.objects.create(name="Food")
+        self.product = Product.objects.create(
+            product_code="P001",
+            original_barcode="8851234567890",
+            name="Cat Food",
+            category=self.category,
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+
+    def test_promotion_pages_are_admin_only(self):
+        self.client.force_login(self.cashier)
+        cashier_response = self.client.get(reverse("promotion-list"))
+
+        self.client.force_login(self.admin)
+        admin_response = self.client.get(reverse("promotion-list"))
+
+        self.assertEqual(cashier_response.status_code, 403)
+        self.assertContains(cashier_response, "Access denied", status_code=403)
+        self.assertEqual(admin_response.status_code, 200)
+        self.assertContains(admin_response, "Promotions")
+
+    def test_admin_can_create_promotion_from_dashboard(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("promotion-create"),
+            {
+                "name": "Food discount",
+                "discount_type": Promotion.DiscountType.FIXED_AMOUNT,
+                "value": "0.50",
+                "start_date": timezone.localdate().isoformat(),
+                "end_date": (timezone.localdate() + timedelta(days=7)).isoformat(),
+                "is_active": "on",
+                "product": "",
+                "category": self.category.id,
+                "allow_below_cost": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("promotion-list"))
+        promotion = Promotion.objects.get(name="Food discount")
+        self.assertEqual(promotion.created_by, self.admin)
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.PROMOTION_CREATE, object_id=promotion.pk).exists())
+
+    def test_promotion_form_requires_product_or_category(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("promotion-create"),
+            {
+                "name": "No scope",
+                "discount_type": Promotion.DiscountType.FIXED_AMOUNT,
+                "value": "0.50",
+                "start_date": timezone.localdate().isoformat(),
+                "end_date": (timezone.localdate() + timedelta(days=7)).isoformat(),
+                "is_active": "on",
+                "product": "",
+                "category": "",
+                "allow_below_cost": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Promotion must apply to a product or category.")
+        self.assertFalse(Promotion.objects.filter(name="No scope").exists())
+
+
 class SalesCancellationTests(TestCase):
     def setUp(self):
         self.admin = get_user_model().objects.create_user(
@@ -237,7 +486,7 @@ class SalesCancellationTests(TestCase):
                 supplier=self.supplier,
                 quantity=5,
                 expiry_date=date(2027, 6, 1),
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
                 selling_price=Decimal("2.50"),
                 received_by=self.admin,
             )

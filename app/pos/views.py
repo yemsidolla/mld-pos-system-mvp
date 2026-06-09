@@ -1,13 +1,17 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from audit.models import AuditLog
+from audit.services import create_audit_log
 from inventory.models import StockBatch
 from core.permissions import admin_required, pos_required
 
-from .forms import CancelSaleForm, ConfirmSaleForm, SaleFilterForm, ScanForm
-from .models import Sale
+from .forms import CancelSaleForm, ConfirmSaleForm, PromotionForm, SaleFilterForm, ScanForm
+from .models import Promotion, Sale
+from .pricing import choose_best_promotion, money
 from .services import cancel_sale, confirm_sale, scan_code, validate_sellable_batch
 
 
@@ -67,10 +71,40 @@ def get_cart_rows(request):
         stock_batch = batches.get(item["stock_batch_id"])
         if stock_batch is None:
             continue
-        subtotal = stock_batch.selling_price * item["quantity"]
+        promotion_price = choose_best_promotion(stock_batch)
+        original_subtotal = money(promotion_price.original_unit_price * item["quantity"])
+        subtotal = money(promotion_price.final_unit_price * item["quantity"])
         total += subtotal
-        rows.append({"stock_batch": stock_batch, "quantity": item["quantity"], "subtotal": subtotal})
+        rows.append(
+            {
+                "stock_batch": stock_batch,
+                "quantity": item["quantity"],
+                "original_unit_price": promotion_price.original_unit_price,
+                "final_unit_price": promotion_price.final_unit_price,
+                "original_subtotal": original_subtotal,
+                "subtotal": subtotal,
+                "promotion": promotion_price.promotion,
+                "promotion_name": promotion_price.promotion_name,
+                "discount_amount": money(promotion_price.discount_per_unit * item["quantity"]),
+            }
+        )
     return rows, total
+
+
+def _promotion_snapshot(promotion):
+    if promotion is None:
+        return None
+    return {
+        "name": promotion.name,
+        "discount_type": promotion.discount_type,
+        "value": str(promotion.value),
+        "start_date": promotion.start_date.isoformat(),
+        "end_date": promotion.end_date.isoformat(),
+        "is_active": promotion.is_active,
+        "product": promotion.product.product_code if promotion.product_id else None,
+        "category": promotion.category.name if promotion.category_id else None,
+        "allow_below_cost": promotion.allow_below_cost,
+    }
 
 
 @pos_required
@@ -127,6 +161,7 @@ def pos_sale_view(request):
                         cashier=request.user,
                         payment_method=confirm_form.cleaned_data["payment_method"],
                         discount_amount=confirm_form.cleaned_data["discount_amount"],
+                        override_reason=confirm_form.cleaned_data["override_reason"],
                         request=request,
                     )
                     save_cart(request, [])
@@ -207,3 +242,60 @@ def sale_cancel_view(request, sale_id):
     else:
         messages.error(request, "Cancellation reason is required.")
     return redirect("sale-detail", sale_id=sale.id)
+
+
+@admin_required
+def promotion_list_view(request):
+    query = request.GET.get("q", "").strip()
+    promotions = Promotion.objects.select_related("product", "category", "created_by").order_by("-is_active", "name")
+    if query:
+        promotions = promotions.filter(
+            Q(name__icontains=query)
+            | Q(product__name__icontains=query)
+            | Q(product__product_code__icontains=query)
+            | Q(category__name__icontains=query)
+        )
+    return render(
+        request,
+        "pos/promotion_list.html",
+        {"promotions": promotions, "query": query, "promotion_count": promotions.count()},
+    )
+
+
+def _promotion_form_view(request, *, instance, mode):
+    old_value = _promotion_snapshot(instance)
+    form = PromotionForm(request.POST or None, instance=instance, created_by=request.user)
+    if request.method == "POST" and form.is_valid():
+        promotion = form.save()
+        new_value = _promotion_snapshot(promotion)
+        if mode == "create":
+            action = AuditLog.Action.PROMOTION_CREATE
+        elif old_value and old_value["is_active"] and not promotion.is_active:
+            action = AuditLog.Action.PROMOTION_DEACTIVATE
+        else:
+            action = AuditLog.Action.PROMOTION_UPDATE
+        create_audit_log(
+            action=action,
+            module="pos",
+            user=request.user,
+            request=request,
+            object_type="Promotion",
+            object_id=promotion.pk,
+            object_display=promotion.name,
+            old_value=old_value,
+            new_value=new_value,
+        )
+        messages.success(request, f"Promotion {promotion.name} was saved.")
+        return redirect("promotion-list")
+    return render(request, "pos/promotion_form.html", {"form": form, "mode": mode, "promotion": instance})
+
+
+@admin_required
+def promotion_create_view(request):
+    return _promotion_form_view(request, instance=None, mode="create")
+
+
+@admin_required
+def promotion_edit_view(request, promotion_id):
+    promotion = get_object_or_404(Promotion, pk=promotion_id)
+    return _promotion_form_view(request, instance=promotion, mode="edit")

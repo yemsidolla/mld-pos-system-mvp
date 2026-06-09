@@ -21,6 +21,8 @@ def dashboard_context(request):
                 {"label": "Categories", "url_name": "category-list", "href": "/dashboard/categories/"},
                 {"label": "Brands", "url_name": "brand-list", "href": "/dashboard/brands/"},
                 {"label": "Suppliers", "url_name": "supplier-list", "href": "/dashboard/suppliers/"},
+                {"label": "Costs", "url_name": "supplier-product-cost-list", "href": "/dashboard/reference-costs/"},
+                {"label": "Promotions", "url_name": "promotion-list", "href": "/dashboard/promotions/"},
                 {"label": "Inventory", "url_name": "inventory-summary", "href": "/dashboard/inventory/"},
                 {"label": "Batch Upload", "url_name": "batch-upload", "href": "/dashboard/batch-upload/"},
                 {"label": "Labels", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"},

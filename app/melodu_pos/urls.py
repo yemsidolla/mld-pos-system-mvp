@@ -23,13 +23,25 @@ from catalog.views import (
     product_create_view,
     product_edit_view,
     product_list_view,
+    supplier_product_cost_create_view,
+    supplier_product_cost_edit_view,
+    supplier_product_cost_list_view,
     supplier_create_view,
     supplier_edit_view,
     supplier_list_view,
 )
 from core.views import dashboard_home_view, dashboard_login_view, dashboard_logout_view, health_check, scan_resolve_view
 from inventory.views import barcode_print_view, inventory_summary_view, stock_batch_detail_view, stock_in_view
-from pos.views import pos_sale_view, sale_cancel_view, sale_detail_view, sale_receipt_view, sales_history_view
+from pos.views import (
+    pos_sale_view,
+    promotion_create_view,
+    promotion_edit_view,
+    promotion_list_view,
+    sale_cancel_view,
+    sale_detail_view,
+    sale_receipt_view,
+    sales_history_view,
+)
 from reports.views import (
     daily_sales_report_view,
     expiry_report_view,
@@ -62,6 +74,13 @@ urlpatterns = [
     path("dashboard/suppliers/", supplier_list_view, name="supplier-list"),
     path("dashboard/suppliers/new/", supplier_create_view, name="supplier-create"),
     path("dashboard/suppliers/<int:supplier_id>/edit/", supplier_edit_view, name="supplier-edit"),
+    path("dashboard/reference-costs/", supplier_product_cost_list_view, name="supplier-product-cost-list"),
+    path("dashboard/reference-costs/new/", supplier_product_cost_create_view, name="supplier-product-cost-create"),
+    path(
+        "dashboard/reference-costs/<int:cost_id>/edit/",
+        supplier_product_cost_edit_view,
+        name="supplier-product-cost-edit",
+    ),
     path("dashboard/batch-upload/", batch_upload_index_view, name="batch-upload"),
     path("dashboard/batch-upload/templates/<str:target>/", batch_upload_template_view, name="batch-upload-template"),
     path("dashboard/batch-upload/jobs/<int:job_id>/", batch_upload_detail_view, name="batch-upload-detail"),
@@ -81,6 +100,9 @@ urlpatterns = [
     path("dashboard/inventory/batches/<int:batch_id>/", stock_batch_detail_view, name="stock-batch-detail"),
     path("dashboard/pos/", pos_sale_view, name="pos-sale"),
     path("dashboard/pos/receipt/<int:sale_id>/", sale_receipt_view, name="sale-receipt"),
+    path("dashboard/promotions/", promotion_list_view, name="promotion-list"),
+    path("dashboard/promotions/new/", promotion_create_view, name="promotion-create"),
+    path("dashboard/promotions/<int:promotion_id>/edit/", promotion_edit_view, name="promotion-edit"),
     path("dashboard/reports/", reports_index_view, name="reports-index"),
     path("dashboard/reports/daily-sales/", daily_sales_report_view, name="daily-sales-report"),
     path("dashboard/reports/stock-summary/", stock_summary_report_view, name="stock-summary-report"),

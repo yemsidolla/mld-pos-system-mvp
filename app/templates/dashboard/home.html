@@ -40,6 +40,8 @@
                 <a class="action-card" href="{% url 'category-list' %}"><strong>{% trans "Categories" %}</strong><span>{% trans "Maintain product groups for the catalog." %}</span></a>
                 <a class="action-card" href="{% url 'brand-list' %}"><strong>{% trans "Brands" %}</strong><span>{% trans "Maintain brand master data." %}</span></a>
                 <a class="action-card" href="{% url 'supplier-list' %}"><strong>{% trans "Suppliers" %}</strong><span>{% trans "Maintain contacts used during stock-in." %}</span></a>
+                <a class="action-card" href="{% url 'supplier-product-cost-list' %}"><strong>{% trans "Reference Costs" %}</strong><span>{% trans "Track expected vendor cost by product." %}</span></a>
+                <a class="action-card" href="{% url 'promotion-list' %}"><strong>{% trans "Promotions" %}</strong><span>{% trans "Manage simple product and category discounts." %}</span></a>
                 <a class="action-card" href="{% url 'batch-upload' %}"><strong>{% trans "Batch Upload" %}</strong><span>{% trans "Import master data and receiving rows." %}</span></a>
                 <a class="action-card" href="{% url 'inventory-summary' %}"><strong>{% trans "Inventory" %}</strong><span>{% trans "Review batches, expiry, and stock levels." %}</span></a>
             {% endif %}

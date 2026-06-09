@@ -42,7 +42,7 @@ class ReportPageTests(TestCase):
                 supplier=self.supplier,
                 quantity=5,
                 expiry_date=timezone.localdate() + timedelta(days=20),
-                cost_price=Decimal("1.50"),
+                actual_unit_cost=Decimal("1.50"),
                 selling_price=Decimal("2.50"),
                 received_by=self.admin,
             )

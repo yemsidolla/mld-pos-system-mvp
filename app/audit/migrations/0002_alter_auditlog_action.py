@@ -1,0 +1,43 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("audit", "0001_initial"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="auditlog",
+            name="action",
+            field=models.CharField(
+                choices=[
+                    ("LOGIN_SUCCESS", "Login success"),
+                    ("LOGIN_FAILED", "Login failed"),
+                    ("CREATE", "Create"),
+                    ("UPDATE", "Update"),
+                    ("DELETE", "Delete"),
+                    ("DEACTIVATE", "Deactivate"),
+                    ("STOCK_IN", "Stock in"),
+                    ("STOCK_ADJUSTMENT", "Stock adjustment"),
+                    ("COST_CHANGE", "Cost change"),
+                    ("STOCK_BATCH_COST_CHANGE", "Stock batch cost change"),
+                    ("SALE_CREATE", "Sale create"),
+                    ("SALE_CANCEL", "Sale cancel"),
+                    ("BELOW_COST_SALE", "Below-cost sale"),
+                    ("SALE_OVERRIDE", "Sale override"),
+                    ("REFUND", "Refund"),
+                    ("PROMOTION_CREATE", "Promotion create"),
+                    ("PROMOTION_UPDATE", "Promotion update"),
+                    ("PROMOTION_DEACTIVATE", "Promotion deactivate"),
+                    ("PROMOTION_BELOW_COST_SALE", "Promotion below-cost sale"),
+                    ("BARCODE_GENERATE", "Barcode generate"),
+                    ("BARCODE_PRINT", "Barcode print"),
+                    ("ROLE_CHANGE", "Role change"),
+                    ("SETTING_CHANGE", "Setting change"),
+                ],
+                max_length=40,
+            ),
+        ),
+    ]

@@ -48,6 +48,7 @@ curl -I http://192.168.1.199:8000/health/
 - Inactive users cannot log in.
 - Admin can open dashboard home.
 - Admin can open products, categories, brands, suppliers, stock-in, inventory, batch upload, labels, sales, reports, system health, and live logs.
+- Admin can open reference costs and promotions.
 - Cashier can open POS.
 - Cashier can open receipts.
 - Cashier cannot open inventory, sales history, reports, batch upload, system health, live logs, or Django Admin.
@@ -74,10 +75,15 @@ curl -I http://192.168.1.199:8000/health/
 - Search product by name, product code, and original barcode.
 - Filter products by category, brand, and status.
 - Confirm create/update actions write audit logs.
+- Create and edit supplier/product reference cost.
+- Reject duplicate supplier/product reference cost rows.
+- Confirm reference cost changes write `COST_CHANGE` audit logs.
 
 ## Stock-In And Inventory Tests
 
 - Receive stock for active product and active supplier.
+- Confirm actual unit cost is stored on the stock batch.
+- Confirm landed unit cost is optional and stored when provided.
 - Quick-create supplier from the Stock-In form modal.
 - Reject stock-in for inactive product.
 - Reject stock-in for inactive supplier.
@@ -86,6 +92,7 @@ curl -I http://192.168.1.199:8000/health/
 - Confirm batch number and custom code are generated.
 - Confirm barcode and QR images are generated.
 - Confirm `STOCK_IN` movement and audit log are created.
+- Confirm `STOCK_BATCH_COST_CHANGE` audit log is created.
 - Adjust stock up and down.
 - Reject adjustment without reason.
 - Reject adjustment that makes stock negative.
@@ -109,6 +116,15 @@ curl -I http://192.168.1.199:8000/health/
 - Reject insufficient stock.
 - Reject expired stock.
 - Confirm sale.
+- Confirm SaleItem snapshots cost basis, actual cost, landed cost, original price, final price, and discount.
+- Confirm cashier below-cost sale is blocked with manager-approval message.
+- Confirm admin below-cost override requires a reason.
+- Confirm admin below-cost override writes audit logs.
+- Confirm promotion is applied automatically when active.
+- Confirm promotion does not stack and the best valid promotion wins.
+- Confirm below-cost promotion is blocked unless `allow_below_cost` is enabled.
+- Confirm below-cost promotion sale writes audit logs.
+- Confirm cashier receipt/POS does not reveal cost or margin.
 - Confirm checkout button disables after submit.
 - Confirm sale success message appears before receipt.
 - Confirm batch quantity is deducted.
@@ -139,6 +155,7 @@ curl -I http://192.168.1.199:8000/health/
 - Commit valid selected rows.
 - Confirm invalid rows are not committed.
 - Confirm stock-in upload uses normal stock-in business rules.
+- Confirm stock-in upload accepts optional `landed_unit_cost`.
 - Confirm audit summary is created after commit.
 
 ## Scanner Tests

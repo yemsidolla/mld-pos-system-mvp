@@ -177,7 +177,8 @@ Columns:
 - `supplier`
 - `quantity`
 - `expiry_date`
-- `cost_price`
+- `actual_unit_cost`
+- `landed_unit_cost`
 - `selling_price`
 - `note`
 
@@ -187,8 +188,12 @@ Required:
 - `supplier`
 - `quantity`
 - `expiry_date`
-- `cost_price`
+- `actual_unit_cost`
 - `selling_price`
+
+Optional:
+
+- `landed_unit_cost`
 
 Validation:
 
@@ -203,8 +208,8 @@ Validation:
 Example:
 
 ```csv
-product_code,supplier,quantity,expiry_date,cost_price,selling_price,note
-P001,Pet Wholesale,10,2027-06-01,1.50,2.50,Initial stock
+product_code,supplier,quantity,expiry_date,actual_unit_cost,landed_unit_cost,selling_price,note
+P001,Pet Wholesale,10,2027-06-01,1.50,1.75,2.50,Initial stock
 ```
 
 ## CSV Templates

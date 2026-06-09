@@ -50,6 +50,23 @@
         });
     });
 
+    document.querySelectorAll("[data-quantity-step]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            var form = button.closest("form");
+            var input = form ? form.querySelector("[data-quantity-input]") : null;
+            if (!input) return;
+
+            var step = parseInt(button.getAttribute("data-quantity-step") || "0", 10);
+            var current = parseInt(input.value || input.getAttribute("min") || "1", 10);
+            var min = parseInt(input.getAttribute("min") || "1", 10);
+            var max = parseInt(input.getAttribute("max") || "999999", 10);
+            var next = Math.max(min, Math.min(max, current + step));
+            input.value = String(next);
+            input.dispatchEvent(new Event("change", { bubbles: true }));
+            input.focus();
+        });
+    });
+
     var quickCreateModal = document.querySelector("[data-quick-create-modal]");
     if (!quickCreateModal) return;
 

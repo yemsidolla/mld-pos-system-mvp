@@ -10,7 +10,7 @@ from django.urls import reverse
 from audit.models import AuditLog
 from core.permissions import ADMIN_GROUP, CASHIER_GROUP
 from .admin import ProductAdmin
-from .models import Brand, Category, Product, Supplier
+from .models import Brand, Category, Product, Supplier, SupplierProductCost
 
 
 class CatalogModelTests(TestCase):
@@ -54,6 +54,22 @@ class CatalogModelTests(TestCase):
         supplier = Supplier.objects.create(name="Pet Wholesale")
 
         self.assertEqual(str(supplier), "Pet Wholesale")
+
+    def test_supplier_product_cost_is_unique_per_product_supplier(self):
+        supplier = Supplier.objects.create(name="Pet Wholesale")
+        product = Product.objects.create(product_code="P001", name="Cat Food")
+        SupplierProductCost.objects.create(
+            product=product,
+            supplier=supplier,
+            reference_unit_cost=Decimal("1.50"),
+        )
+
+        with self.assertRaises(IntegrityError):
+            SupplierProductCost.objects.create(
+                product=product,
+                supplier=supplier,
+                reference_unit_cost=Decimal("1.75"),
+            )
 
 
 class CatalogAdminTests(TestCase):
@@ -279,6 +295,8 @@ class MasterDataDashboardTests(TestCase):
         self.assertContains(response, reverse("category-list"))
         self.assertContains(response, reverse("brand-list"))
         self.assertContains(response, reverse("supplier-list"))
+        self.assertContains(response, reverse("supplier-product-cost-list"))
+        self.assertContains(response, reverse("promotion-list"))
 
     def test_admin_can_create_category_from_dashboard(self):
         self.client.force_login(self.admin)
@@ -333,6 +351,36 @@ class MasterDataDashboardTests(TestCase):
         self.assertEqual(supplier.contact_person, "Sophea")
         self.assertEqual(supplier.phone, "012345678")
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.UPDATE, object_type="Supplier").exists())
+
+    def test_admin_can_create_supplier_product_cost_from_dashboard(self):
+        category = Category.objects.create(name="Food")
+        product = Product.objects.create(product_code="P001", name="Cat Food", category=category)
+        supplier = Supplier.objects.create(name="Pet Wholesale")
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("supplier-product-cost-create"),
+            {
+                "product": product.id,
+                "supplier": supplier.id,
+                "reference_unit_cost": "1.75",
+                "notes": "Vendor June quote",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("supplier-product-cost-list"))
+        cost = SupplierProductCost.objects.get(product=product, supplier=supplier)
+        self.assertEqual(cost.reference_unit_cost, Decimal("1.75"))
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.COST_CHANGE, object_type="SupplierProductCost").exists())
+
+    def test_cashier_cannot_access_supplier_product_cost_pages(self):
+        self.client.force_login(self.cashier)
+
+        response = self.client.get(reverse("supplier-product-cost-list"))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)
 
     def test_cashier_cannot_access_master_data_pages(self):
         self.client.force_login(self.cashier)

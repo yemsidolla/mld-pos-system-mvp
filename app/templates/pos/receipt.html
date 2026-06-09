@@ -29,7 +29,11 @@
         <tbody>
         {% for item in sale.items.all %}
             <tr>
-                <td>{{ item.product.name }}<br><span class="muted">{{ item.stock_batch.batch_no }}</span></td>
+                <td>
+                    {{ item.product.name }}<br>
+                    <span class="muted">{{ item.stock_batch.batch_no }}</span>
+                    {% if item.promotion_name_at_sale %}<br><span class="badge badge-success">{{ item.promotion_name_at_sale }}</span>{% endif %}
+                </td>
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.subtotal }}</td>
             </tr>

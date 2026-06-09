@@ -37,12 +37,15 @@ Evidence:
 - Stock-in requires an active supplier.
 - Quantity must be greater than zero.
 - Expiry date is required.
+- Stock batch actual unit cost is recorded at receiving time.
+- Stock batch landed unit cost is optional and records actual cost plus shipping, import, or extra costs.
 - Product must have an original barcode before stock-in.
 - Batch number format is `BYYNNNN`.
 - Custom code format is `[original_barcode]-M-[expiry_yymmdd]-[batch_no]`.
 - Stock-in creates barcode and QR image files.
 - Stock-in creates one `InventoryMovement` with type `STOCK_IN`.
 - Stock-in creates one audit log with action `STOCK_IN`.
+- Stock-in creates one audit log with action `STOCK_BATCH_COST_CHANGE`.
 
 Evidence:
 
@@ -80,12 +83,46 @@ Evidence:
 - Sale confirmation creates `Sale`, `SaleItem`, `InventoryMovement SALE`, and `AuditLog SALE_CREATE`.
 - Sold-out batches are marked `SOLD_OUT`.
 - Discount cannot be negative or exceed the sale total.
+- Sale validation uses cost basis in this order: landed unit cost, actual unit cost, supplier/product reference cost, then product default cost.
+- Cashier users cannot confirm below-cost sales.
+- Admin users can confirm below-cost sales only with an override reason.
+- Promotions can produce below-cost sales only when `allow_below_cost` is enabled.
+- SaleItem snapshots preserve reference cost, actual cost, landed cost, cost basis, original price, final price, discount, promotion, and override details.
 
 Evidence:
 
 - `pos.views.pos_sale_view()`
 - `pos.services.scan_code()`
 - `pos.services.validate_sellable_batch()`
+- `pos.services.confirm_sale()`
+
+## Supplier Reference Cost Rules
+
+- Supplier/product reference cost stores the expected cost for one supplier and one product.
+- Only one reference cost row can exist per supplier/product pair.
+- Reference costs are Admin-only dashboard records.
+- Creating or editing a reference cost creates `AuditLog.Action.COST_CHANGE`.
+
+Evidence:
+
+- `catalog.models.SupplierProductCost`
+- `catalog.views.supplier_product_cost_list_view()`
+
+## Promotion Rules
+
+- Only Admin users can create or edit promotions.
+- Promotions can apply to a product or a category.
+- Supported discount types are percentage, fixed amount, and fixed final price.
+- Active date range is required.
+- Promotions do not stack.
+- If multiple promotions apply, the lowest final unit price wins.
+- Promotion create/update/deactivation creates promotion audit logs.
+- Below-cost promotion sales create `PROMOTION_BELOW_COST_SALE` audit logs.
+
+Evidence:
+
+- `pos.models.Promotion`
+- `pos.pricing.choose_best_promotion()`
 - `pos.services.confirm_sale()`
 
 ## Sale Cancellation Rules

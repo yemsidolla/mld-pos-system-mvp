@@ -1,7 +1,7 @@
 from django import forms
 from django.db.models import Q
 
-from .models import Brand, Category, Product, Supplier
+from .models import Brand, Category, Product, Supplier, SupplierProductCost
 
 
 class CatalogFilterForm(forms.Form):
@@ -85,6 +85,25 @@ class SupplierForm(forms.ModelForm):
         fields = ("name", "contact_person", "phone", "telegram", "address", "notes", "is_active")
         widgets = {
             "address": forms.Textarea(attrs={"rows": 3}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+
+class SupplierProductCostForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        product_filter = Q(is_active=True)
+        supplier_filter = Q(is_active=True)
+        if self.instance and self.instance.pk:
+            product_filter |= Q(pk=self.instance.product_id)
+            supplier_filter |= Q(pk=self.instance.supplier_id)
+        self.fields["product"].queryset = Product.objects.filter(product_filter).order_by("name")
+        self.fields["supplier"].queryset = Supplier.objects.filter(supplier_filter).order_by("name")
+
+    class Meta:
+        model = SupplierProductCost
+        fields = ("product", "supplier", "reference_unit_cost", "notes", "is_active")
+        widgets = {
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
 

@@ -71,14 +71,24 @@ SCHEMAS = {
         },
     },
     BatchUploadJob.Target.STOCK_IN: {
-        "fields": ["product_code", "supplier", "quantity", "expiry_date", "cost_price", "selling_price", "note"],
-        "required": ["product_code", "supplier", "quantity", "expiry_date", "cost_price", "selling_price"],
+        "fields": [
+            "product_code",
+            "supplier",
+            "quantity",
+            "expiry_date",
+            "actual_unit_cost",
+            "landed_unit_cost",
+            "selling_price",
+            "note",
+        ],
+        "required": ["product_code", "supplier", "quantity", "expiry_date", "actual_unit_cost", "selling_price"],
         "sample": {
             "product_code": "P001",
             "supplier": "Pet Wholesale",
             "quantity": "10",
             "expiry_date": "2027-06-01",
-            "cost_price": "1.50",
+            "actual_unit_cost": "1.50",
+            "landed_unit_cost": "1.75",
             "selling_price": "2.50",
             "note": "Initial stock",
         },
@@ -163,7 +173,8 @@ def validate_headers(target, headers):
     schema = get_schema(target)
     expected = set(schema["fields"])
     provided = {normalize_header(header) for header in headers if normalize_header(header)}
-    missing = sorted(expected - provided)
+    optional_missing = {"landed_unit_cost"} if target == BatchUploadJob.Target.STOCK_IN else set()
+    missing = sorted(expected - provided - optional_missing)
     if missing:
         raise ValidationError(f"Missing columns: {', '.join(missing)}")
 
@@ -248,7 +259,12 @@ def normalize_row(target, row_data):
         elif target == BatchUploadJob.Target.STOCK_IN:
             normalized["quantity"] = parse_positive_int(normalized.get("quantity"))
             normalized["expiry_date"] = parse_date(normalized.get("expiry_date"))
-            normalized["cost_price"] = parse_decimal(normalized.get("cost_price"))
+            normalized["actual_unit_cost"] = parse_decimal(normalized.get("actual_unit_cost"))
+            normalized["landed_unit_cost"] = (
+                parse_decimal(normalized.get("landed_unit_cost"))
+                if normalized.get("landed_unit_cost")
+                else ""
+            )
             normalized["selling_price"] = parse_decimal(normalized.get("selling_price"))
             try:
                 product = Product.objects.get(product_code=normalized.get("product_code"))
@@ -429,7 +445,8 @@ def _commit_stock_in(data, user, request=None):
         supplier=supplier,
         quantity=data["quantity"],
         expiry_date=date.fromisoformat(data["expiry_date"]),
-        cost_price=Decimal(data["cost_price"]),
+        actual_unit_cost=Decimal(data["actual_unit_cost"]),
+        landed_unit_cost=Decimal(data["landed_unit_cost"]) if data.get("landed_unit_cost") else None,
         selling_price=Decimal(data["selling_price"]),
         received_by=user,
         request=request,

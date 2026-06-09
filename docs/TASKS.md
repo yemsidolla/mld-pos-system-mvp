@@ -272,3 +272,20 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Improve POS empty states and checkout copy | Done |
 | Add checkout double-submit protection | Done |
 | Add Phase 2B tests and documentation | Done |
+
+## V3 Phase 1: Cost Guardrails, Promotions, And Responsive POS
+
+| Task | Status |
+| --- | --- |
+| Add supplier/product reference cost model and dashboard pages | Done |
+| Add stock batch actual and landed unit costs | Done |
+| Add SaleItem cost, price, promotion, and override snapshots | Done |
+| Add cost-basis sale validation | Done |
+| Block cashier below-cost sales | Done |
+| Add admin below-cost override with required reason | Done |
+| Add simple product/category promotions | Done |
+| Add best-promotion selection without stacking | Done |
+| Add below-cost promotion allowance flag | Done |
+| Add V3 audit logging for cost, promotion, below-cost, and override events | Done |
+| Add POS promotion labels, quantity steppers, sticky cart, and mobile layout improvements | Done |
+| Add V3 tests and documentation | Done |

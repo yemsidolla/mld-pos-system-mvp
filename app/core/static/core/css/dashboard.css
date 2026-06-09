@@ -328,11 +328,19 @@ button.btn-danger {
 .input-row select { flex: 1 1 220px; }
 .compact-row {
     align-items: stretch;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
 }
 .compact-row .quantity-input {
-    flex: 0 0 76px;
-    width: 76px;
+    flex: 0 0 70px;
+    width: 70px;
+    text-align: center;
+}
+.quantity-stepper {
+    flex: 0 0 38px;
+    width: 38px;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
 }
 .field-errors,
 .errorlist {
@@ -391,6 +399,15 @@ button.btn-danger {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
     gap: 16px;
+}
+.pos-cart-panel {
+    position: sticky;
+    top: 116px;
+    align-self: start;
+}
+.pos-cart-scroll {
+    max-height: min(46vh, 520px);
+    overflow: auto;
 }
 .pos-status {
     margin-top: 12px;
@@ -592,6 +609,12 @@ button.btn-danger {
     }
     .topbar-actions { justify-content: flex-start; }
     .pos-layout { grid-template-columns: 1fr; }
+    .pos-cart-panel {
+        position: static;
+    }
+    .pos-cart-scroll {
+        max-height: none;
+    }
     .mobile-nav {
         position: fixed;
         left: 0;
@@ -617,6 +640,27 @@ button.btn-danger {
         text-align: center;
     }
     .mobile-nav a.active { color: var(--primary); }
+}
+
+@media (max-width: 640px) {
+    .form-actions,
+    .actions,
+    .input-row {
+        align-items: stretch;
+    }
+    .input-row > .btn,
+    .input-row > button:not(.quantity-stepper),
+    .form-actions > .btn,
+    .form-actions > button {
+        flex: 1 1 140px;
+    }
+    .pos-layout .panel {
+        padding: 14px;
+    }
+    .cart-total {
+        text-align: left;
+        font-size: 24px;
+    }
 }
 
 @media print {
