@@ -74,7 +74,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "melodu_pos.urls"
-LOGIN_URL = "/admin/login/"
+LOGIN_URL = "/dashboard/login/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/dashboard/login/"
 
 TEMPLATES = [
     {

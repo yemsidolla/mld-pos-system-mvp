@@ -26,6 +26,12 @@ body {
     font-size: 14px;
     line-height: 1.45;
 }
+body.auth-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+}
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .skip-link {
@@ -317,6 +323,7 @@ button.btn-danger {
     align-items: center;
     flex-wrap: wrap;
 }
+.full-width { width: 100%; }
 .input-row input,
 .input-row select { flex: 1 1 220px; }
 .compact-row {
@@ -385,11 +392,36 @@ button.btn-danger {
     grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
     gap: 16px;
 }
+.pos-status {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-subtle);
+    color: var(--text-soft);
+}
+.pos-empty-state {
+    margin-top: 16px;
+    padding: 18px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface-subtle);
+    color: var(--text-soft);
+    text-align: center;
+}
 .cart-total {
     margin: 14px 0;
     text-align: right;
     font-size: 26px;
     font-weight: 800;
+}
+.cart-total span {
+    display: block;
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
 }
 .receipt-panel {
     max-width: 460px;
@@ -508,6 +540,40 @@ button.btn-danger {
     overflow: auto;
 }
 .log-block.error-log { background: #2f1518; }
+
+.auth-shell {
+    width: min(420px, 100%);
+}
+.auth-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+}
+.auth-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.auth-brand h1 {
+    margin: 2px 0 0;
+    font-size: 24px;
+    line-height: 1.15;
+}
+.error-panel { text-align: left; }
+.error-code {
+    margin: 10px 0;
+    color: var(--text-soft);
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+}
+.error-message {
+    margin: 0 0 18px;
+    color: var(--text-soft);
+}
 
 .mobile-nav { display: none; }
 

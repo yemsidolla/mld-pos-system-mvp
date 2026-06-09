@@ -109,7 +109,8 @@ class ProductDashboardTests(TestCase):
 
         response = self.client.get(reverse("product-list"))
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)
 
     def test_admin_can_create_product_from_dashboard(self):
         self.client.force_login(self.admin)
@@ -338,4 +339,5 @@ class MasterDataDashboardTests(TestCase):
 
         response = self.client.get(reverse("category-list"))
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)

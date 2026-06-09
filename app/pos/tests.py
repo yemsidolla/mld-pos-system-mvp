@@ -154,11 +154,15 @@ class PosPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "POS Sale")
+        self.assertContains(response, "Ready for the next barcode")
+        self.assertContains(response, "Cart is empty. Add a sellable batch before checkout.")
+        self.assertContains(response, "data-disable-on-submit")
+        self.assertContains(response, "Complete Sale")
 
     def test_anonymous_user_is_redirected_from_pos_page(self):
         response = self.client.get(reverse("pos-sale"))
 
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, f"{reverse('dashboard-login')}?next={reverse('pos-sale')}")
 
     def test_scan_post_without_action_still_looks_up_item(self):
         stock_batch = self.create_batch()
@@ -282,6 +286,7 @@ class SalesCancellationTests(TestCase):
 
         response = self.client.post(reverse("sale-cancel", kwargs={"sale_id": sale.id}), {"reason": "No permission"})
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)
         sale.refresh_from_db()
         self.assertEqual(sale.status, Sale.Status.COMPLETED)

@@ -63,5 +63,7 @@ class SystemLogTests(TestCase):
         logs_response = self.client.get(reverse("live-logs"))
         health_response = self.client.get(reverse("system-health"))
 
-        self.assertEqual(logs_response.status_code, 302)
-        self.assertEqual(health_response.status_code, 302)
+        self.assertEqual(logs_response.status_code, 403)
+        self.assertEqual(health_response.status_code, 403)
+        self.assertContains(logs_response, "Access denied", status_code=403)
+        self.assertContains(health_response, "Access denied", status_code=403)

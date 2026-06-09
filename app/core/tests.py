@@ -3,14 +3,15 @@ from decimal import Decimal
 from tempfile import TemporaryDirectory
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.contrib.auth import SESSION_KEY, get_user_model
+from django.contrib.auth.models import AnonymousUser, Group
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from batch_upload.models import BatchUploadJob, BatchUploadRow
 from catalog.models import Product, Supplier
-from core.permissions import CASHIER_GROUP
+from core.permissions import ADMIN_GROUP, CASHIER_GROUP
+from core.views import dashboard_server_error_view
 from inventory.models import StockBatch
 from inventory.services import receive_stock
 
@@ -34,6 +35,8 @@ class DashboardShellTests(TestCase):
 
     def test_dashboard_url_resolves(self):
         self.assertEqual(reverse("dashboard-home"), "/dashboard/")
+        self.assertEqual(reverse("dashboard-login"), "/dashboard/login/")
+        self.assertEqual(reverse("dashboard-logout"), "/dashboard/logout/")
 
     def test_language_settings_include_english_and_khmer(self):
         self.assertIn(("en", "English"), settings.LANGUAGES)
@@ -58,6 +61,137 @@ class DashboardShellTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "POS")
         self.assertNotContains(response, "Batch Upload")
+        self.assertNotContains(response, "Django Admin")
+
+
+class DashboardAuthTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="auth-admin",
+            password="Admin123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.cashier = get_user_model().objects.create_user(username="auth-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get(name=CASHIER_GROUP))
+        self.unassigned = get_user_model().objects.create_user(username="unassigned", password="Admin123")
+
+    def test_unauthenticated_dashboard_redirects_to_dashboard_login(self):
+        response = self.client.get(reverse("dashboard-home"))
+
+        self.assertRedirects(response, f"{reverse('dashboard-login')}?next={reverse('dashboard-home')}")
+
+    def test_login_success_redirects_to_dashboard(self):
+        response = self.client.post(
+            reverse("dashboard-login"),
+            {"username": "auth-admin", "password": "Admin123"},
+        )
+
+        self.assertRedirects(response, reverse("dashboard-home"))
+        self.assertIn(SESSION_KEY, self.client.session)
+
+    def test_login_uses_safe_next_url(self):
+        response = self.client.post(
+            reverse("dashboard-login"),
+            {"username": "auth-cashier", "password": "Admin123", "next": reverse("pos-sale")},
+        )
+
+        self.assertRedirects(response, reverse("pos-sale"))
+
+    def test_login_rejects_unsafe_next_url(self):
+        response = self.client.post(
+            reverse("dashboard-login"),
+            {"username": "auth-admin", "password": "Admin123", "next": "https://example.com/steal"},
+        )
+
+        self.assertRedirects(response, reverse("dashboard-home"))
+
+    def test_authenticated_user_opening_login_redirects_to_dashboard(self):
+        self.client.force_login(self.cashier)
+
+        response = self.client.get(reverse("dashboard-login"))
+
+        self.assertRedirects(response, reverse("dashboard-home"))
+
+    def test_logout_requires_post_and_returns_to_login(self):
+        self.client.force_login(self.cashier)
+
+        get_response = self.client.get(reverse("dashboard-logout"))
+        post_response = self.client.post(reverse("dashboard-logout"), follow=True)
+
+        self.assertEqual(get_response.status_code, 405)
+        self.assertRedirects(post_response, reverse("dashboard-login"))
+        self.assertContains(post_response, "You have logged out successfully.")
+        self.assertNotIn(SESSION_KEY, self.client.session)
+
+    def test_inactive_user_cannot_log_in(self):
+        inactive = get_user_model().objects.create_user(username="inactive", password="Admin123", is_active=False)
+        inactive.groups.add(Group.objects.get(name=ADMIN_GROUP))
+
+        response = self.client.post(
+            reverse("dashboard-login"),
+            {"username": "inactive", "password": "Admin123"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Check your username and password")
+        self.assertNotIn(SESSION_KEY, self.client.session)
+
+    def test_unassigned_user_receives_friendly_access_denied(self):
+        self.client.force_login(self.unassigned)
+
+        response = self.client.get(reverse("dashboard-home"))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)
+
+    def test_force_logged_inactive_user_is_treated_as_anonymous(self):
+        inactive = get_user_model().objects.create_user(username="forced-inactive", password="Admin123", is_active=False)
+        inactive.groups.add(Group.objects.get(name=ADMIN_GROUP))
+        self.client.force_login(inactive)
+
+        response = self.client.get(reverse("dashboard-home"))
+
+        self.assertRedirects(response, f"{reverse('dashboard-login')}?next={reverse('dashboard-home')}")
+
+
+class DashboardErrorPageTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="error-admin",
+            password="Admin123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.cashier = get_user_model().objects.create_user(username="error-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get(name=CASHIER_GROUP))
+
+    def test_cashier_denial_renders_friendly_403(self):
+        self.client.force_login(self.cashier)
+
+        response = self.client.get(reverse("product-list"))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)
+        self.assertContains(response, "Back to POS", status_code=403)
+
+    @override_settings(DEBUG=False, ALLOWED_HOSTS=["testserver"])
+    def test_missing_dashboard_object_renders_friendly_404(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("product-edit", kwargs={"product_id": 999999}))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Page or item not found", status_code=404)
+
+    def test_server_error_handler_renders_friendly_500(self):
+        request = RequestFactory().get("/dashboard/error/")
+        request.user = AnonymousUser()
+
+        response = dashboard_server_error_view(request)
+
+        self.assertEqual(response.status_code, 500)
+        self.assertIn(b"Unexpected error", response.content)
 
 
 class ScanResolveTests(TestCase):

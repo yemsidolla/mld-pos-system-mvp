@@ -27,7 +27,7 @@ from catalog.views import (
     supplier_edit_view,
     supplier_list_view,
 )
-from core.views import dashboard_home_view, health_check, scan_resolve_view
+from core.views import dashboard_home_view, dashboard_login_view, dashboard_logout_view, health_check, scan_resolve_view
 from inventory.views import barcode_print_view, inventory_summary_view, stock_batch_detail_view, stock_in_view
 from pos.views import pos_sale_view, sale_cancel_view, sale_detail_view, sale_receipt_view, sales_history_view
 from reports.views import (
@@ -45,6 +45,8 @@ from system_logs.views import live_logs_view, system_health_view
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
+    path("dashboard/login/", dashboard_login_view, name="dashboard-login"),
+    path("dashboard/logout/", dashboard_logout_view, name="dashboard-logout"),
     path("dashboard/", dashboard_home_view, name="dashboard-home"),
     path("dashboard/api/scan/resolve/", scan_resolve_view, name="scan-resolve"),
     path("dashboard/api/catalog/quick-create/", catalog_quick_create_view, name="catalog-quick-create"),
@@ -97,3 +99,7 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler403 = "core.views.dashboard_permission_denied_view"
+handler404 = "core.views.dashboard_page_not_found_view"
+handler500 = "core.views.dashboard_server_error_view"

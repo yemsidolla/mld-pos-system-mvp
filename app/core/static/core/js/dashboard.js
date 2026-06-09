@@ -24,6 +24,32 @@
         input.addEventListener("change", applyFilter);
     });
 
+    document.querySelectorAll("form[data-disable-on-submit]").forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+            if (form.getAttribute("data-submitting") === "true") {
+                event.preventDefault();
+                return;
+            }
+
+            var submitter = event.submitter;
+            if (submitter && submitter.name) {
+                var proxy = document.createElement("input");
+                proxy.type = "hidden";
+                proxy.name = submitter.name;
+                proxy.value = submitter.value;
+                proxy.setAttribute("data-submit-proxy", "true");
+                form.appendChild(proxy);
+            }
+
+            form.setAttribute("data-submitting", "true");
+            Array.prototype.forEach.call(form.querySelectorAll("button[type='submit']"), function (button) {
+                var loadingText = button.getAttribute("data-loading-text");
+                if (loadingText && button === submitter) button.textContent = loadingText;
+                button.disabled = true;
+            });
+        });
+    });
+
     var quickCreateModal = document.querySelector("[data-quick-create-modal]");
     if (!quickCreateModal) return;
 

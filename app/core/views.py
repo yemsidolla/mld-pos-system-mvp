@@ -1,12 +1,19 @@
 import logging
 
-from django.contrib.auth.decorators import user_passes_test
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.db import connections
 from django.db.models import F, Sum
 from django.http import JsonResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from batch_upload.models import BatchUploadJob
 from catalog.models import Product
@@ -14,10 +21,118 @@ from inventory.models import StockBatch
 from pos.models import Sale
 from pos.services import parse_custom_code
 
-from .permissions import can_access_pos, is_admin_user
+from .permissions import can_access_pos, is_admin_user, is_cashier_user, pos_required
 
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_next_url(request):
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return ""
+
+
+@never_cache
+@require_http_methods(["GET", "POST"])
+def dashboard_login_view(request):
+    if request.user.is_authenticated:
+        return redirect(settings.LOGIN_REDIRECT_URL)
+
+    safe_next = _safe_next_url(request)
+    form = AuthenticationForm(request, data=request.POST or None)
+
+    if request.method == "POST":
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            return redirect(safe_next or settings.LOGIN_REDIRECT_URL)
+        messages.error(request, "Check your username and password, then try again.")
+
+    return render(request, "dashboard/login.html", {"form": form, "next": safe_next})
+
+
+@never_cache
+@require_POST
+def dashboard_logout_view(request):
+    if request.user.is_authenticated:
+        auth_logout(request)
+    messages.success(request, "You have logged out successfully.")
+    return redirect(settings.LOGOUT_REDIRECT_URL)
+
+
+def _error_context(request, status_code, title, message):
+    user = getattr(request, "user", None)
+    if user and user.is_authenticated and can_access_pos(user):
+        if is_cashier_user(user) and not is_admin_user(user):
+            action_label = "Back to POS"
+            action_url = reverse("pos-sale")
+        else:
+            action_label = "Back to Dashboard"
+            action_url = reverse("dashboard-home")
+        secondary_label = "Login again"
+        secondary_url = reverse("dashboard-login")
+    else:
+        action_label = "Login again"
+        action_url = reverse("dashboard-login")
+        secondary_label = ""
+        secondary_url = ""
+
+    return {
+        "status_code": status_code,
+        "title": title,
+        "message": message,
+        "action_label": action_label,
+        "action_url": action_url,
+        "secondary_label": secondary_label,
+        "secondary_url": secondary_url,
+    }
+
+
+def dashboard_permission_denied_view(request, exception=None):
+    return render(
+        request,
+        "dashboard/error.html",
+        _error_context(
+            request,
+            "403",
+            "Access denied",
+            "Your account does not have permission to open this area.",
+        ),
+        status=403,
+    )
+
+
+def dashboard_page_not_found_view(request, exception=None):
+    return render(
+        request,
+        "dashboard/error.html",
+        _error_context(
+            request,
+            "404",
+            "Page or item not found",
+            "The page or record you requested could not be found.",
+        ),
+        status=404,
+    )
+
+
+def dashboard_server_error_view(request):
+    return render(
+        request,
+        "dashboard/error.html",
+        _error_context(
+            request,
+            "500",
+            "Unexpected error",
+            "Something went wrong while handling the request.",
+        ),
+        status=500,
+    )
 
 
 def health_check(request):
@@ -80,7 +195,7 @@ def _resolve_warnings(product=None, stock_batch=None):
     return warnings
 
 
-@user_passes_test(can_access_pos)
+@pos_required
 def dashboard_home_view(request):
     today = timezone.localdate()
     context = {
@@ -111,13 +226,11 @@ def dashboard_home_view(request):
         }
         context["recent_sales"] = Sale.objects.filter(cashier=request.user).order_by("-created_at")[:5]
 
-    from django.shortcuts import render
-
     return render(request, "dashboard/home.html", context)
 
 
 @require_GET
-@user_passes_test(can_access_pos)
+@pos_required
 def scan_resolve_view(request):
     value = request.GET.get("value", "").strip()
     context = request.GET.get("context", "").strip() or "general"

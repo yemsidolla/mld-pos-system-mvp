@@ -4,6 +4,8 @@ The Melodu Dashboard is the daily-work interface at `/dashboard/`.
 
 Django Admin remains available at `/admin/` for raw model inspection, user/group management, and emergency maintenance.
 
+Dashboard staff login is available at `/dashboard/login/`. Dashboard logout is POST-only at `/dashboard/logout/`.
+
 ## Design Direction
 
 - Merchant admin structure inspired by Shopify Admin and Polaris.
@@ -16,6 +18,7 @@ Django Admin remains available at `/admin/` for raw model inspection, user/group
 - Admin users can access POS, stock-in, inventory, batch upload, label printing, sales, reports, system health, live logs, and Django Admin.
 - Admin users can manage products at `/dashboard/products/` for daily catalog updates.
 - Cashier users can access POS and cashier dashboard links only.
+- Blocked authenticated users see a friendly access-denied page instead of a raw redirect or traceback.
 - Business rules still live in Python services; the dashboard does not bypass them.
 
 ## Scanner

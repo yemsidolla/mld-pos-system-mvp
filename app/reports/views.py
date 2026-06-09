@@ -1,11 +1,13 @@
 from datetime import timedelta
 from decimal import Decimal
 
+from django.contrib import messages
 from django.db import models
 from django.db.models import Count, DecimalField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 from catalog.models import Product
 from core.permissions import admin_required
@@ -35,7 +37,11 @@ def reports_index_view(request):
 
 @admin_required
 def daily_sales_report_view(request):
-    report_date = request.GET.get("date") or timezone.localdate().isoformat()
+    requested_date = request.GET.get("date")
+    report_date = parse_date(requested_date) if requested_date else timezone.localdate()
+    if requested_date and report_date is None:
+        report_date = timezone.localdate()
+        messages.warning(request, "Invalid report date. Showing today's sales.")
     sales = Sale.objects.select_related("cashier").filter(created_at__date=report_date)
     completed_sales = sales.filter(status=Sale.Status.COMPLETED)
     totals = completed_sales.aggregate(
@@ -49,7 +55,7 @@ def daily_sales_report_view(request):
     return render(
         request,
         "reports/daily_sales.html",
-        {"report_date": report_date, "sales": sales, "totals": totals},
+        {"report_date": report_date.isoformat(), "sales": sales, "totals": totals},
     )
 
 

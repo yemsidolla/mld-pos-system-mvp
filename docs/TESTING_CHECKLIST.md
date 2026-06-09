@@ -41,12 +41,25 @@ curl -I http://192.168.1.199:8000/health/
 
 ## Role And Permission Tests
 
+- Anonymous dashboard access redirects to `/dashboard/login/`.
+- Login redirects to a safe `next` URL or `/dashboard/`.
+- Unsafe external `next` URLs are ignored.
+- Logout is POST-only and returns to `/dashboard/login/`.
+- Inactive users cannot log in.
 - Admin can open dashboard home.
 - Admin can open products, categories, brands, suppliers, stock-in, inventory, batch upload, labels, sales, reports, system health, and live logs.
 - Cashier can open POS.
 - Cashier can open receipts.
-- Cashier cannot open inventory, sales history, reports, batch upload, system health, or live logs.
-- Cashier-only user cannot open Django Admin.
+- Cashier cannot open inventory, sales history, reports, batch upload, system health, live logs, or Django Admin.
+- Cashier and unassigned users see the friendly access-denied page for blocked dashboard pages.
+
+## Error Page Tests
+
+- 403 page shows access denied without internal details.
+- 404 page shows page/item not found without internal details.
+- 500 page shows unexpected error without internal details.
+- Missing product, sale, stock batch, batch upload job, and invalid template URLs do not expose tracebacks.
+- Invalid daily sales report date falls back with a friendly message.
 
 ## Catalog Tests
 
@@ -86,6 +99,8 @@ curl -I http://192.168.1.199:8000/health/
 
 - Scan original barcode and show available batches.
 - Scan custom code and add exact batch to cart.
+- Confirm POS empty state is clear before scan.
+- Confirm lookup state is clear after scan.
 - Add selected batch to cart.
 - Update cart quantity.
 - Remove cart item.
@@ -94,6 +109,8 @@ curl -I http://192.168.1.199:8000/health/
 - Reject insufficient stock.
 - Reject expired stock.
 - Confirm sale.
+- Confirm checkout button disables after submit.
+- Confirm sale success message appears before receipt.
 - Confirm batch quantity is deducted.
 - Confirm sold-out batch status changes.
 - Confirm sale movement and audit log are created.

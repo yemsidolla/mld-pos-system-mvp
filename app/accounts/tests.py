@@ -36,6 +36,7 @@ class RoleTests(TestCase):
         response = self.client.get(reverse("admin:index"))
 
         self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)
 
     def test_set_user_role_assigns_dashboard_admin_without_django_admin(self):
         user = get_user_model().objects.create_user(username="manager", password="Admin123", is_staff=False)

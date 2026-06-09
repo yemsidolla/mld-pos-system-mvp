@@ -32,6 +32,13 @@
                 <button class="btn btn-primary" type="submit">{% trans "Lookup" %}</button>
             </div>
         </form>
+        <div class="pos-status" aria-live="polite">
+            {% if scanned_product %}
+                {% trans "Product found. Choose the stock batch and quantity to add." %}
+            {% else %}
+                {% trans "Ready for the next barcode, QR code, or manual lookup." %}
+            {% endif %}
+        </div>
 
         {% if scanned_product %}
             <section class="panel panel-spaced">
@@ -70,12 +77,16 @@
                                 </td>
                             </tr>
                         {% empty %}
-                            <tr><td colspan="6" class="empty-cell">{% trans "No sellable batches." %}</td></tr>
+                            <tr><td colspan="6" class="empty-cell">{% trans "No sellable batches are available. Check stock, damage, or expiry before selling." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </section>
+        {% else %}
+            <div class="pos-empty-state">
+                {% trans "Scan or type a product code to begin the sale." %}
+            </div>
         {% endif %}
     </section>
 
@@ -86,7 +97,7 @@
                 <p>{% trans "Batch-level sale items." %}</p>
             </div>
         </header>
-        <table class="data-table">
+        <table class="data-table" aria-live="polite">
             <thead>
             <tr>
                 <th>{% trans "Item" %}</th>
@@ -117,12 +128,12 @@
                     </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="4" class="empty-cell">{% trans "Cart is empty." %}</td></tr>
+                <tr><td colspan="4" class="empty-cell">{% trans "Cart is empty. Add a sellable batch before checkout." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
-        <div class="cart-total">{{ cart_total }}</div>
-        <form class="form-stack" method="post">
+        <div class="cart-total"><span>{% trans "Cart Total" %}</span>{{ cart_total }}</div>
+        <form class="form-stack" method="post" data-disable-on-submit>
             {% csrf_token %}
             <div>
                 {{ confirm_form.payment_method.label_tag }}
@@ -133,8 +144,8 @@
                 {{ confirm_form.discount_amount }}
             </div>
             <div class="form-actions">
-                <button class="btn btn-success" type="submit" name="action" value="confirm" {% if not cart_rows %}disabled{% endif %}>{% trans "Confirm Sale" %}</button>
-                <button class="btn" type="submit" name="action" value="clear">{% trans "Clear" %}</button>
+                <button class="btn btn-success" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}" {% if not cart_rows %}disabled{% endif %}>{% trans "Complete Sale" %}</button>
+                <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}">{% trans "Clear Cart" %}</button>
             </div>
         </form>
     </aside>

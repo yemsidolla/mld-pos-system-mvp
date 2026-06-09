@@ -31,6 +31,14 @@ Mac: http://127.0.0.1:8000/dashboard/
 iPhone: http://192.168.1.199:8000/dashboard/
 ```
 
+Dashboard auth:
+
+```text
+Login: /dashboard/login/
+Logout: POST /dashboard/logout/
+Django Admin login: /admin/login/
+```
+
 Local credentials:
 
 ```text
@@ -138,6 +146,8 @@ curl https://melodu-pos.khlovepet.com/health/
 Check:
 
 - `/dashboard/` loads.
+- `/dashboard/login/` loads and redirects authenticated staff to `/dashboard/`.
+- POST `/dashboard/logout/` returns staff to `/dashboard/login/`.
 - `/admin/` loads for trusted admin users.
 - Static assets load.
 - Pages reference the latest collected static asset hashes after `web` restart.

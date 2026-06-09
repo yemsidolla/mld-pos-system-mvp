@@ -273,12 +273,22 @@ class BatchUploadViewTests(TestCase):
     def test_batch_upload_pages_are_admin_only(self):
         self.client.force_login(self.cashier)
         cashier_response = self.client.get(reverse("batch-upload"))
-        self.assertEqual(cashier_response.status_code, 302)
+        self.assertEqual(cashier_response.status_code, 403)
+        self.assertContains(cashier_response, "Access denied", status_code=403)
 
         self.client.force_login(self.admin)
         admin_response = self.client.get(reverse("batch-upload"))
         self.assertEqual(admin_response.status_code, 200)
         self.assertContains(admin_response, "Batch Upload")
+
+    @override_settings(DEBUG=False, ALLOWED_HOSTS=["testserver"])
+    def test_invalid_template_target_renders_friendly_404(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("batch-upload-template", kwargs={"target": "missing"}))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Page or item not found", status_code=404)
 
     def test_admin_can_upload_preview_edit_delete_and_commit(self):
         self.client.force_login(self.admin)

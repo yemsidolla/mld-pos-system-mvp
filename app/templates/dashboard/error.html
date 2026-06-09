@@ -1,0 +1,31 @@
+{% load i18n static %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ status_code }} {{ title }} | Melodu POS</title>
+    <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+</head>
+<body class="auth-page">
+<main class="auth-shell">
+    <section class="auth-panel error-panel">
+        <div class="auth-brand">
+            <span class="brand-mark">M</span>
+            <div>
+                <p class="eyebrow">{% trans "Melodu POS" %}</p>
+                <h1>{{ title }}</h1>
+            </div>
+        </div>
+        <div class="error-code">{{ status_code }}</div>
+        <p class="error-message">{{ message }}</p>
+        <div class="form-actions">
+            <a class="btn btn-primary" href="{{ action_url }}">{{ action_label }}</a>
+            {% if secondary_url %}
+                <a class="btn" href="{{ secondary_url }}">{{ secondary_label }}</a>
+            {% endif %}
+        </div>
+    </section>
+</main>
+</body>
+</html>

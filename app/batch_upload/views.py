@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from core.permissions import admin_required
@@ -122,7 +122,10 @@ def batch_upload_commit_view(request, job_id):
 
 @admin_required
 def batch_upload_template_view(request, target):
-    csv_content = get_template_csv(target)
+    try:
+        csv_content = get_template_csv(target)
+    except ValidationError as exc:
+        raise Http404("Upload template not found.") from exc
     response = HttpResponse(csv_content, content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="{target}_template.csv"'
     return response

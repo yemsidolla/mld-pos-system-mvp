@@ -1,4 +1,4 @@
-# V2 Phase 2A: Dashboard Access And POS UX Stabilization
+# V2 Phase 2A: Inline Master-Data Quick Add
 
 Date: 2026-06-09
 
@@ -64,4 +64,3 @@ Coverage includes:
 - Remove the quick-create route and modal include.
 - Remove `data-quick-create` buttons from Product and Stock-In templates.
 - Keep existing full CRUD pages; they are unchanged and remain the fallback.
-

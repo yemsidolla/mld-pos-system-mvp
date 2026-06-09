@@ -247,7 +247,7 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add audited expired-batch maintenance command | Done |
 | Harden backup and restore scripts | Done |
 
-## V2 Phase 2A: Dashboard Access And POS UX Stabilization
+## V2 Phase 2A: Inline Master-Data Quick Add
 
 | Task | Status |
 | --- | --- |
@@ -258,3 +258,17 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add quick-create audit logging | Done |
 | Add quick-create duplicate validation | Done |
 | Add quick-create tests and documentation | Done |
+
+## V2 Phase 2B: Dashboard Access And POS UX Stabilization
+
+| Task | Status |
+| --- | --- |
+| Add dashboard login page | Done |
+| Add POST-only dashboard logout | Done |
+| Standardize Admin/Cashier/unassigned access behavior | Done |
+| Add friendly 403/404/500 pages | Done |
+| Hide Django Admin link from non-admin dashboard users | Done |
+| Harden invalid report date and batch-upload template handling | Done |
+| Improve POS empty states and checkout copy | Done |
+| Add checkout double-submit protection | Done |
+| Add Phase 2B tests and documentation | Done |

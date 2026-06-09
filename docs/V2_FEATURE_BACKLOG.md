@@ -17,6 +17,18 @@ Delivered:
 - Admin-only JSON endpoint with CSRF protection.
 - Audit logging and duplicate-name validation.
 
+## Completed Phase 2B Slice: Dashboard Access And POS UX Stabilization
+
+Status: implemented.
+
+Delivered:
+
+- Dashboard-specific login and POST-only logout flow.
+- Friendly 403, 404, and 500 pages.
+- Standardized Admin/Cashier/unassigned/inactive access behavior.
+- POS empty states, checkout copy, and double-submit protection.
+- Friendly invalid report date and batch-upload template handling.
+
 ## Priority 1: Report Exports
 
 Default first V2 feature.

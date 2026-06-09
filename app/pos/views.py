@@ -130,6 +130,7 @@ def pos_sale_view(request):
                         request=request,
                     )
                     save_cart(request, [])
+                    messages.success(request, f"Sale {sale.sale_no} completed.")
                     return redirect(reverse("sale-receipt", kwargs={"sale_id": sale.id}))
         except ValidationError as exc:
             messages.error(request, "; ".join(exc.messages))

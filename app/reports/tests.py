@@ -60,6 +60,12 @@ class ReportPageTests(TestCase):
         self.assertContains(response, self.sale.sale_no)
         self.assertContains(response, "Daily Sales Report")
 
+    def test_daily_sales_invalid_date_falls_back_with_message(self):
+        response = self.client.get(reverse("daily-sales-report"), {"date": "not-a-date"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Invalid report date")
+
     def test_stock_summary_report_shows_product(self):
         response = self.client.get(reverse("stock-summary-report"))
 
@@ -124,4 +130,5 @@ class ReportPageTests(TestCase):
 
         response = self.client.get(reverse("reports-index"))
 
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)

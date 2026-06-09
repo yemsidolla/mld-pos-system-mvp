@@ -307,7 +307,8 @@ class InventoryAdjustmentTests(TestCase):
         stock_batch = self.create_batch(quantity=5)
         self.client.force_login(self.cashier)
         cashier_response = self.client.get(reverse("inventory-summary"))
-        self.assertEqual(cashier_response.status_code, 302)
+        self.assertEqual(cashier_response.status_code, 403)
+        self.assertContains(cashier_response, "Access denied", status_code=403)
 
         self.client.force_login(self.admin)
         summary = self.client.get(reverse("inventory-summary"))

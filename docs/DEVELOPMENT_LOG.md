@@ -210,3 +210,13 @@
 - Added inline quick-create for Supplier on Stock-In.
 - Added an Admin-only catalog quick-create JSON endpoint with CSRF protection, duplicate-name validation, and audit logging.
 - Added a shared dashboard quick-create modal that appends and selects the new option without losing unsaved form data.
+
+### V2 Phase 2B Dashboard Access And POS UX Stabilization
+
+- Added dashboard-specific `/dashboard/login/` and POST-only `/dashboard/logout/` routes.
+- Switched dashboard auth redirects away from Django Admin login while keeping `/admin/login/` available for Django Admin.
+- Standardized dashboard access checks so anonymous users redirect to login and wrong-role users see a friendly 403 page.
+- Added friendly 403, 404, and 500 pages without internal error details.
+- Hid the Django Admin link from non-admin dashboard users.
+- Hardened invalid daily sales report dates and invalid batch-upload template targets.
+- Improved POS empty states, unavailable-stock text, checkout button copy, success messaging, and double-submit protection.
