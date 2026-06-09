@@ -11,7 +11,7 @@ from django.urls import reverse
 from openpyxl import Workbook
 
 from audit.models import AuditLog
-from catalog.models import Brand, Category, Product, Supplier
+from catalog.models import Brand, Category, Product, ProductTag, Supplier
 from core.permissions import CASHIER_GROUP
 from inventory.models import InventoryMovement, StockBatch
 
@@ -351,3 +351,65 @@ class BatchUploadViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Melodu Workflows")
         self.assertContains(response, reverse("batch-upload"))
+
+
+class ProductClassificationUploadTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(
+            username="class-upload-admin", password="Admin123", is_staff=True, is_superuser=True
+        )
+        Category.objects.create(name="Food")
+        Brand.objects.create(name="Melodu")
+
+    def test_upload_with_classification_columns_commits_tags(self):
+        content = (
+            "product_code,original_barcode,name,category,brand,unit,default_cost_price,"
+            "default_selling_price,min_stock,description,animal_type,life_stage,tags,is_active\n"
+            "P100,8850000001000,Kitten Food,Food,Melodu,Bag,1.50,2.50,3,,cat,kitten,Grain Free; Indoor,TRUE\n"
+        )
+        job = create_upload_job(
+            target=BatchUploadJob.Target.PRODUCTS,
+            uploaded_file=csv_upload("products.csv", content),
+            uploaded_by=self.admin,
+        )
+        self.assertEqual(job.rows.get().validation_errors, [])
+
+        commit_upload_job(job=job, committed_by=self.admin)
+
+        product = Product.objects.get(product_code="P100")
+        self.assertEqual(product.animal_type, "CAT")
+        self.assertEqual(product.life_stage, "KITTEN")
+        self.assertEqual(set(product.tags.values_list("name", flat=True)), {"Grain Free", "Indoor"})
+        self.assertEqual(ProductTag.objects.filter(name__in=["Grain Free", "Indoor"]).count(), 2)
+
+    def test_upload_without_optional_columns_still_works(self):
+        content = (
+            "product_code,original_barcode,name,category,brand,unit,default_cost_price,"
+            "default_selling_price,min_stock,description,is_active\n"
+            "P101,8850000001001,Dog Food,Food,Melodu,Bag,1.50,2.50,3,,TRUE\n"
+        )
+        job = create_upload_job(
+            target=BatchUploadJob.Target.PRODUCTS,
+            uploaded_file=csv_upload("products.csv", content),
+            uploaded_by=self.admin,
+        )
+        self.assertEqual(job.rows.get().validation_errors, [])
+
+        commit_upload_job(job=job, committed_by=self.admin)
+
+        product = Product.objects.get(product_code="P101")
+        self.assertEqual(product.animal_type, "")
+        self.assertEqual(product.tags.count(), 0)
+
+    def test_invalid_animal_type_is_flagged(self):
+        content = (
+            "product_code,original_barcode,name,category,brand,unit,default_cost_price,"
+            "default_selling_price,min_stock,description,animal_type,life_stage,tags,is_active\n"
+            "P102,8850000001002,Mystery,Food,Melodu,Bag,1.50,2.50,3,,DINOSAUR,,,TRUE\n"
+        )
+        job = create_upload_job(
+            target=BatchUploadJob.Target.PRODUCTS,
+            uploaded_file=csv_upload("products.csv", content),
+            uploaded_by=self.admin,
+        )
+        self.assertIn("animal_type: invalid value", job.rows.get().validation_errors)

@@ -55,6 +55,13 @@ def _model_snapshot(obj, fields):
         return None
     snapshot = {}
     for field in fields:
+        try:
+            field_obj = obj._meta.get_field(field)
+        except Exception:  # pragma: no cover - defensive
+            field_obj = None
+        if field_obj is not None and field_obj.many_to_many:
+            snapshot[field] = sorted(str(item) for item in getattr(obj, field).all()) if obj.pk else []
+            continue
         value = getattr(obj, field)
         snapshot[field] = str(value) if value is not None else None
     return snapshot
@@ -201,12 +208,19 @@ def _master_data_form_view(
 @admin_required
 def product_list_view(request):
     form = ProductFilterForm(request.GET or None)
-    products = Product.objects.select_related("category", "brand").order_by("name", "product_code")
+    products = (
+        Product.objects.select_related("category", "brand")
+        .prefetch_related("tags")
+        .order_by("name", "product_code")
+    )
 
     if form.is_valid():
         query = form.cleaned_data.get("q")
         category = form.cleaned_data.get("category")
         brand = form.cleaned_data.get("brand")
+        animal_type = form.cleaned_data.get("animal_type")
+        life_stage = form.cleaned_data.get("life_stage")
+        tag = form.cleaned_data.get("tag")
         status = form.cleaned_data.get("status")
 
         if query:
@@ -214,11 +228,18 @@ def product_list_view(request):
                 Q(name__icontains=query)
                 | Q(product_code__icontains=query)
                 | Q(original_barcode__icontains=query)
-            )
+                | Q(tags__name__icontains=query)
+            ).distinct()
         if category:
             products = products.filter(category=category)
         if brand:
             products = products.filter(brand=brand)
+        if animal_type:
+            products = products.filter(animal_type=animal_type)
+        if life_stage:
+            products = products.filter(life_stage=life_stage)
+        if tag:
+            products = products.filter(tags=tag)
         products = _apply_status_filter(products, status)
 
     return render(

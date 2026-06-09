@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Brand, Category, Product, Supplier, SupplierProductCost
+from .models import Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
 @admin.register(Category)
@@ -27,6 +27,14 @@ class SupplierAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
 
+@admin.register(ProductTag)
+class ProductTagAdmin(admin.ModelAdmin):
+    list_display = ("name", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("name",)
+    readonly_fields = ("created_at", "updated_at")
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
@@ -35,14 +43,17 @@ class ProductAdmin(admin.ModelAdmin):
         "original_barcode",
         "category",
         "brand",
+        "animal_type",
+        "life_stage",
         "default_selling_price",
         "min_stock",
         "is_active",
     )
-    list_filter = ("is_active", "category", "brand")
+    list_filter = ("is_active", "category", "brand", "animal_type", "life_stage", "tags")
     search_fields = ("name", "product_code", "original_barcode")
     readonly_fields = ("created_at", "updated_at")
     autocomplete_fields = ("category", "brand")
+    filter_horizontal = ("tags",)
 
 
 @admin.register(SupplierProductCost)

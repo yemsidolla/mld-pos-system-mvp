@@ -304,3 +304,17 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add Owner-only, self-protection, and last-Owner safeguards | AI Generated |
 | Audit user create/update/role-change/disable | AI Generated |
 | Add V4 Phase 1 tests and documentation | AI Generated |
+
+## V4 Phase 2: Product Classification
+
+| Task | Status |
+| --- | --- |
+| Add `catalog.ProductTag` model and migration | AI Generated |
+| Add optional `animal_type` and `life_stage` fields to Product | AI Generated |
+| Add tags/classification to product form | AI Generated |
+| Add product list filters for animal type, life stage, and tag | AI Generated |
+| Show classification in product list and Django Admin | AI Generated |
+| Add optional batch-upload columns with backward compatibility | AI Generated |
+| Auto-create tags and validate classification on upload | AI Generated |
+| Include tag list in product audit snapshots | AI Generated |
+| Add V4 Phase 2 tests and documentation | AI Generated |

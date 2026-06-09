@@ -1,7 +1,7 @@
 from django import forms
 from django.db.models import Q
 
-from .models import Brand, Category, Product, Supplier, SupplierProductCost
+from .models import Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
 class CatalogFilterForm(forms.Form):
@@ -16,6 +16,15 @@ class ProductFilterForm(forms.Form):
     q = forms.CharField(label="Search", required=False)
     category = forms.ModelChoiceField(queryset=Category.objects.none(), required=False)
     brand = forms.ModelChoiceField(queryset=Brand.objects.none(), required=False)
+    animal_type = forms.ChoiceField(
+        choices=[("", "All animals")] + list(Product.AnimalType.choices),
+        required=False,
+    )
+    life_stage = forms.ChoiceField(
+        choices=[("", "All stages")] + list(Product.LifeStage.choices),
+        required=False,
+    )
+    tag = forms.ModelChoiceField(queryset=ProductTag.objects.none(), required=False)
     status = forms.ChoiceField(
         choices=(("", "All"), ("active", "Active"), ("inactive", "Inactive")),
         required=False,
@@ -25,6 +34,7 @@ class ProductFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
         self.fields["brand"].queryset = Brand.objects.filter(is_active=True).order_by("name")
+        self.fields["tag"].queryset = ProductTag.objects.filter(is_active=True).order_by("name")
 
 
 class ProductForm(forms.ModelForm):
@@ -54,10 +64,14 @@ class ProductForm(forms.ModelForm):
             "min_stock",
             "description",
             "image",
+            "animal_type",
+            "life_stage",
+            "tags",
             "is_active",
         )
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
+            "tags": forms.SelectMultiple(attrs={"size": 6}),
         }
 
 

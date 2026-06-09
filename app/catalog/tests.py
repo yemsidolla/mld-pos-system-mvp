@@ -10,7 +10,7 @@ from django.urls import reverse
 from audit.models import AuditLog
 from core.permissions import ADMIN_GROUP, CASHIER_GROUP
 from .admin import ProductAdmin
-from .models import Brand, Category, Product, Supplier, SupplierProductCost
+from .models import Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
 class CatalogModelTests(TestCase):
@@ -78,7 +78,10 @@ class CatalogAdminTests(TestCase):
 
         self.assertIsInstance(product_admin, ProductAdmin)
         self.assertEqual(product_admin.search_fields, ("name", "product_code", "original_barcode"))
-        self.assertEqual(product_admin.list_filter, ("is_active", "category", "brand"))
+        self.assertEqual(
+            product_admin.list_filter,
+            ("is_active", "category", "brand", "animal_type", "life_stage", "tags"),
+        )
 
 
 class ProductDashboardTests(TestCase):
@@ -389,3 +392,91 @@ class MasterDataDashboardTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertContains(response, "Access denied", status_code=403)
+
+
+class ProductClassificationTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(username="class-admin", password="Admin123")
+        self.admin.groups.add(Group.objects.get_or_create(name=ADMIN_GROUP)[0])
+        self.category = Category.objects.create(name="Food")
+        self.brand = Brand.objects.create(name="Melodu")
+
+    def _base_payload(self, **overrides):
+        payload = {
+            "product_code": "P010",
+            "original_barcode": "8850000000010",
+            "name": "Kitten Food",
+            "category": self.category.id,
+            "brand": self.brand.id,
+            "unit": "Bag",
+            "default_cost_price": "1.50",
+            "default_selling_price": "2.50",
+            "min_stock": "1",
+            "description": "",
+            "is_active": "on",
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_product_can_have_classification_and_tags(self):
+        product = Product.objects.create(product_code="P001", name="Cat Food")
+        tag = ProductTag.objects.create(name="Grain Free")
+        product.animal_type = Product.AnimalType.CAT
+        product.life_stage = Product.LifeStage.ADULT
+        product.save()
+        product.tags.add(tag)
+
+        product.refresh_from_db()
+        self.assertEqual(product.animal_type, "CAT")
+        self.assertEqual(product.life_stage, "ADULT")
+        self.assertEqual(list(product.tags.values_list("name", flat=True)), ["Grain Free"])
+
+    def test_existing_product_without_classification_is_valid(self):
+        product = Product.objects.create(product_code="P002", name="Plain Product")
+        self.assertEqual(product.animal_type, "")
+        self.assertEqual(product.life_stage, "")
+        self.assertEqual(product.tags.count(), 0)
+
+    def test_create_product_with_classification_and_tags_via_dashboard(self):
+        tag1 = ProductTag.objects.create(name="Grain Free")
+        tag2 = ProductTag.objects.create(name="Indoor")
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("product-create"),
+            self._base_payload(animal_type="CAT", life_stage="KITTEN", tags=[tag1.id, tag2.id]),
+        )
+
+        self.assertRedirects(response, reverse("product-list"))
+        product = Product.objects.get(product_code="P010")
+        self.assertEqual(product.animal_type, "CAT")
+        self.assertEqual(product.life_stage, "KITTEN")
+        self.assertEqual(set(product.tags.values_list("name", flat=True)), {"Grain Free", "Indoor"})
+        audit = AuditLog.objects.filter(action=AuditLog.Action.CREATE, module="catalog").latest("created_at")
+        self.assertEqual(audit.new_value.get("tags"), ["Grain Free", "Indoor"])
+
+    def test_product_list_filters_by_animal_type_and_tag(self):
+        dental = ProductTag.objects.create(name="Dental Care")
+        cat_food = Product.objects.create(
+            product_code="C1", name="Cat Food", animal_type=Product.AnimalType.CAT
+        )
+        cat_food.tags.add(dental)
+        Product.objects.create(product_code="D1", name="Dog Food", animal_type=Product.AnimalType.DOG)
+        self.client.force_login(self.admin)
+
+        by_animal = self.client.get(reverse("product-list"), {"animal_type": "CAT"})
+        self.assertContains(by_animal, "Cat Food")
+        self.assertNotContains(by_animal, "Dog Food")
+
+        by_tag = self.client.get(reverse("product-list"), {"tag": dental.id})
+        self.assertContains(by_tag, "Cat Food")
+        self.assertNotContains(by_tag, "Dog Food")
+
+    def test_product_form_renders_classification_fields(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("product-create"))
+
+        self.assertContains(response, 'name="animal_type"')
+        self.assertContains(response, 'name="life_stage"')
+        self.assertContains(response, 'name="tags"')

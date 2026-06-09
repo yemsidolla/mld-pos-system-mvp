@@ -69,7 +69,37 @@ class SupplierProductCost(TimeStampedModel):
         return f"{self.product} - {self.supplier}"
 
 
+class ProductTag(TimeStampedModel):
+    """Flexible classification label (e.g. Grain Free, Dental Care, Small Breed)."""
+
+    name = models.CharField(max_length=80, unique=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Product(TimeStampedModel):
+    class AnimalType(models.TextChoices):
+        DOG = "DOG", "Dog"
+        CAT = "CAT", "Cat"
+        RABBIT = "RABBIT", "Rabbit"
+        HAMSTER = "HAMSTER", "Hamster"
+        BIRD = "BIRD", "Bird"
+        FISH = "FISH", "Fish"
+        OTHER = "OTHER", "Other"
+
+    class LifeStage(models.TextChoices):
+        BABY = "BABY", "Baby"
+        PUPPY = "PUPPY", "Puppy"
+        KITTEN = "KITTEN", "Kitten"
+        ADULT = "ADULT", "Adult"
+        SENIOR = "SENIOR", "Senior"
+        ALL = "ALL", "All ages"
+
     product_code = models.CharField(max_length=40, unique=True)
     original_barcode = models.CharField(
         max_length=80,
@@ -107,6 +137,9 @@ class Product(TimeStampedModel):
     min_stock = models.PositiveIntegerField(default=0)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="products/", blank=True, null=True)
+    animal_type = models.CharField(max_length=20, choices=AnimalType.choices, blank=True)
+    life_stage = models.CharField(max_length=20, choices=LifeStage.choices, blank=True)
+    tags = models.ManyToManyField(ProductTag, blank=True, related_name="products")
     is_active = models.BooleanField(default=True)
 
     class Meta:

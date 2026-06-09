@@ -1,2 +1,2 @@
-product_code,original_barcode,name,category,brand,unit,default_cost_price,default_selling_price,min_stock,description,is_active
-P001,8851234567890,Cat Food,Food,Melodu,Bag,1.50,2.50,5,,TRUE
+product_code,original_barcode,name,category,brand,unit,default_cost_price,default_selling_price,min_stock,description,animal_type,life_stage,tags,is_active
+P001,8851234567890,Cat Food,Food,Melodu,Bag,1.50,2.50,5,,CAT,ADULT,Grain Free; Indoor,TRUE

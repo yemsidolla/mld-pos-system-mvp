@@ -60,6 +60,7 @@
                     <th>{% trans "Barcode" %}</th>
                     <th>{% trans "Category" %}</th>
                     <th>{% trans "Brand" %}</th>
+                    <th>{% trans "Classification" %}</th>
                     <th>{% trans "Price" %}</th>
                     <th>{% trans "Status" %}</th>
                     <th>{% trans "Action" %}</th>
@@ -73,6 +74,12 @@
                     <td>{{ product.original_barcode|default:"-" }}</td>
                     <td>{{ product.category|default:"-" }}</td>
                     <td>{{ product.brand|default:"-" }}</td>
+                    <td>
+                        {% if product.animal_type %}<span class="badge">{{ product.get_animal_type_display }}</span>{% endif %}
+                        {% if product.life_stage %}<span class="badge">{{ product.get_life_stage_display }}</span>{% endif %}
+                        {% for tag in product.tags.all %}<span class="badge badge-success">{{ tag.name }}</span>{% endfor %}
+                        {% if not product.animal_type and not product.life_stage and not product.tags.all %}-{% endif %}
+                    </td>
                     <td>{{ product.default_selling_price }}</td>
                     <td>
                         {% if product.is_active %}
@@ -84,7 +91,7 @@
                     <td><a class="btn" href="{% url 'product-edit' product.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="8" class="empty-cell">{% trans "No products found." %}</td></tr>
+                <tr><td colspan="9" class="empty-cell">{% trans "No products found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

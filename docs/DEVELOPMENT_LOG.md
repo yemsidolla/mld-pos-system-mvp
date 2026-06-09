@@ -2,6 +2,24 @@
 
 ## 2026-06-09
 
+### V4 Phase 2: Product Classification
+
+- Added `catalog.ProductTag` (flexible tags) and optional `animal_type` and
+  `life_stage` choice fields on `Product`; all classification is optional so
+  existing products stay valid.
+- Extended the product form with classification dropdowns and a tag picker;
+  added product-list filters for animal type, life stage, and tag, with the
+  free-text search also matching tag names and a new Classification column.
+- Updated Django Admin with the new filters, a tag picker, and a `ProductTag`
+  section; product audit snapshots now record the tag list (m2m-aware).
+- Added optional batch-upload columns `animal_type`, `life_stage`, and `tags`
+  (auto-creates tags, validates choices, replaces tags only when provided);
+  files without these columns still upload. Updated the products CSV template.
+- Documented in `docs/PRODUCT_CLASSIFICATION_GUIDE.md` and the batch-upload
+  guide.
+- Verified: `manage.py check` clean; full suite 167 tests passing (was 159);
+  migration applies cleanly.
+
 ### V4 Phase 1: User Management & Permissions
 
 - Added `accounts.StaffProfile` (Owner, Manager, Inventory staff, Cashier,

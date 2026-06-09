@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
-from catalog.models import Brand, Category, Product, Supplier
+from catalog.models import Brand, Category, Product, ProductTag, Supplier
 from inventory.services import receive_stock
 
 from .models import BatchUploadJob, BatchUploadRow
@@ -53,6 +53,9 @@ SCHEMAS = {
             "default_selling_price",
             "min_stock",
             "description",
+            "animal_type",
+            "life_stage",
+            "tags",
             "is_active",
         ],
         "required": ["product_code", "name"],
@@ -67,6 +70,9 @@ SCHEMAS = {
             "default_selling_price": "2.50",
             "min_stock": "5",
             "description": "",
+            "animal_type": "CAT",
+            "life_stage": "ADULT",
+            "tags": "Grain Free; Indoor",
             "is_active": "TRUE",
         },
     },
@@ -169,11 +175,23 @@ def parse_date(value):
         raise ValueError("Use YYYY-MM-DD.") from exc
 
 
+# Columns that may be omitted from an uploaded file (kept backward compatible).
+OPTIONAL_COLUMNS = {
+    BatchUploadJob.Target.STOCK_IN: {"landed_unit_cost"},
+    BatchUploadJob.Target.PRODUCTS: {"animal_type", "life_stage", "tags"},
+}
+
+
+def split_tag_names(value):
+    raw = str(value or "").replace(";", ",")
+    return [name.strip() for name in raw.split(",") if name.strip()]
+
+
 def validate_headers(target, headers):
     schema = get_schema(target)
     expected = set(schema["fields"])
     provided = {normalize_header(header) for header in headers if normalize_header(header)}
-    optional_missing = {"landed_unit_cost"} if target == BatchUploadJob.Target.STOCK_IN else set()
+    optional_missing = OPTIONAL_COLUMNS.get(target, set())
     missing = sorted(expected - provided - optional_missing)
     if missing:
         raise ValidationError(f"Missing columns: {', '.join(missing)}")
@@ -247,6 +265,14 @@ def normalize_row(target, row_data):
                 errors.append("category: category name does not exist")
             if normalized.get("brand") and not Brand.objects.filter(name=normalized["brand"]).exists():
                 errors.append("brand: brand name does not exist")
+            animal_type = (normalized.get("animal_type") or "").strip().upper()
+            if animal_type and animal_type not in {choice for choice, _ in Product.AnimalType.choices}:
+                errors.append("animal_type: invalid value")
+            normalized["animal_type"] = animal_type
+            life_stage = (normalized.get("life_stage") or "").strip().upper()
+            if life_stage and life_stage not in {choice for choice, _ in Product.LifeStage.choices}:
+                errors.append("life_stage: invalid value")
+            normalized["life_stage"] = life_stage
             barcode_value = normalized.get("original_barcode")
             product_code = normalized.get("product_code")
             if barcode_value:
@@ -431,9 +457,15 @@ def _commit_product(data):
             "default_selling_price": Decimal(data.get("default_selling_price") or "0"),
             "min_stock": data.get("min_stock") or 0,
             "description": data.get("description", ""),
+            "animal_type": (data.get("animal_type") or "").strip().upper(),
+            "life_stage": (data.get("life_stage") or "").strip().upper(),
             "is_active": data.get("is_active", True),
         },
     )
+    tag_names = split_tag_names(data.get("tags"))
+    if tag_names:
+        tags = [ProductTag.objects.get_or_create(name=name)[0] for name in tag_names]
+        obj.tags.set(tags)
     return obj, created
 
 

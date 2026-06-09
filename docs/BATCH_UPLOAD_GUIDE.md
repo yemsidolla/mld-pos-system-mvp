@@ -161,12 +161,17 @@ Validation:
 - `original_barcode` must not be used by a different existing product.
 - `original_barcode` must not be duplicated by another selected row in the same upload with a different product code.
 - Product images are not included in Version 1 batch upload.
+- `animal_type`, `life_stage`, and `tags` are **optional** (V4). Files without
+  these columns still work. `animal_type`/`life_stage` use code values
+  (case-insensitive), e.g. `CAT`, `ADULT`; invalid values are flagged in
+  preview. `tags` is one cell separated by `;` or `,`; tags are created on
+  demand. See `docs/PRODUCT_CLASSIFICATION_GUIDE.md`.
 
 Example:
 
 ```csv
-product_code,original_barcode,name,category,brand,unit,default_cost_price,default_selling_price,min_stock,description,is_active
-P001,8851234567890,Cat Food,Food,Melodu,Bag,1.50,2.50,5,,TRUE
+product_code,original_barcode,name,category,brand,unit,default_cost_price,default_selling_price,min_stock,description,animal_type,life_stage,tags,is_active
+P001,8851234567890,Cat Food,Food,Melodu,Bag,1.50,2.50,5,,CAT,ADULT,Grain Free; Indoor,TRUE
 ```
 
 ### Stock-In

@@ -17,8 +17,8 @@ no ESC-POS library).
 
 | # | Phase | Status |
 | --- | --- | --- |
-| 1 | User Management & Permissions | Implemented (this PR) |
-| 2 | Product Classification (tags, animal type, life stage) | Planned |
+| 1 | User Management & Permissions | Implemented |
+| 2 | Product Classification (tags, animal type, life stage) | Implemented |
 | 3 | Printer Settings & 80mm Receipt | Planned |
 | 4 | Label Template System | Planned |
 | 5 | Promotion Label Printing | Planned |
@@ -78,9 +78,13 @@ The detailed 13-point plans (goal, scope, non-goals, affected files, data model,
 migration, UI, permission, audit, tests, deployment, docs, risk/rollback) were
 agreed with the owner and will be restated at the start of each phase branch.
 
-- **Phase 2 — Product Classification:** flexible `ProductTag` (M2M) plus optional
-  structured fields (animal type, life stage) on `Product`; product form,
-  filters, search, and batch-upload columns; fully backward compatible.
+- **Phase 2 — Product Classification (implemented):** added `catalog.ProductTag`
+  (M2M) plus optional `animal_type` and `life_stage` choice fields on `Product`.
+  Product form gains classification + tag pickers; product list filters by
+  animal type, life stage, and tag (search also matches tag names); admin gains
+  filters and a tag section; product audit records the tag list. Batch upload
+  adds optional `animal_type`, `life_stage`, `tags` columns (auto-creates tags,
+  validates choices) and stays backward compatible with files that omit them.
 - **Phase 3 — Printer Settings & 80mm Receipt:** singleton store/printer
   settings, de-hardcoded store info, a standalone thermal 80mm receipt template,
   browser print first, reprint permission + print audit.
