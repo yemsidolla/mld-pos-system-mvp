@@ -40,6 +40,12 @@ from core.views import (
     store_settings_view,
 )
 from inventory.views import barcode_print_view, inventory_summary_view, stock_batch_detail_view, stock_in_view
+from labels.views import (
+    label_print_view,
+    label_template_create_view,
+    label_template_edit_view,
+    label_template_list_view,
+)
 from pos.views import (
     pos_sale_view,
     promotion_create_view,
@@ -108,6 +114,10 @@ urlpatterns = [
         name="batch-upload-row-delete",
     ),
     path("dashboard/barcode-print/", barcode_print_view, name="barcode-print"),
+    path("dashboard/labels/templates/", label_template_list_view, name="label-template-list"),
+    path("dashboard/labels/templates/new/", label_template_create_view, name="label-template-create"),
+    path("dashboard/labels/templates/<int:template_id>/edit/", label_template_edit_view, name="label-template-edit"),
+    path("dashboard/labels/print/", label_print_view, name="label-print"),
     path("dashboard/inventory/", inventory_summary_view, name="inventory-summary"),
     path("dashboard/inventory/batches/<int:batch_id>/", stock_batch_detail_view, name="stock-batch-detail"),
     path("dashboard/pos/", pos_sale_view, name="pos-sale"),

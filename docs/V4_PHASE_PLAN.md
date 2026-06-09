@@ -20,7 +20,7 @@ no ESC-POS library).
 | 1 | User Management & Permissions | Implemented |
 | 2 | Product Classification (tags, animal type, life stage) | Implemented |
 | 3 | Printer Settings & 80mm Receipt | Implemented |
-| 4 | Label Template System | Planned |
+| 4 | Label Template System | Implemented |
 | 5 | Promotion Label Printing | Planned |
 | 6 | Safe Data Reset / Admin Maintenance | Planned |
 
@@ -92,8 +92,12 @@ agreed with the owner and will be restated at the start of each phase branch.
   template driven by the configured paper width/font and store info; labels now
   use the configured store name. Added an audited `RECEIPT_PRINT` reprint action
   (Owner/Manager) from sale detail. Browser print only; no ESC-POS dependency.
-- **Phase 4 — Label Template System:** `LabelTemplate` (paper size, orientation,
-  field toggles); preset layouts (no drag-and-drop); batch printing + preview.
+- **Phase 4 — Label Template System (implemented):** new `labels` app with
+  `LabelTemplate` (type, paper size, orientation, font, field toggles, default
+  per type). Owner/Manager manage templates (`/dashboard/labels/templates/`);
+  Owner/Manager/Inventory print (`/dashboard/labels/print/`) by choosing a
+  template + active stock batches + quantity, with preview, browser print, and a
+  `BARCODE_PRINT` audit. A default product template is seeded by migration.
 - **Phase 5 — Promotion Label Printing:** promotion labels (old/new price,
   discount, period) built on Phase 4 templates and the existing `Promotion`
   model.

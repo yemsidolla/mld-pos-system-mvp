@@ -332,3 +332,17 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Register StoreSetting in Django Admin as a singleton | AI Generated |
 | Add Settings navigation link | AI Generated |
 | Add V4 Phase 3 tests and documentation | AI Generated |
+
+## V4 Phase 4: Label Template System
+
+| Task | Status |
+| --- | --- |
+| Create `labels` app and register it | AI Generated |
+| Add `LabelTemplate` model with field toggles and migration | AI Generated |
+| Seed a default product template via data migration | AI Generated |
+| Add Owner/Manager template management pages with audit | AI Generated |
+| Add Owner/Manager/Inventory label print page with preview | AI Generated |
+| Drive labels from a template + selected stock batches | AI Generated |
+| Audit label printing | AI Generated |
+| Add Label Templates and Print Labels navigation | AI Generated |
+| Add V4 Phase 4 tests and documentation | AI Generated |

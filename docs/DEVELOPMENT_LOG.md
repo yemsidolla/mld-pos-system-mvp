@@ -2,6 +2,23 @@
 
 ## 2026-06-09
 
+### V4 Phase 4: Label Template System
+
+- Added a new `labels` app with `LabelTemplate` (type, paper size, orientation,
+  font size, per-field show/hide toggles, header/footer, one default per type).
+  A data migration seeds a default 50×30mm product template.
+- Owner/Manager manage templates at `/dashboard/labels/templates/` (audited
+  create/update); Owner/Manager/Inventory print at `/dashboard/labels/print/` by
+  choosing a template, active stock batches, and a per-batch quantity, with a
+  live preview and browser print. Printing records a `BARCODE_PRINT` audit.
+- Labels read from stock batches (barcode/QR, price, expiry, batch) and products
+  (name, SKU, animal type, life stage) plus the store name/logo; only the fields
+  enabled on the template render. Added Label Templates and Print Labels nav.
+- The legacy single-batch label page (`/dashboard/barcode-print/`) is unchanged.
+- Documented in `docs/LABEL_TEMPLATE_GUIDE.md`.
+- Verified: `manage.py check` clean; full suite 182 tests passing (was 175);
+  migrations apply cleanly.
+
 ### V4 Phase 3: Printer Settings & 80mm Receipt
 
 - Added the `core.StoreSetting` singleton (store identity plus receipt/printer

@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "batch_upload.apps.BatchUploadConfig",
     "catalog.apps.CatalogConfig",
     "inventory.apps.InventoryConfig",
+    "labels.apps.LabelsConfig",
     "pos.apps.PosConfig",
     "reports.apps.ReportsConfig",
     "audit.apps.AuditConfig",

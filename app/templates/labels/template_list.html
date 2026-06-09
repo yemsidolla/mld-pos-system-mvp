@@ -1,0 +1,49 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Label Templates" %}{% endblock %}
+{% block page_title %}{% trans "Label Templates" %}{% endblock %}
+{% block page_subtitle %}{% trans "Configurable label layouts for products, shelves, and promotions." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'label-print' %}">{% trans "Print Labels" %}</a>
+    <a class="btn btn-primary" href="{% url 'label-template-create' %}">{% trans "New Template" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Templates" %}</h2>
+            <p>{% blocktrans count count=templates|length %}{{ count }} template.{% plural %}{{ count }} templates.{% endblocktrans %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Name" %}</th>
+                    <th>{% trans "Type" %}</th>
+                    <th>{% trans "Size (mm)" %}</th>
+                    <th>{% trans "Default" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Action" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for template in templates %}
+                <tr>
+                    <td><strong>{{ template.name }}</strong></td>
+                    <td>{{ template.get_template_type_display }}</td>
+                    <td>{{ template.paper_width_mm }} × {{ template.paper_height_mm }}</td>
+                    <td>{% if template.is_default %}<span class="badge badge-success">{% trans "Default" %}</span>{% else %}-{% endif %}</td>
+                    <td>{% if template.is_active %}<span class="badge badge-success">{% trans "Active" %}</span>{% else %}<span class="badge badge-danger">{% trans "Inactive" %}</span>{% endif %}</td>
+                    <td><a class="btn" href="{% url 'label-template-edit' template.id %}">{% trans "Edit" %}</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty-cell">{% trans "No templates yet." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

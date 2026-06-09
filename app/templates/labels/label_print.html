@@ -1,0 +1,95 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Print Labels" %}{% endblock %}
+{% block page_title %}{% trans "Print Labels" %}{% endblock %}
+{% block page_subtitle %}{% trans "Pick a template and stock batches, preview, then print." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
+{% endblock %}
+
+{% block extra_head %}
+{% if template %}
+<style>
+    .label-sheet { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tpl-label {
+        width: {{ template.paper_width_mm }}mm;
+        min-height: {{ template.paper_height_mm }}mm;
+        font-size: {{ template.font_size_px }}px;
+        border: 1px solid #ccc; padding: 2mm; box-sizing: border-box;
+        text-align: center; overflow: hidden;
+    }
+    .tpl-label img { max-width: 100%; height: auto; }
+    .tpl-label .name { font-weight: bold; }
+    @media print {
+        .no-print { display: none !important; }
+        .tpl-label { border: none; }
+        @page { margin: 4mm; }
+    }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="panel no-print">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Label Setup" %}</h2>
+            <p>{% trans "Quantity is the number of copies per selected batch." %}</p>
+        </div>
+    </header>
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="form-stack" method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
+            <button class="btn btn-success" type="submit" name="action" value="print">{% trans "Print" %}</button>
+        </div>
+    </form>
+</section>
+
+{% if template and labels %}
+<section class="panel">
+    <header class="panel-header no-print">
+        <div>
+            <h2>{% trans "Preview" %}</h2>
+            <p>{{ template.name }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
+        </div>
+    </header>
+    <div class="label-sheet">
+        {% for batch in labels %}
+            <article class="tpl-label">
+                {% if template.show_logo and store_setting.logo %}<img src="{{ store_setting.logo.url }}" alt=""><br>{% endif %}
+                {% if template.show_store_name %}<div>{{ store_setting.store_name|default:"Melodu Pet Store" }}</div>{% endif %}
+                {% if template.header_text %}<div>{{ template.header_text }}</div>{% endif %}
+                {% if template.show_product_name %}<div class="name">{{ batch.product.name }}</div>{% endif %}
+                {% if template.show_animal_type and batch.product.animal_type %}<div>{{ batch.product.get_animal_type_display }}</div>{% endif %}
+                {% if template.show_life_stage and batch.product.life_stage %}<div>{{ batch.product.get_life_stage_display }}</div>{% endif %}
+                {% if template.show_price %}<div>{{ store_setting.currency_symbol|default:"$" }}{{ batch.selling_price }}</div>{% endif %}
+                {% if template.show_sku %}<div>{{ batch.product.product_code }}</div>{% endif %}
+                {% if template.show_batch %}<div>{{ batch.batch_no }}</div>{% endif %}
+                {% if template.show_expiry %}<div>{% trans "Exp" %}: {{ batch.expiry_date }}</div>{% endif %}
+                {% if template.show_barcode and batch.barcode_image %}<img src="{{ batch.barcode_image.url }}" alt="{{ batch.batch_no }}">{% endif %}
+                {% if template.show_qr and batch.qr_image %}<img src="{{ batch.qr_image.url }}" alt="{{ batch.batch_no }}">{% endif %}
+                {% if template.custom_footer %}<div>{{ template.custom_footer }}</div>{% endif %}
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if auto_print %}
+<script>window.addEventListener("load", function () { window.print(); });</script>
+{% endif %}
+{% endblock %}

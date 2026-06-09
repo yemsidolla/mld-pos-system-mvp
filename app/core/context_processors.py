@@ -49,6 +49,11 @@ def dashboard_context(request):
         nav_items.append({"label": "Batch Upload", "url_name": "batch-upload", "href": "/dashboard/batch-upload/"})
     if user and can_manage_inventory(user):
         nav_items.append({"label": "Labels", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"})
+        nav_items.append({"label": "Print Labels", "url_name": "label-print", "href": "/dashboard/labels/print/"})
+    if user and can_manage_catalog(user):
+        nav_items.append(
+            {"label": "Label Templates", "url_name": "label-template-list", "href": "/dashboard/labels/templates/"}
+        )
     if user and can_view_sales_history(user):
         nav_items.append({"label": "Sales", "url_name": "sales-history", "href": "/dashboard/sales/"})
     if user and can_view_reports(user):
