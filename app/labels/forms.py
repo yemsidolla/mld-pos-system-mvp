@@ -1,6 +1,7 @@
 from django import forms
 
 from inventory.models import StockBatch
+from pos.models import Promotion
 
 from .models import LabelTemplate
 
@@ -60,3 +61,18 @@ class LabelPrintForm(forms.Form):
             .filter(status=StockBatch.Status.ACTIVE)
             .order_by("product__name", "batch_no")
         )
+
+
+class PromotionLabelForm(forms.Form):
+    promotion = forms.ModelChoiceField(queryset=Promotion.objects.none())
+    template = forms.ModelChoiceField(queryset=LabelTemplate.objects.none())
+    quantity = forms.IntegerField(min_value=1, max_value=200, initial=1)
+    custom_text = forms.CharField(max_length=120, required=False, initial="Special Offer")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["promotion"].queryset = Promotion.objects.filter(is_active=True).order_by("name")
+        self.fields["template"].queryset = LabelTemplate.objects.filter(
+            is_active=True,
+            template_type__in=[LabelTemplate.TemplateType.PROMOTION, LabelTemplate.TemplateType.CUSTOM],
+        ).order_by("template_type", "name")

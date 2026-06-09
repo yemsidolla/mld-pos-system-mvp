@@ -21,7 +21,7 @@ no ESC-POS library).
 | 2 | Product Classification (tags, animal type, life stage) | Implemented |
 | 3 | Printer Settings & 80mm Receipt | Implemented |
 | 4 | Label Template System | Implemented |
-| 5 | Promotion Label Printing | Planned |
+| 5 | Promotion Label Printing | Implemented |
 | 6 | Safe Data Reset / Admin Maintenance | Planned |
 
 Dependencies: 5 needs 4; 4 benefits from 2; 6 needs 1. Phases 1–3 are largely
@@ -98,9 +98,12 @@ agreed with the owner and will be restated at the start of each phase branch.
   Owner/Manager/Inventory print (`/dashboard/labels/print/`) by choosing a
   template + active stock batches + quantity, with preview, browser print, and a
   `BARCODE_PRINT` audit. A default product template is seeded by migration.
-- **Phase 5 — Promotion Label Printing:** promotion labels (old/new price,
-  discount, period) built on Phase 4 templates and the existing `Promotion`
-  model.
+- **Phase 5 — Promotion Label Printing (implemented):** Promotion Labels page
+  (`/dashboard/labels/promotions/`, Owner/Manager/Inventory) that resolves a
+  promotion's products (product or category scope), computes promo prices with
+  the shared `calculate_promotion_price`, and prints old/new price + savings +
+  period labels using a Promotion/Custom template. Seeds a default promotion
+  template; printing is audited (`BARCODE_PRINT`, promotion reference).
 - **Phase 6 — Safe Data Reset:** `reset_business_data` management command first
   (dry-run, exact-phrase confirm, env-flag guard, mandatory backup, audit
   before/after, Owner-only); dashboard UI only later if approved.

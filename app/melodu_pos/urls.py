@@ -45,6 +45,7 @@ from labels.views import (
     label_template_create_view,
     label_template_edit_view,
     label_template_list_view,
+    promotion_label_print_view,
 )
 from pos.views import (
     pos_sale_view,
@@ -118,6 +119,7 @@ urlpatterns = [
     path("dashboard/labels/templates/new/", label_template_create_view, name="label-template-create"),
     path("dashboard/labels/templates/<int:template_id>/edit/", label_template_edit_view, name="label-template-edit"),
     path("dashboard/labels/print/", label_print_view, name="label-print"),
+    path("dashboard/labels/promotions/", promotion_label_print_view, name="promotion-label-print"),
     path("dashboard/inventory/", inventory_summary_view, name="inventory-summary"),
     path("dashboard/inventory/batches/<int:batch_id>/", stock_batch_detail_view, name="stock-batch-detail"),
     path("dashboard/pos/", pos_sale_view, name="pos-sale"),

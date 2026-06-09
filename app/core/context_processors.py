@@ -50,6 +50,9 @@ def dashboard_context(request):
     if user and can_manage_inventory(user):
         nav_items.append({"label": "Labels", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"})
         nav_items.append({"label": "Print Labels", "url_name": "label-print", "href": "/dashboard/labels/print/"})
+        nav_items.append(
+            {"label": "Promotion Labels", "url_name": "promotion-label-print", "href": "/dashboard/labels/promotions/"}
+        )
     if user and can_manage_catalog(user):
         nav_items.append(
             {"label": "Label Templates", "url_name": "label-template-list", "href": "/dashboard/labels/templates/"}

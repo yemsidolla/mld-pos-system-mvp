@@ -346,3 +346,16 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Audit label printing | AI Generated |
 | Add Label Templates and Print Labels navigation | AI Generated |
 | Add V4 Phase 4 tests and documentation | AI Generated |
+
+## V4 Phase 5: Promotion Label Printing
+
+| Task | Status |
+| --- | --- |
+| Add promotion label print page (Owner/Manager/Inventory) | AI Generated |
+| Resolve promotion products by product/category scope | AI Generated |
+| Compute promo prices via shared pricing logic | AI Generated |
+| Render old/new price, savings, and period labels | AI Generated |
+| Seed a default promotion label template | AI Generated |
+| Audit promotion label printing | AI Generated |
+| Add Promotion Labels navigation | AI Generated |
+| Add V4 Phase 5 tests and documentation | AI Generated |

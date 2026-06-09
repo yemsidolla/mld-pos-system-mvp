@@ -1,0 +1,92 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Promotion Labels" %}{% endblock %}
+{% block page_title %}{% trans "Promotion Labels" %}{% endblock %}
+{% block page_subtitle %}{% trans "Print special-offer labels for a promotion's products." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
+{% endblock %}
+
+{% block extra_head %}
+{% if template %}
+<style>
+    .label-sheet { display: flex; flex-wrap: wrap; gap: 4px; }
+    .promo-label {
+        width: {{ template.paper_width_mm }}mm;
+        min-height: {{ template.paper_height_mm }}mm;
+        font-size: {{ template.font_size_px }}px;
+        border: 1px solid #ccc; padding: 2mm; box-sizing: border-box;
+        text-align: center; overflow: hidden;
+    }
+    .promo-label .name { font-weight: bold; }
+    .promo-label .was { text-decoration: line-through; color: #555; }
+    .promo-label .now { font-size: 1.4em; font-weight: bold; }
+    .promo-label .offer { letter-spacing: 1px; }
+    @media print {
+        .no-print { display: none !important; }
+        .promo-label { border: none; }
+        @page { margin: 4mm; }
+    }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="panel no-print">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Promotion Label Setup" %}</h2>
+            <p>{% trans "Quantity is the number of copies per product in the promotion." %}</p>
+        </div>
+    </header>
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="form-stack" method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
+            <button class="btn btn-success" type="submit" name="action" value="print">{% trans "Print" %}</button>
+        </div>
+    </form>
+</section>
+
+{% if template and labels %}
+<section class="panel">
+    <header class="panel-header no-print">
+        <div>
+            <h2>{% trans "Preview" %}</h2>
+            <p>{{ promotion.name }} · {{ promotion.start_date }} → {{ promotion.end_date }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
+        </div>
+    </header>
+    <div class="label-sheet">
+        {% for card in labels %}
+            <article class="promo-label">
+                {% if template.show_store_name %}<div>{{ store_setting.store_name|default:"Melodu Pet Store" }}</div>{% endif %}
+                {% if card.custom_text %}<div class="offer">{{ card.custom_text }}</div>{% elif template.header_text %}<div class="offer">{{ template.header_text }}</div>{% endif %}
+                {% if template.show_product_name %}<div class="name">{{ card.product.name }}</div>{% endif %}
+                <div class="was">{{ store_setting.currency_symbol|default:"$" }}{{ card.original_price }}</div>
+                <div class="now">{{ store_setting.currency_symbol|default:"$" }}{{ card.promo_price }}</div>
+                <div>{% trans "Save" %} {{ store_setting.currency_symbol|default:"$" }}{{ card.discount }}</div>
+                <div class="muted">{{ promotion.start_date }} – {{ promotion.end_date }}</div>
+                {% if template.custom_footer %}<div>{{ template.custom_footer }}</div>{% endif %}
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if auto_print %}
+<script>window.addEventListener("load", function () { window.print(); });</script>
+{% endif %}
+{% endblock %}

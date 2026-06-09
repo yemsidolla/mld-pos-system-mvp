@@ -8,10 +8,11 @@ from django.urls import reverse
 
 from accounts.models import StaffProfile
 from audit.models import AuditLog
-from catalog.models import Product, Supplier
+from catalog.models import Category, Product, Supplier
 from core.permissions import ROLE_INVENTORY, ROLE_VIEWER
 from inventory.models import StockBatch
 from inventory.services import receive_stock
+from pos.models import Promotion
 
 from .models import LabelTemplate
 
@@ -132,3 +133,61 @@ class LabelPrintTests(TestCase):
                 action=AuditLog.Action.BARCODE_PRINT, module="labels"
             ).exists()
         )
+
+
+class PromotionLabelTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_user(
+            username="promo-owner", password="Admin123", is_staff=True, is_superuser=True
+        )
+        self.category = Category.objects.create(name="Food")
+        self.product = Product.objects.create(
+            product_code="P001",
+            name="Cat Food",
+            category=self.category,
+            default_selling_price=Decimal("10.00"),
+        )
+        self.promotion = Promotion.objects.create(
+            name="Cat Week",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("20.00"),
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 12, 31),
+            is_active=True,
+            category=self.category,
+            created_by=self.owner,
+        )
+
+    def test_promotion_label_print_renders_old_and_new_price(self):
+        template = LabelTemplate.default_for("PROMOTION")
+        self.assertIsNotNone(template)
+        self.client.force_login(self.owner)
+
+        response = self.client.post(
+            reverse("promotion-label-print"),
+            {
+                "promotion": self.promotion.id,
+                "template": template.id,
+                "quantity": "2",
+                "custom_text": "Special Offer",
+                "action": "print",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Cat Food")
+        self.assertContains(response, "10.00")  # original price
+        self.assertContains(response, "8.00")   # 20% off
+        self.assertContains(response, 'class="promo-label"', count=2)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action=AuditLog.Action.BARCODE_PRINT, module="labels", object_id=str(self.promotion.pk)
+            ).exists()
+        )
+
+    def test_inventory_staff_can_open_but_viewer_cannot(self):
+        self.client.force_login(_profile_user("promo-inv", ROLE_INVENTORY))
+        self.assertEqual(self.client.get(reverse("promotion-label-print")).status_code, 200)
+
+        self.client.force_login(_profile_user("promo-vw", ROLE_VIEWER))
+        self.assertEqual(self.client.get(reverse("promotion-label-print")).status_code, 403)

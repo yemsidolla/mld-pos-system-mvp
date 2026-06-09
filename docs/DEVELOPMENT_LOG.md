@@ -2,6 +2,20 @@
 
 ## 2026-06-09
 
+### V4 Phase 5: Promotion Label Printing
+
+- Added a Promotion Labels page (`/dashboard/labels/promotions/`, Owner/Manager/
+  Inventory) that resolves a promotion's products (product or category scope),
+  computes the promo price for each with the shared `calculate_promotion_price`,
+  and prints special-offer labels showing the old price, new price, savings, and
+  promotion period using a Promotion/Custom label template.
+- Seeded a default 70×50mm promotion label template via migration; printing is
+  audited as `BARCODE_PRINT` with the promotion reference, template, and product
+  codes. Added a Promotion Labels nav item.
+- Documented in `docs/PROMOTION_LABEL_GUIDE.md`.
+- Verified: `manage.py check` clean; full suite 184 tests passing (was 182);
+  migrations apply cleanly.
+
 ### V4 Phase 4: Label Template System
 
 - Added a new `labels` app with `LabelTemplate` (type, paper size, orientation,
