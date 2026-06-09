@@ -6,6 +6,17 @@ Date: 2026-06-09
 
 V2 features must build on stable V1 workflows. Prefer features that reuse existing models, reports, permissions, and tests before adding new data structures.
 
+## Completed Phase 2A Slice: Inline Master-Data Quick Add
+
+Status: implemented.
+
+Delivered:
+
+- Category and Brand quick-add from Product create/edit.
+- Supplier quick-add from Stock-In.
+- Admin-only JSON endpoint with CSRF protection.
+- Audit logging and duplicate-name validation.
+
 ## Priority 1: Report Exports
 
 Default first V2 feature.

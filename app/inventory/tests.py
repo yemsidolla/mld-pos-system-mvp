@@ -130,6 +130,21 @@ class StockInPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Stock-In")
 
+    def test_stock_in_page_renders_supplier_quick_add_control(self):
+        user = get_user_model().objects.create_user(
+            username="stock-admin",
+            password="Admin123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("stock-in"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-quick-create-type="supplier"')
+        self.assertContains(response, 'data-quick-create-target="#id_supplier"')
+
     def test_anonymous_user_is_redirected_from_stock_in_page(self):
         response = self.client.get(reverse("stock-in"))
 

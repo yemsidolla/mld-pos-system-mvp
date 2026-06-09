@@ -87,3 +87,35 @@ class SupplierForm(forms.ModelForm):
             "address": forms.Textarea(attrs={"rows": 3}),
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
+
+
+class QuickCreateNameMixin:
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+        if self.Meta.model.objects.filter(name__iexact=name).exists():
+            raise forms.ValidationError(f"{self.Meta.model._meta.verbose_name.title()} already exists.")
+        return name
+
+
+class QuickCategoryForm(QuickCreateNameMixin, forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ("name", "description")
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 2}),
+        }
+
+
+class QuickBrandForm(QuickCreateNameMixin, forms.ModelForm):
+    class Meta:
+        model = Brand
+        fields = ("name", "description")
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 2}),
+        }
+
+
+class QuickSupplierForm(QuickCreateNameMixin, forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = ("name", "contact_person", "phone", "telegram")

@@ -1,14 +1,35 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
-from core.permissions import admin_required
+from core.permissions import admin_required, is_admin_user
 
-from .forms import BrandForm, CatalogFilterForm, CategoryForm, ProductFilterForm, ProductForm, SupplierForm
+from .forms import (
+    BrandForm,
+    CatalogFilterForm,
+    CategoryForm,
+    ProductFilterForm,
+    ProductForm,
+    QuickBrandForm,
+    QuickCategoryForm,
+    QuickSupplierForm,
+    SupplierForm,
+)
 from .models import Brand, Category, Product, Supplier
+
+
+QUICK_CREATE_FORMS = {
+    "category": (QuickCategoryForm, "Category"),
+    "brand": (QuickBrandForm, "Brand"),
+    "supplier": (QuickSupplierForm, "Supplier"),
+}
 
 
 def _apply_status_filter(queryset, status):
@@ -36,6 +57,53 @@ def _model_snapshot(obj, fields):
         value = getattr(obj, field)
         snapshot[field] = str(value) if value is not None else None
     return snapshot
+
+
+def _form_errors_payload(form):
+    return {field: [str(error) for error in errors] for field, errors in form.errors.items()}
+
+
+@require_POST
+@login_required
+def catalog_quick_create_view(request):
+    if not is_admin_user(request.user):
+        return JsonResponse({"status": "error", "error": "Access denied."}, status=403)
+
+    item_type = request.POST.get("type", "").strip().lower()
+    config = QUICK_CREATE_FORMS.get(item_type)
+    if config is None:
+        return JsonResponse({"status": "error", "error": "Unsupported quick-create type."}, status=400)
+
+    form_class, object_type = config
+    form = form_class(request.POST)
+    if not form.is_valid():
+        return JsonResponse({"status": "error", "errors": _form_errors_payload(form)}, status=400)
+
+    with transaction.atomic():
+        obj = form.save(commit=False)
+        obj.is_active = True
+        obj.save()
+        create_audit_log(
+            action=AuditLog.Action.CREATE,
+            module="catalog",
+            user=request.user,
+            request=request,
+            object_type=object_type,
+            object_id=obj.pk,
+            object_display=str(obj),
+            new_value=_model_snapshot(obj, form_class.Meta.fields + ("is_active",)),
+        )
+
+    return JsonResponse(
+        {
+            "status": "ok",
+            "item": {
+                "id": obj.pk,
+                "label": obj.name,
+                "type": item_type,
+            },
+        }
+    )
 
 
 def _master_data_list_view(

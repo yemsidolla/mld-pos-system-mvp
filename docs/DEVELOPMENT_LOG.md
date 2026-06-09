@@ -203,3 +203,10 @@
 - Added the `expire_batches` maintenance command for audited expired-stock processing without adding a scheduler dependency.
 - Hardened backup/restore scripts with explicit compose targeting and restore confirmation.
 - Set report exports as the first low-risk V2 feature family after stabilization.
+
+### V2 Phase 2A UX Stabilization
+
+- Added inline quick-create for Category and Brand on Product create/edit.
+- Added inline quick-create for Supplier on Stock-In.
+- Added an Admin-only catalog quick-create JSON endpoint with CSRF protection, duplicate-name validation, and audit logging.
+- Added a shared dashboard quick-create modal that appends and selects the new option without losing unsaved form data.

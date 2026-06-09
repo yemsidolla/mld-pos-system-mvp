@@ -160,6 +160,105 @@ class ProductDashboardTests(TestCase):
         self.assertEqual(self.product.name, "Cat Food Updated")
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.UPDATE, module="catalog").exists())
 
+    def test_product_form_renders_quick_add_controls(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("product-create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-quick-create-type="category"')
+        self.assertContains(response, 'data-quick-create-target="#id_category"')
+        self.assertContains(response, 'data-quick-create-type="brand"')
+        self.assertContains(response, 'data-quick-create-target="#id_brand"')
+
+
+class CatalogQuickCreateTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(username="quick-admin", password="Admin123")
+        admin_group, _created = Group.objects.get_or_create(name=ADMIN_GROUP)
+        self.admin.groups.add(admin_group)
+        self.cashier = get_user_model().objects.create_user(username="quick-cashier", password="Admin123")
+        cashier_group, _created = Group.objects.get_or_create(name=CASHIER_GROUP)
+        self.cashier.groups.add(cashier_group)
+
+    def test_admin_can_quick_create_category(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("catalog-quick-create"),
+            {"type": "category", "name": "Treats", "description": "Snack products"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["item"]["type"], "category")
+        self.assertEqual(payload["item"]["label"], "Treats")
+        self.assertTrue(Category.objects.filter(name="Treats", is_active=True).exists())
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.CREATE, object_type="Category").exists())
+
+    def test_admin_can_quick_create_brand(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("catalog-quick-create"),
+            {"type": "brand", "name": "Happy Paw", "description": ""},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Brand.objects.filter(name="Happy Paw", is_active=True).exists())
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.CREATE, object_type="Brand").exists())
+
+    def test_admin_can_quick_create_supplier(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("catalog-quick-create"),
+            {
+                "type": "supplier",
+                "name": "Pet Wholesale",
+                "contact_person": "Sophea",
+                "phone": "012345678",
+                "telegram": "@supplier",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Supplier.objects.filter(name="Pet Wholesale", is_active=True).exists())
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.CREATE, object_type="Supplier").exists())
+
+    def test_quick_create_rejects_case_insensitive_duplicate_name(self):
+        Category.objects.create(name="Treats")
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse("catalog-quick-create"), {"type": "category", "name": "treats"})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Category.objects.count(), 1)
+        self.assertIn("name", response.json()["errors"])
+
+    def test_quick_create_rejects_unsupported_type(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse("catalog-quick-create"), {"type": "product", "name": "Toy"})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["status"], "error")
+
+    def test_cashier_cannot_quick_create_master_data(self):
+        self.client.force_login(self.cashier)
+
+        response = self.client.post(reverse("catalog-quick-create"), {"type": "category", "name": "Treats"})
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Category.objects.filter(name="Treats").exists())
+
+    def test_anonymous_user_is_redirected_from_quick_create(self):
+        response = self.client.post(reverse("catalog-quick-create"), {"type": "category", "name": "Treats"})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Category.objects.filter(name="Treats").exists())
+
 
 class MasterDataDashboardTests(TestCase):
     def setUp(self):

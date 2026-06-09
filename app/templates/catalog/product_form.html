@@ -31,6 +31,16 @@
                             {{ field }}
                             <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% trans "Scan" %}</button>
                         </div>
+                    {% elif field.name == "category" %}
+                        <div class="input-row">
+                            {{ field }}
+                            <button class="btn" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% trans "New Category" %}</button>
+                        </div>
+                    {% elif field.name == "brand" %}
+                        <div class="input-row">
+                            {{ field }}
+                            <button class="btn" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% trans "New Brand" %}</button>
+                        </div>
                     {% else %}
                         {{ field }}
                     {% endif %}

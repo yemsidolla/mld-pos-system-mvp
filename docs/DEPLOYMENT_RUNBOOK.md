@@ -96,6 +96,12 @@ docker compose -f docker-compose.prod.yml exec web python manage.py setup_roles 
 
 Do not set the production admin password to the local development password.
 
+After `collectstatic`, restart `web` so the running Django process reads the latest static manifest:
+
+```bash
+docker compose -f docker-compose.prod.yml restart web
+```
+
 ## Host Nginx
 
 Nginx should be installed on the host and proxy to Django/Gunicorn:
@@ -134,6 +140,7 @@ Check:
 - `/dashboard/` loads.
 - `/admin/` loads for trusted admin users.
 - Static assets load.
+- Pages reference the latest collected static asset hashes after `web` restart.
 - Product images/media load.
 - POS sale can be completed.
 - Stock-in can create a batch.

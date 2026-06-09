@@ -12,6 +12,7 @@ docker compose -f docker-compose.prod.yml config --services
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py check
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py test
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py collectstatic --noinput
+docker compose -f docker-compose.yml -f docker-compose.local.yml restart web
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec -T -e DJANGO_SECRET_KEY=replace-with-64-character-secret-value-1234567890abcdef1234567890abcdef -e DJANGO_SESSION_COOKIE_SECURE=True -e DJANGO_CSRF_COOKIE_SECURE=True -e DJANGO_SECURE_SSL_REDIRECT=True -e DJANGO_SECURE_HSTS_SECONDS=31536000 -e DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True -e DJANGO_SECURE_HSTS_PRELOAD=True web python manage.py check --deploy
 sh -n scripts/backup_db.sh scripts/backup_media.sh scripts/restore_db.sh scripts/restore_media.sh
 ```
@@ -52,6 +53,10 @@ curl -I http://192.168.1.199:8000/health/
 - Create and edit category.
 - Create and edit brand.
 - Create and edit supplier.
+- Quick-create category from the Product form modal.
+- Quick-create brand from the Product form modal.
+- Reject duplicate quick-created category/brand/supplier names.
+- Confirm quick-create actions write audit logs.
 - Create and edit product.
 - Search product by name, product code, and original barcode.
 - Filter products by category, brand, and status.
@@ -60,6 +65,7 @@ curl -I http://192.168.1.199:8000/health/
 ## Stock-In And Inventory Tests
 
 - Receive stock for active product and active supplier.
+- Quick-create supplier from the Stock-In form modal.
 - Reject stock-in for inactive product.
 - Reject stock-in for inactive supplier.
 - Reject zero or negative stock-in quantity.
@@ -145,6 +151,7 @@ curl -I http://192.168.1.199:8000/health/
 - No Docker Nginx service appears in compose config.
 - Host Nginx proxy points to the configured Django/Gunicorn port.
 - Static files load through WhiteNoise.
+- Restart `web` after `collectstatic` so pages use the latest static manifest.
 - Media files remain available after container restart.
 - Database, media, static, and logs persist.
 

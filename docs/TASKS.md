@@ -246,3 +246,15 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Stabilize stock report inclusion rules | Done |
 | Add audited expired-batch maintenance command | Done |
 | Harden backup and restore scripts | Done |
+
+## V2 Phase 2A: Dashboard Access And POS UX Stabilization
+
+| Task | Status |
+| --- | --- |
+| Add inline category quick-create from product form | Done |
+| Add inline brand quick-create from product form | Done |
+| Add inline supplier quick-create from stock-in form | Done |
+| Add admin-only quick-create JSON endpoint | Done |
+| Add quick-create audit logging | Done |
+| Add quick-create duplicate validation | Done |
+| Add quick-create tests and documentation | Done |

@@ -1,0 +1,22 @@
+{% load i18n %}
+<div class="quick-create-modal" data-quick-create-modal data-quick-create-url="{% url 'catalog-quick-create' %}" hidden>
+    <div class="quick-create-backdrop" data-quick-create-close></div>
+    <section class="quick-create-panel" role="dialog" aria-modal="true" aria-labelledby="quick-create-title">
+        <header class="quick-create-header">
+            <div>
+                <p class="eyebrow">{% trans "Quick add" %}</p>
+                <h2 id="quick-create-title" data-quick-create-title>{% trans "New item" %}</h2>
+            </div>
+            <button class="icon-button" type="button" data-quick-create-close aria-label="{% trans 'Close quick add' %}">×</button>
+        </header>
+        <div class="quick-create-status" data-quick-create-status>{% trans "Create the missing item without leaving this page." %}</div>
+        <form class="form-stack" data-quick-create-form>
+            <div class="quick-create-fields" data-quick-create-fields></div>
+            <div class="quick-create-errors" data-quick-create-errors aria-live="polite"></div>
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit" data-quick-create-submit>{% trans "Create" %}</button>
+                <button class="btn" type="button" data-quick-create-close>{% trans "Cancel" %}</button>
+            </div>
+        </form>
+    </section>
+</div>
