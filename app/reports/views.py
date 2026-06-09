@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from catalog.models import Product
-from core.permissions import admin_required
+from core.permissions import reports_required
 from inventory.models import InventoryMovement, StockBatch
 from inventory.services import get_expiry_status
 from pos.models import Sale
@@ -30,12 +30,12 @@ def with_sellable_stock(queryset, today=None):
     )
 
 
-@admin_required
+@reports_required
 def reports_index_view(request):
     return render(request, "reports/index.html")
 
 
-@admin_required
+@reports_required
 def daily_sales_report_view(request):
     requested_date = request.GET.get("date")
     report_date = parse_date(requested_date) if requested_date else timezone.localdate()
@@ -59,13 +59,13 @@ def daily_sales_report_view(request):
     )
 
 
-@admin_required
+@reports_required
 def stock_summary_report_view(request):
     products = with_sellable_stock(Product.objects.all()).order_by("name")
     return render(request, "reports/stock_summary.html", {"products": products})
 
 
-@admin_required
+@reports_required
 def low_stock_report_view(request):
     products = (
         with_sellable_stock(Product.objects.all())
@@ -75,7 +75,7 @@ def low_stock_report_view(request):
     return render(request, "reports/low_stock.html", {"products": products})
 
 
-@admin_required
+@reports_required
 def expiry_report_view(request):
     today = timezone.localdate()
     warning_date = today + timedelta(days=60)
@@ -88,13 +88,13 @@ def expiry_report_view(request):
     return render(request, "reports/expiry.html", {"rows": rows})
 
 
-@admin_required
+@reports_required
 def stock_movement_report_view(request):
     movements = InventoryMovement.objects.select_related("product", "stock_batch", "created_by").order_by("-created_at")[:300]
     return render(request, "reports/stock_movements.html", {"movements": movements})
 
 
-@admin_required
+@reports_required
 def staff_sales_report_view(request):
     rows = (
         Sale.objects.filter(status=Sale.Status.COMPLETED)

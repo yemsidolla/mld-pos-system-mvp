@@ -1,0 +1,57 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "User Management" %}{% endblock %}
+{% block page_title %}{% trans "User Management" %}{% endblock %}
+{% block page_subtitle %}{% trans "Create staff accounts and assign dashboard roles." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn btn-primary" href="{% url 'user-create' %}">{% trans "New User" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Staff Accounts" %}</h2>
+            <p>{% blocktrans count count=rows|length %}{{ count }} account.{% plural %}{{ count }} accounts.{% endblocktrans %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Username" %}</th>
+                    <th>{% trans "Name" %}</th>
+                    <th>{% trans "Role" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Last Login" %}</th>
+                    <th>{% trans "Action" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>
+                        <strong>{{ row.user.username }}</strong>
+                        {% if row.is_superuser %}<br><span class="badge">{% trans "Superuser" %}</span>{% endif %}
+                    </td>
+                    <td>{{ row.user.get_full_name|default:"—" }}</td>
+                    <td>{{ row.role_label }}</td>
+                    <td>
+                        {% if row.user.is_active %}
+                            <span class="badge badge-success">{% trans "Active" %}</span>
+                        {% else %}
+                            <span class="badge badge-danger">{% trans "Disabled" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.user.last_login|default:"—" }}</td>
+                    <td><a class="btn" href="{% url 'user-edit' row.user.id %}">{% trans "Edit" %}</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty-cell">{% trans "No users found." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from accounts.views import user_create_view, user_edit_view, user_list_view
 from batch_upload.views import (
     batch_upload_commit_view,
     batch_upload_detail_view,
@@ -61,6 +62,9 @@ urlpatterns = [
     path("dashboard/logout/", dashboard_logout_view, name="dashboard-logout"),
     path("dashboard/", dashboard_home_view, name="dashboard-home"),
     path("dashboard/api/scan/resolve/", scan_resolve_view, name="scan-resolve"),
+    path("dashboard/users/", user_list_view, name="user-list"),
+    path("dashboard/users/new/", user_create_view, name="user-create"),
+    path("dashboard/users/<int:user_id>/edit/", user_edit_view, name="user-edit"),
     path("dashboard/api/catalog/quick-create/", catalog_quick_create_view, name="catalog-quick-create"),
     path("dashboard/products/", product_list_view, name="product-list"),
     path("dashboard/products/new/", product_create_view, name="product-create"),

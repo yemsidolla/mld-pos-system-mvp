@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
-from core.permissions import ADMIN_GROUP, CASHIER_GROUP
+from accounts.models import StaffProfile
+from core.permissions import ADMIN_GROUP, CASHIER_GROUP, ROLE_OWNER
 
 
 class Command(BaseCommand):
@@ -40,5 +41,7 @@ class Command(BaseCommand):
                 user.email = options["email"]
                 update_fields.append("email")
             user.save(update_fields=update_fields)
+
+            StaffProfile.objects.update_or_create(user=user, defaults={"role": ROLE_OWNER})
 
         self.stdout.write(self.style.SUCCESS("Default roles are ready."))

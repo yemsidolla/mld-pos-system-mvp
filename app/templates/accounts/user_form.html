@@ -1,0 +1,45 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% if mode == "create" %}{% trans "New User" %}{% else %}{% trans "Edit User" %}{% endif %}{% endblock %}
+{% block page_title %}{% if mode == "create" %}{% trans "New User" %}{% else %}{% trans "Edit User" %}: {{ target.username }}{% endif %}{% endblock %}
+{% block page_subtitle %}{% trans "Assign a dashboard role and manage account access." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'user-list' %}">{% trans "Back to Users" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    {% if mode == "edit" %}
+        <header class="panel-header">
+            <div>
+                <h2>{{ target.username }}</h2>
+                <p>{% trans "Current role" %}: {{ target_role_label }}{% if target.is_superuser %} · {% trans "Django superuser" %}{% endif %}</p>
+            </div>
+        </header>
+    {% endif %}
+    <form class="form-stack" method="post" autocomplete="off">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        {% if not request_is_owner %}
+            <p class="muted">{% trans "Only an Owner can assign the Owner role or edit an Owner/superuser account." %}</p>
+        {% endif %}
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">
+                {% if mode == "create" %}{% trans "Create User" %}{% else %}{% trans "Save Changes" %}{% endif %}
+            </button>
+            <a class="btn" href="{% url 'user-list' %}">{% trans "Cancel" %}</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

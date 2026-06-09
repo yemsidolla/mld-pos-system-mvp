@@ -289,3 +289,18 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add V3 audit logging for cost, promotion, below-cost, and override events | Done |
 | Add POS promotion labels, quantity steppers, sticky cart, and mobile layout improvements | Done |
 | Add V3 tests and documentation | Done |
+
+## V4 Phase 1: User Management & Permissions
+
+| Task | Status |
+| --- | --- |
+| Add `accounts.StaffProfile` role model and migration | AI Generated |
+| Backfill profiles for existing users (map and keep) | AI Generated |
+| Rewrite `core.permissions` with roles, capabilities, and compatibility shims | AI Generated |
+| Add dashboard user management (list/create/edit/disable) | AI Generated |
+| Add role-aware navigation and Users link | AI Generated |
+| Re-gate inventory, reports, and sales pages to the permission matrix | AI Generated |
+| Extend `set_user_role`/`setup_roles` to five roles and profiles | AI Generated |
+| Add Owner-only, self-protection, and last-Owner safeguards | AI Generated |
+| Audit user create/update/role-change/disable | AI Generated |
+| Add V4 Phase 1 tests and documentation | AI Generated |

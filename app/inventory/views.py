@@ -6,14 +6,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from catalog.models import Product
-from core.permissions import admin_required
+from core.permissions import inventory_required
 
 from .forms import DamageStockForm, InventoryAdjustmentForm, LabelPrintForm, MarkExpiredForm, StockInForm
 from .models import StockBatch
 from .services import adjust_stock, get_expiry_status, mark_batch_damaged, mark_batch_expired, receive_stock
 
 
-@admin_required
+@inventory_required
 def stock_in_view(request):
     form = StockInForm(request.POST or None)
     stock_batch = None
@@ -41,7 +41,7 @@ def stock_in_view(request):
     return render(request, "inventory/stock_in.html", {"form": form, "stock_batch": stock_batch})
 
 
-@admin_required
+@inventory_required
 def barcode_print_view(request):
     form = LabelPrintForm(request.POST or None)
     stock_batch = None
@@ -82,7 +82,7 @@ def barcode_print_view(request):
     )
 
 
-@admin_required
+@inventory_required
 def inventory_summary_view(request):
     products = (
         Product.objects.filter(stock_batches__isnull=False)
@@ -94,7 +94,7 @@ def inventory_summary_view(request):
     return render(request, "inventory/inventory_summary.html", {"products": products, "batches": batches})
 
 
-@admin_required
+@inventory_required
 def stock_batch_detail_view(request, batch_id):
     stock_batch = get_object_or_404(StockBatch.objects.select_related("product", "supplier", "received_by"), pk=batch_id)
     adjustment_form = InventoryAdjustmentForm()

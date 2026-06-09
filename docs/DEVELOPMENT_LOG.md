@@ -1,5 +1,31 @@
 # Development Log
 
+## 2026-06-09
+
+### V4 Phase 1: User Management & Permissions
+
+- Added `accounts.StaffProfile` (Owner, Manager, Inventory staff, Cashier,
+  Viewer) with a data migration that backfills existing users (superuser →
+  Owner, `Admin` group → Manager, `Cashier` group → Cashier) and leaves
+  unassigned users without dashboard access.
+- Rewrote `core.permissions` with `get_user_role` resolution (superusers are
+  always Owner), role/capability predicates, and capability decorators.
+  `admin_required`, `pos_required`, `is_admin_user`, `is_cashier_user`, and
+  `can_access_pos` are preserved as compatibility shims (map and keep).
+- Added dashboard user management at `/dashboard/users/` (list, create, edit,
+  disable) for Owner/Manager, with role-aware navigation and a Users link.
+- Re-gated inventory, labels, reports, and sales-history pages to the new
+  permission matrix; Cashier access (POS + receipts) is unchanged.
+- Extended `set_user_role` to all five roles (legacy `admin`/`cashier` aliases
+  retained) and made `setup_roles` seed an Owner profile for the dev superuser.
+- Added Owner-only assignment, self-protection, and last-Owner safeguards, plus
+  audit logging for user create, update, role change, and disable.
+- Documented the plan and matrix in `docs/V4_PHASE_PLAN.md` and
+  `docs/PERMISSION_MATRIX.md`; updated `docs/USER_MANAGEMENT_GUIDE.md`.
+- Verified: `manage.py check` clean; full suite 159 tests passing (was 141);
+  migrations apply cleanly; `check --deploy` shows only the pre-existing
+  environment warnings.
+
 ## 2026-06-06
 
 ### Phase 0: Project Bootstrap

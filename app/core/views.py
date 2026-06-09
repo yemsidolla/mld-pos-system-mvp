@@ -21,7 +21,12 @@ from inventory.models import StockBatch
 from pos.models import Sale
 from pos.services import parse_custom_code
 
-from .permissions import can_access_pos, is_admin_user, is_cashier_user, pos_required
+from .permissions import (
+    can_access_dashboard,
+    dashboard_required,
+    is_admin_user,
+    is_cashier_user,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -67,13 +72,14 @@ def dashboard_logout_view(request):
 
 def _error_context(request, status_code, title, message):
     user = getattr(request, "user", None)
-    if user and user.is_authenticated and can_access_pos(user):
-        if is_cashier_user(user) and not is_admin_user(user):
-            action_label = "Back to POS"
-            action_url = reverse("pos-sale")
-        else:
-            action_label = "Back to Dashboard"
-            action_url = reverse("dashboard-home")
+    if user and user.is_authenticated and is_cashier_user(user) and not is_admin_user(user):
+        action_label = "Back to POS"
+        action_url = reverse("pos-sale")
+        secondary_label = "Login again"
+        secondary_url = reverse("dashboard-login")
+    elif user and user.is_authenticated and can_access_dashboard(user):
+        action_label = "Back to Dashboard"
+        action_url = reverse("dashboard-home")
         secondary_label = "Login again"
         secondary_url = reverse("dashboard-login")
     else:
@@ -195,7 +201,7 @@ def _resolve_warnings(product=None, stock_batch=None):
     return warnings
 
 
-@pos_required
+@dashboard_required
 def dashboard_home_view(request):
     today = timezone.localdate()
     context = {
@@ -230,7 +236,7 @@ def dashboard_home_view(request):
 
 
 @require_GET
-@pos_required
+@dashboard_required
 def scan_resolve_view(request):
     value = request.GET.get("value", "").strip()
     context = request.GET.get("context", "").strip() or "general"
