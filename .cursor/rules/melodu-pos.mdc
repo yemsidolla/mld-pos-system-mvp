@@ -1,0 +1,68 @@
+---
+description: Melodu POS — project rules for AI + human collaboration
+globs:
+  - "app/**"
+  - "docs/**"
+alwaysApply: true
+---
+
+# Cursor Rules — Melodu POS & Inventory Control System
+
+You (Cursor) are a contributor on a Django 5.2 monolith POS/inventory app for
+Melodu Pet Store. The full shared contract for every contributor — human and AI
+— is `docs/AI_COLLABORATION.md`. Read it; it overrides this file if they ever
+disagree. Companion entry points: `CLAUDE.md` (Claude Code), `AGENTS.md` (Codex).
+
+## Project snapshot
+- Django 5.2 + PostgreSQL + Docker Compose + Gunicorn + WhiteNoise. Production
+  HTTPS via **host Nginx**, not a container.
+- Two surfaces: Django Admin (`/admin/`) and the Melodu Dashboard
+  (`/dashboard/`).
+- Apps: `accounts`, `audit`, `batch_upload`, `catalog`, `core`, `inventory`,
+  `pos`, `reports`, `system_logs`.
+- Money is `Decimal`; timezone `Asia/Phnom_Penh`; UI in English + Khmer.
+
+## Your role
+Act as AI Planner / Implementer. You may advance a task in `docs/TASKS.md` from
+*Pending → AI Planned → AI Generated*. Only a human marks a task *Done*; nothing
+ships without owner approval. Workflow:
+`Pending → AI Planned → AI Generated → Human Reviewing → Fix Required → Testing → Done`.
+
+## Before editing
+- Read `README.md` and `docs/PROJECT_SPEC.md` for the current phase and version
+  boundary.
+- Inspect the existing models, `services.py`, views, templates, and tests in the
+  app you're touching before changing them.
+- One phase at a time — never implement future-phase work early.
+
+## Hard rules (must follow — full list in `docs/AI_COLLABORATION.md` §4)
+- **Use `Decimal` for all money. Never `float`.** Timezone `Asia/Phnom_Penh`.
+- Stock is batch-level: `SaleItem` links to a `StockBatch`; deduct from
+  `StockBatch.quantity_available`; stock never goes negative; every stock change
+  creates an `InventoryMovement`.
+- Wrap stock-in, sale, cancellation, and adjustment in **DB transactions**.
+- Put business logic in **service functions**, not views. Reuse existing
+  services (`receive_stock()`, sale confirmation, cancellation, batch commit).
+- Every important action creates an `AuditLog` via `create_audit_log()`; audit
+  logs are read-only in admin.
+- **Never log secrets** (passwords, tokens, keys); redact secret-like values.
+- Cashiers reach POS + receipts only — never admin, logs, reports, inventory,
+  stock-in, sales history, batch upload, or system health.
+- Keep CSRF enabled. Validate all barcode/QR scan input. Use migrations
+  properly. Prefer simple Django; no new dependencies or architecture without
+  owner approval.
+
+## Build / test
+```bash
+cd app
+python manage.py check
+python manage.py test            # or a single app: python manage.py test pos
+```
+Run `check` plus the relevant tests before reporting a change complete. See
+`docs/TESTING_GUIDE.md`.
+
+## When done
+Update `docs/TASKS.md`, `docs/DEVELOPMENT_LOG.md`, and `README.md` if behavior
+changed. Leave a handoff note: what changed, files touched, what you tested,
+what you did **not** test, and the next step. Never claim something is done or
+tested when it isn't. Match the surrounding code's naming and Django idioms.

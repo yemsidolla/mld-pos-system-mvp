@@ -1,0 +1,41 @@
+# Cursor Rules — Melodu POS (legacy file)
+
+Modern Cursor uses `.cursor/rules/melodu-pos.mdc`. This file mirrors it for
+older Cursor versions. The full shared contract for all contributors is
+`docs/AI_COLLABORATION.md` (it wins on any conflict).
+
+Project: Django 5.2 monolith POS/inventory for Melodu Pet Store. PostgreSQL,
+Docker Compose, Gunicorn, WhiteNoise. Production HTTPS via host Nginx, not a
+container. Surfaces: Django Admin (/admin/) and Melodu Dashboard (/dashboard/).
+Apps: accounts, audit, batch_upload, catalog, core, inventory, pos, reports,
+system_logs. Money is Decimal; timezone Asia/Phnom_Penh; UI English + Khmer.
+
+Role: AI Planner / Implementer. Advance tasks in docs/TASKS.md only
+Pending -> AI Planned -> AI Generated. Only a human marks Done. Nothing ships
+without owner approval. One phase at a time; never build future-phase work early.
+
+Hard rules:
+- Use Decimal for all money. Never float. Timezone Asia/Phnom_Penh.
+- Stock is batch-level: SaleItem links to a StockBatch; deduct from
+  StockBatch.quantity_available; never go negative; every stock change creates an
+  InventoryMovement.
+- Wrap stock-in, sale, cancellation, and adjustment in DB transactions.
+- Business logic in service functions, not views. Reuse receive_stock(), sale
+  confirmation, cancellation, and batch-commit services.
+- Every important action creates an AuditLog via create_audit_log(); audit logs
+  are read-only in admin.
+- Never log secrets; redact secret-like values.
+- Cashiers reach POS + receipts only; block admin, logs, reports, inventory,
+  stock-in, sales history, batch upload, system health.
+- Keep CSRF enabled. Validate all barcode/QR input. Use migrations properly.
+- Prefer simple Django; no new dependencies/architecture without owner approval.
+
+Before editing: read README.md and docs/PROJECT_SPEC.md; inspect existing
+models, services.py, views, templates, and tests first.
+
+Build/test:
+  cd app && python manage.py check && python manage.py test
+
+When done: update docs/TASKS.md, docs/DEVELOPMENT_LOG.md, and README.md if
+behavior changed. Leave a handoff note (what changed, files, tested, not tested,
+next step). Never claim done/tested when it isn't.
