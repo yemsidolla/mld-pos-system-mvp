@@ -11,7 +11,7 @@ Statuses: Pending, AI Planned, AI Generated, Human Reviewing, Fix Required, Test
 | Create Django apps | Done |
 | Create Dockerfile | Done |
 | Create docker-compose.yml | Done |
-| Create Nginx config | Done |
+| Document external host Nginx config | Done |
 | Configure PostgreSQL | Done |
 | Configure environment variables | Done |
 | Configure static/media/log folders | Done |
@@ -232,3 +232,17 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Convert system pages to dashboard shell | Done |
 | Add dashboard and scanner tests | Done |
 | Add dashboard UX documentation | Done |
+
+## V2 Baseline And Stabilization
+
+| Task | Status |
+| --- | --- |
+| Produce V2 baseline audit documentation | Done |
+| Produce V2 roadmap documentation | Done |
+| Produce business rules documentation | Done |
+| Produce testing checklist documentation | Done |
+| Produce deployment runbook documentation | Done |
+| Produce V2 feature backlog | Done |
+| Stabilize stock report inclusion rules | Done |
+| Add audited expired-batch maintenance command | Done |
+| Harden backup and restore scripts | Done |

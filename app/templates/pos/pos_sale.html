@@ -19,6 +19,7 @@
         </header>
         <form class="form-stack" method="post">
             {% csrf_token %}
+            <input type="hidden" name="action" value="scan">
             <div>
                 {{ scan_form.scan_value.label_tag }}
                 <div class="input-row">
@@ -28,7 +29,7 @@
                 {{ scan_form.scan_value.errors }}
             </div>
             <div class="form-actions">
-                <button class="btn btn-primary" type="submit" name="action" value="scan">{% trans "Lookup" %}</button>
+                <button class="btn btn-primary" type="submit">{% trans "Lookup" %}</button>
             </div>
         </form>
 
@@ -91,17 +92,32 @@
                 <th>{% trans "Item" %}</th>
                 <th>{% trans "Qty" %}</th>
                 <th>{% trans "Subtotal" %}</th>
+                <th>{% trans "Action" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for row in cart_rows %}
                 <tr>
                     <td>{{ row.stock_batch.product.name }}<br><span class="muted">{{ row.stock_batch.batch_no }}</span></td>
-                    <td>{{ row.quantity }}</td>
+                    <td>
+                        <form class="input-row compact-row" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
+                            <input class="quantity-input" type="number" name="quantity" min="1" max="{{ row.stock_batch.quantity_available }}" value="{{ row.quantity }}" aria-label="{% trans 'Quantity' %}">
+                            <button class="btn" type="submit" name="action" value="update_item">{% trans "Update" %}</button>
+                        </form>
+                    </td>
                     <td>{{ row.subtotal }}</td>
+                    <td>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
+                            <button class="btn btn-danger" type="submit" name="action" value="remove_item">{% trans "Remove" %}</button>
+                        </form>
+                    </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="3" class="empty-cell">{% trans "Cart is empty." %}</td></tr>
+                <tr><td colspan="4" class="empty-cell">{% trans "Cart is empty." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -117,7 +133,7 @@
                 {{ confirm_form.discount_amount }}
             </div>
             <div class="form-actions">
-                <button class="btn btn-success" type="submit" name="action" value="confirm">{% trans "Confirm Sale" %}</button>
+                <button class="btn btn-success" type="submit" name="action" value="confirm" {% if not cart_rows %}disabled{% endif %}>{% trans "Confirm Sale" %}</button>
                 <button class="btn" type="submit" name="action" value="clear">{% trans "Clear" %}</button>
             </div>
         </form>

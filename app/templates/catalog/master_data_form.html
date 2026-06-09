@@ -1,0 +1,40 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}{{ subtitle }}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{{ back_url }}">{% trans "Back" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% if mode == "create" %}{{ title }}{% else %}{{ object.name }}{% endif %}</h2>
+            <p>{% trans "Names should stay short and clear because they appear in filters, reports, and stock workflows." %}</p>
+        </div>
+    </header>
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <form class="form-stack" method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-success" type="submit">{% if mode == "create" %}{% trans "Create" %}{% else %}{% trans "Save" %}{% endif %}</button>
+            <a class="btn" href="{{ back_url }}">{% trans "Cancel" %}</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

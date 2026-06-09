@@ -1,9 +1,11 @@
 from decimal import Decimal
+from io import StringIO
 from tempfile import TemporaryDirectory
 from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -300,3 +302,27 @@ class InventoryAdjustmentTests(TestCase):
         self.assertContains(summary, "Product Stock Summary")
         self.assertEqual(detail.status_code, 200)
         self.assertContains(detail, "Expiry Status")
+
+    def test_expire_batches_command_uses_movement_and_audit_workflow(self):
+        stock_batch = self.create_batch(quantity=5, expiry_date=date(2026, 5, 20))
+        out = StringIO()
+
+        call_command("expire_batches", username=self.admin.username, stdout=out)
+
+        stock_batch.refresh_from_db()
+        self.assertEqual(stock_batch.quantity_available, 0)
+        self.assertEqual(stock_batch.status, StockBatch.Status.EXPIRED)
+        self.assertTrue(InventoryMovement.objects.filter(movement_type=InventoryMovement.MovementType.EXPIRED).exists())
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.STOCK_ADJUSTMENT).exists())
+        self.assertIn("Marked 1 expired batch(es).", out.getvalue())
+
+    def test_expire_batches_dry_run_does_not_change_stock(self):
+        stock_batch = self.create_batch(quantity=5, expiry_date=date(2026, 5, 20))
+        out = StringIO()
+
+        call_command("expire_batches", username=self.admin.username, dry_run=True, stdout=out)
+
+        stock_batch.refresh_from_db()
+        self.assertEqual(stock_batch.quantity_available, 5)
+        self.assertEqual(stock_batch.status, StockBatch.Status.ACTIVE)
+        self.assertIn("1 expired active batch(es) would be marked expired.", out.getvalue())

@@ -5,10 +5,10 @@
 ### Phase 0: Project Bootstrap
 
 - Created the Django monolith project under `app/`.
-- Added Docker Compose services for PostgreSQL, web, and Nginx.
+- Added Docker Compose services for PostgreSQL and web.
 - Added `/health/`, static/media/log/database persistence folders, and starter documentation.
 - Verified Docker startup, Django migrations, collectstatic, admin login redirect, health check, and restart persistence.
-- Fixed Nginx host forwarding to preserve `localhost:8000` for Django CSRF checks.
+- Documented host-level reverse proxy expectations for production.
 
 ### Phase 1: Master Data
 
@@ -119,7 +119,7 @@
 
 ### Phase 11: Production Deployment and Backup
 
-- Added `docker-compose.prod.yml` with production restart policies and port 80 Nginx binding.
+- Added `docker-compose.prod.yml` with production restart policies for PostgreSQL and Django.
 - Updated `.env.example` with app version and production security fields.
 - Added backup and restore scripts under `scripts/`.
 - Added `docs/BACKUP_GUIDE.md`.
@@ -128,6 +128,16 @@
 - Updated README with current MVP status and operational links.
 - Verified production Compose config with `.env.example`.
 - Ran database and media backup scripts successfully against the local stack.
+
+## 2026-06-08
+
+### V1 Stabilization
+
+- Removed the internal Docker Nginx service and Docker Nginx config.
+- Kept production reverse proxy responsibility with host-installed Nginx.
+- Added `docker-compose.local.yml` for local/iPhone testing with Django published directly on port 8000.
+- Added dashboard management pages for categories, brands, and suppliers.
+- Tightened POS cart quantity handling and added cart update/remove controls.
 
 ### Batch Upload Feature
 
@@ -183,3 +193,13 @@
 - `docker compose --env-file .env.example -f docker-compose.prod.yml config`
 - `scripts/backup_db.sh`
 - `scripts/backup_media.sh`
+
+## 2026-06-09
+
+### V2 Baseline And Stabilization
+
+- Added V2 baseline audit, roadmap, business rules, testing checklist, deployment runbook, and feature backlog documentation.
+- Chose active sellable stock as the default report inclusion rule for stock and low-stock reports.
+- Added the `expire_batches` maintenance command for audited expired-stock processing without adding a scheduler dependency.
+- Hardened backup/restore scripts with explicit compose targeting and restore confirmation.
+- Set report exports as the first low-risk V2 feature family after stabilization.

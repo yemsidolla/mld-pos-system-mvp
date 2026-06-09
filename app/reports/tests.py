@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from catalog.models import Product, Supplier
-from inventory.models import InventoryMovement
+from inventory.models import InventoryMovement, StockBatch
 from inventory.services import receive_stock
 from pos.models import Sale
 from pos.services import confirm_sale
@@ -66,11 +66,30 @@ class ReportPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Cat Food")
 
+    def test_stock_summary_counts_only_sellable_stock(self):
+        self.stock_batch.expiry_date = timezone.localdate() - timedelta(days=1)
+        self.stock_batch.save(update_fields=["expiry_date", "updated_at"])
+
+        response = self.client.get(reverse("stock-summary-report"))
+
+        self.assertEqual(response.status_code, 200)
+        product = response.context["products"][0]
+        self.assertEqual(product.total_available, 0)
+
     def test_low_stock_report_shows_low_stock_product(self):
         response = self.client.get(reverse("low-stock-report"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Cat Food")
+
+    def test_low_stock_report_excludes_inactive_products(self):
+        self.product.is_active = False
+        self.product.save(update_fields=["is_active", "updated_at"])
+
+        response = self.client.get(reverse("low-stock-report"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Cat Food")
 
     def test_expiry_report_shows_near_expiry_batch(self):
         response = self.client.get(reverse("expiry-report"))
@@ -78,6 +97,15 @@ class ReportPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.stock_batch.batch_no)
         self.assertContains(response, "Critical")
+
+    def test_expiry_report_excludes_non_active_batches(self):
+        self.stock_batch.status = StockBatch.Status.SOLD_OUT
+        self.stock_batch.save(update_fields=["status", "updated_at"])
+
+        response = self.client.get(reverse("expiry-report"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.stock_batch.batch_no)
 
     def test_stock_movement_report_can_trace_movements(self):
         response = self.client.get(reverse("stock-movement-report"))

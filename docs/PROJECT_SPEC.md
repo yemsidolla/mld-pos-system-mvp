@@ -10,7 +10,7 @@ Version 1 MVP is a Django monolith for Melodu Pet Store.
 - PostgreSQL database
 - Docker Compose hosting
 - Gunicorn for Django
-- Nginx reverse proxy
+- External host Nginx reverse proxy
 - Docker-backed static, media, log, and database persistence
 
 ## Core Business Rule
@@ -35,7 +35,7 @@ Version 1 does not include Next.js, Node.js, Redis, Celery, customer accounts, l
 ### Phase 0: Project Bootstrap
 
 - Django project and required apps are created.
-- Docker Compose runs PostgreSQL, Gunicorn/Django, and Nginx.
+- Docker Compose runs PostgreSQL and Gunicorn/Django. It does not include an internal Nginx container.
 - Static, media, database, and log folders persist under `data/`.
 - `/health/` checks the database connection.
 
@@ -148,7 +148,8 @@ Version 1 does not include Next.js, Node.js, Redis, Celery, customer accounts, l
 
 ### Phase 11: Production Deployment and Backup
 
-- Production Compose settings are available in `docker-compose.prod.yml`.
+- Production Compose settings are available in `docker-compose.prod.yml` for PostgreSQL and Django.
+- Production HTTPS/reverse proxy is handled by Nginx on the host, outside Docker.
 - Production setup steps are documented in `docs/DEPLOYMENT_GUIDE.md`.
 - Backup and restore steps are documented in `docs/BACKUP_GUIDE.md`.
 - Production checklist is documented in `docs/PRODUCTION_CHECKLIST.md`.

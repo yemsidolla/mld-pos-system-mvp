@@ -122,10 +122,33 @@ class PosServiceTests(TestCase):
 
 
 class PosPageTests(TestCase):
+    def setUp(self):
+        self.cashier = get_user_model().objects.create_user(username="page-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get(name=CASHIER_GROUP))
+        self.supplier = Supplier.objects.create(name="Pet Wholesale")
+        self.product = Product.objects.create(
+            product_code="P001",
+            original_barcode="8851234567890",
+            name="Cat Food",
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+
+    def create_batch(self, quantity=5):
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            stock_batch, _movement = receive_stock(
+                product=self.product,
+                supplier=self.supplier,
+                quantity=quantity,
+                expiry_date=date(2027, 6, 1),
+                cost_price=Decimal("1.50"),
+                selling_price=Decimal("2.50"),
+                received_by=self.cashier,
+            )
+        return StockBatch.objects.get(pk=stock_batch.pk)
+
     def test_staff_can_open_pos_page(self):
-        user = get_user_model().objects.create_user(username="cashier", password="Admin123")
-        user.groups.add(Group.objects.get(name=CASHIER_GROUP))
-        self.client.force_login(user)
+        self.client.force_login(self.cashier)
 
         response = self.client.get(reverse("pos-sale"))
 
@@ -136,6 +159,49 @@ class PosPageTests(TestCase):
         response = self.client.get(reverse("pos-sale"))
 
         self.assertEqual(response.status_code, 302)
+
+    def test_scan_post_without_action_still_looks_up_item(self):
+        stock_batch = self.create_batch()
+        self.client.force_login(self.cashier)
+
+        response = self.client.post(reverse("pos-sale"), {"scan_value": self.product.original_barcode})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, stock_batch.batch_no)
+
+    def test_cart_rejects_total_quantity_above_available(self):
+        stock_batch = self.create_batch(quantity=2)
+        self.client.force_login(self.cashier)
+
+        self.client.post(
+            reverse("pos-sale"),
+            {"action": "add_batch", "stock_batch_id": stock_batch.id, "quantity": "2"},
+        )
+        response = self.client.post(
+            reverse("pos-sale"),
+            {"action": "add_batch", "stock_batch_id": stock_batch.id, "quantity": "1"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Not enough stock available.")
+        self.assertEqual(self.client.session["pos_cart"][0]["quantity"], 2)
+
+    def test_cart_quantity_can_be_updated_and_removed(self):
+        stock_batch = self.create_batch(quantity=5)
+        self.client.force_login(self.cashier)
+
+        self.client.post(
+            reverse("pos-sale"),
+            {"action": "add_batch", "stock_batch_id": stock_batch.id, "quantity": "1"},
+        )
+        self.client.post(
+            reverse("pos-sale"),
+            {"action": "update_item", "stock_batch_id": stock_batch.id, "quantity": "3"},
+        )
+        self.assertEqual(self.client.session["pos_cart"][0]["quantity"], 3)
+
+        self.client.post(reverse("pos-sale"), {"action": "remove_item", "stock_batch_id": stock_batch.id})
+        self.assertEqual(self.client.session["pos_cart"], [])
 
 
 class SalesCancellationTests(TestCase):

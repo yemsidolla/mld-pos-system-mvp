@@ -2,7 +2,7 @@
 
 Version 1 MVP for Melodu Pet Store.
 
-This project is a Django monolith using PostgreSQL, Docker Compose, Gunicorn, and Nginx. Version 1 uses Django Admin for raw internal management and a polished Melodu Dashboard for daily POS, stock-in, barcode/QR printing, batch upload, inventory, reports, live backend logs, and system health.
+This project is a Django monolith using PostgreSQL, Docker Compose, Gunicorn, and WhiteNoise. Version 1 uses Django Admin for raw internal management and a polished Melodu Dashboard for daily POS, stock-in, barcode/QR printing, batch upload, inventory, reports, live backend logs, and system health. Production HTTPS is handled by Nginx on the host, not by an internal Docker Nginx container.
 
 ## Phase Status
 
@@ -24,28 +24,34 @@ Edit `.env`, then start the stack:
 docker compose up -d --build
 ```
 
+For local browser or iPhone testing from a OneDrive-synced workspace, use the local override. It keeps runtime data in Docker volumes and publishes Django directly on port 8000:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+```
+
 Run migrations:
 
 ```bash
-docker compose exec web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py migrate
 ```
 
 Collect static files:
 
 ```bash
-docker compose exec web python manage.py collectstatic --noinput
+docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py collectstatic --noinput
 ```
 
-Create the first admin user:
+Create or reset the development admin user:
 
 ```bash
-docker compose exec web python manage.py createsuperuser
+docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py setup_roles --admin-username admin --password Admin123
 ```
 
-Create roles and assign the development admin account:
+For production with host Nginx, use the production compose file and point host Nginx to `127.0.0.1:${WEB_HOST_PORT}`. Docker should run only PostgreSQL and Django.
 
 ```bash
-docker compose exec web python manage.py setup_roles --admin-username admin
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 Open:
@@ -88,7 +94,6 @@ app/
   core/
 docker/
   django/Dockerfile
-  nginx/default.conf
 data/
   postgres/
   media/

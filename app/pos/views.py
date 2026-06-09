@@ -21,14 +21,36 @@ def save_cart(request, cart):
 
 
 def add_batch_to_cart(request, stock_batch, quantity=1):
+    if quantity <= 0:
+        raise ValidationError("Sale quantity must be greater than zero.")
+    cart = get_cart(request)
+    for item in cart:
+        if item["stock_batch_id"] == stock_batch.id:
+            new_quantity = item["quantity"] + quantity
+            validate_sellable_batch(stock_batch, quantity=new_quantity)
+            item["quantity"] = new_quantity
+            save_cart(request, cart)
+            return
+    validate_sellable_batch(stock_batch, quantity=quantity)
+    cart.append({"stock_batch_id": stock_batch.id, "quantity": quantity})
+    save_cart(request, cart)
+
+
+def update_cart_item(request, stock_batch, quantity):
+    if quantity <= 0:
+        raise ValidationError("Sale quantity must be greater than zero.")
     validate_sellable_batch(stock_batch, quantity=quantity)
     cart = get_cart(request)
     for item in cart:
         if item["stock_batch_id"] == stock_batch.id:
-            item["quantity"] += quantity
+            item["quantity"] = quantity
             save_cart(request, cart)
             return
-    cart.append({"stock_batch_id": stock_batch.id, "quantity": quantity})
+    raise ValidationError("Cart item does not exist.")
+
+
+def remove_cart_item(request, stock_batch_id):
+    cart = [item for item in get_cart(request) if item["stock_batch_id"] != stock_batch_id]
     save_cart(request, cart)
 
 
@@ -60,6 +82,8 @@ def pos_sale_view(request):
 
     if request.method == "POST":
         action = request.POST.get("action")
+        if not action and request.POST.get("scan_value"):
+            action = "scan"
         try:
             if action == "scan":
                 scan_form = ScanForm(request.POST)
@@ -76,6 +100,17 @@ def pos_sale_view(request):
                 quantity = int(request.POST.get("quantity", "1"))
                 add_batch_to_cart(request, stock_batch, quantity)
                 messages.success(request, f"Added {stock_batch.batch_no} to cart.")
+                return redirect("pos-sale")
+            elif action == "update_item":
+                stock_batch = get_object_or_404(StockBatch.objects.select_related("product"), pk=request.POST.get("stock_batch_id"))
+                quantity = int(request.POST.get("quantity", "1"))
+                update_cart_item(request, stock_batch, quantity)
+                messages.success(request, f"Updated {stock_batch.batch_no}.")
+                return redirect("pos-sale")
+            elif action == "remove_item":
+                stock_batch_id = int(request.POST.get("stock_batch_id"))
+                remove_cart_item(request, stock_batch_id)
+                messages.success(request, "Item removed from cart.")
                 return redirect("pos-sale")
             elif action == "clear":
                 save_cart(request, [])

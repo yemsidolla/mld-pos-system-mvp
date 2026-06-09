@@ -270,6 +270,11 @@ button:hover {
     background: var(--surface-subtle);
     text-decoration: none;
 }
+button:disabled,
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
 .btn-primary,
 button.btn-primary {
     border-color: var(--primary);
@@ -313,6 +318,14 @@ button.btn-danger {
     flex-wrap: wrap;
 }
 .input-row input { flex: 1 1 220px; }
+.compact-row {
+    align-items: stretch;
+    flex-wrap: nowrap;
+}
+.compact-row .quantity-input {
+    flex: 0 0 76px;
+    width: 76px;
+}
 .field-errors,
 .errorlist {
     margin: 6px 0 0;

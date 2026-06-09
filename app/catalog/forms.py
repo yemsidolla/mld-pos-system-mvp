@@ -1,19 +1,45 @@
 from django import forms
+from django.db.models import Q
 
-from .models import Brand, Category, Product
+from .models import Brand, Category, Product, Supplier
 
 
-class ProductFilterForm(forms.Form):
+class CatalogFilterForm(forms.Form):
     q = forms.CharField(label="Search", required=False)
-    category = forms.ModelChoiceField(queryset=Category.objects.filter(is_active=True), required=False)
-    brand = forms.ModelChoiceField(queryset=Brand.objects.filter(is_active=True), required=False)
     status = forms.ChoiceField(
         choices=(("", "All"), ("active", "Active"), ("inactive", "Inactive")),
         required=False,
     )
 
 
+class ProductFilterForm(forms.Form):
+    q = forms.CharField(label="Search", required=False)
+    category = forms.ModelChoiceField(queryset=Category.objects.none(), required=False)
+    brand = forms.ModelChoiceField(queryset=Brand.objects.none(), required=False)
+    status = forms.ChoiceField(
+        choices=(("", "All"), ("active", "Active"), ("inactive", "Inactive")),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
+        self.fields["brand"].queryset = Brand.objects.filter(is_active=True).order_by("name")
+
+
 class ProductForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        category_filter = Q(is_active=True)
+        brand_filter = Q(is_active=True)
+        if self.instance and self.instance.pk:
+            if self.instance.category_id:
+                category_filter |= Q(pk=self.instance.category_id)
+            if self.instance.brand_id:
+                brand_filter |= Q(pk=self.instance.brand_id)
+        self.fields["category"].queryset = Category.objects.filter(category_filter).order_by("name")
+        self.fields["brand"].queryset = Brand.objects.filter(brand_filter).order_by("name")
+
     class Meta:
         model = Product
         fields = (
@@ -34,3 +60,30 @@ class ProductForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 3}),
         }
 
+
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ("name", "description", "is_active")
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+        }
+
+
+class BrandForm(forms.ModelForm):
+    class Meta:
+        model = Brand
+        fields = ("name", "description", "is_active")
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+        }
+
+
+class SupplierForm(forms.ModelForm):
+    class Meta:
+        model = Supplier
+        fields = ("name", "contact_person", "phone", "telegram", "address", "notes", "is_active")
+        widgets = {
+            "address": forms.Textarea(attrs={"rows": 3}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }

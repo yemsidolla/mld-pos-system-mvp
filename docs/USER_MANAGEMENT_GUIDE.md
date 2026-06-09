@@ -7,12 +7,14 @@ Melodu uses Django users with two application roles:
 
 Django Admin access is separate from Melodu dashboard access. A user must have `is_staff=True` to log in to `/admin/`. Cashiers are always blocked from Django Admin, even if they are accidentally marked as staff.
 
+Use `docker-compose.prod.yml` on the VPS. For local development, replace the compose flags below with `-f docker-compose.yml -f docker-compose.local.yml`.
+
 ## Create A Dashboard Admin
 
 Create the user in Django Admin or with `createsuperuser`, then assign the role:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py set_user_role USERNAME admin
+docker compose -f docker-compose.prod.yml exec web python manage.py set_user_role USERNAME admin
 ```
 
 This user can log in to `/dashboard/`, but not `/admin/`.
@@ -22,13 +24,13 @@ This user can log in to `/dashboard/`, but not `/admin/`.
 Use this only for owners or trusted managers who need raw Django Admin access:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py set_user_role USERNAME admin --django-admin
+docker compose -f docker-compose.prod.yml exec web python manage.py set_user_role USERNAME admin --django-admin
 ```
 
 ## Create A Cashier
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py set_user_role USERNAME cashier
+docker compose -f docker-compose.prod.yml exec web python manage.py set_user_role USERNAME cashier
 ```
 
 The cashier can log in to `/dashboard/` and use POS. The cashier cannot access `/admin/`.
@@ -42,4 +44,3 @@ When creating users manually at `/admin/auth/user/`:
 - Add exactly one Melodu group: `Admin` or `Cashier`.
 - Check `Staff status` only for trusted Admin users who need `/admin/`.
 - Do not check `Staff status` for Cashier users.
-

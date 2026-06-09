@@ -6,6 +6,8 @@
 {% block page_subtitle %}{% trans "Create, search, and maintain product master data for daily store operations." %}{% endblock %}
 {% block header_actions %}
     <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% trans "Scan Search" %}</button>
+    <a class="btn" href="{% url 'category-list' %}">{% trans "Categories" %}</a>
+    <a class="btn" href="{% url 'brand-list' %}">{% trans "Brands" %}</a>
     <a class="btn" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
     <a class="btn btn-primary" href="{% url 'product-create' %}">{% trans "New Product" %}</a>
 {% endblock %}
@@ -89,4 +91,3 @@
     </div>
 </section>
 {% endblock %}
-

@@ -2,7 +2,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.db import models
-from django.db.models import Count, DecimalField, Sum, Value
+from django.db.models import Count, DecimalField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import render
 from django.utils import timezone
@@ -12,6 +12,20 @@ from core.permissions import admin_required
 from inventory.models import InventoryMovement, StockBatch
 from inventory.services import get_expiry_status
 from pos.models import Sale
+
+
+def sellable_stock_filter(today=None):
+    today = today or timezone.localdate()
+    return Q(stock_batches__status=StockBatch.Status.ACTIVE, stock_batches__expiry_date__gte=today)
+
+
+def with_sellable_stock(queryset, today=None):
+    return queryset.filter(is_active=True).annotate(
+        total_available=Coalesce(
+            Sum("stock_batches__quantity_available", filter=sellable_stock_filter(today)),
+            0,
+        )
+    )
 
 
 @admin_required
@@ -41,16 +55,14 @@ def daily_sales_report_view(request):
 
 @admin_required
 def stock_summary_report_view(request):
-    products = Product.objects.annotate(
-        total_available=Coalesce(Sum("stock_batches__quantity_available"), 0)
-    ).order_by("name")
+    products = with_sellable_stock(Product.objects.all()).order_by("name")
     return render(request, "reports/stock_summary.html", {"products": products})
 
 
 @admin_required
 def low_stock_report_view(request):
     products = (
-        Product.objects.annotate(total_available=Coalesce(Sum("stock_batches__quantity_available"), 0))
+        with_sellable_stock(Product.objects.all())
         .filter(total_available__lte=models.F("min_stock"))
         .order_by("name")
     )
@@ -63,7 +75,7 @@ def expiry_report_view(request):
     warning_date = today + timedelta(days=60)
     batches = (
         StockBatch.objects.select_related("product", "supplier")
-        .filter(expiry_date__lte=warning_date)
+        .filter(product__is_active=True, status=StockBatch.Status.ACTIVE, quantity_available__gt=0, expiry_date__lte=warning_date)
         .order_by("expiry_date", "batch_no")
     )
     rows = [{"batch": batch, "expiry_status": get_expiry_status(batch, today=today)} for batch in batches]

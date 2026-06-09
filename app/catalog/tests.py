@@ -159,3 +159,84 @@ class ProductDashboardTests(TestCase):
         self.product.refresh_from_db()
         self.assertEqual(self.product.name, "Cat Food Updated")
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.UPDATE, module="catalog").exists())
+
+
+class MasterDataDashboardTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_user(username="master-admin", password="Admin123")
+        admin_group, _created = Group.objects.get_or_create(name=ADMIN_GROUP)
+        self.admin.groups.add(admin_group)
+        self.cashier = get_user_model().objects.create_user(username="master-cashier", password="Admin123")
+        cashier_group, _created = Group.objects.get_or_create(name=CASHIER_GROUP)
+        self.cashier.groups.add(cashier_group)
+
+    def test_admin_dashboard_links_to_master_data_pages(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("dashboard-home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("category-list"))
+        self.assertContains(response, reverse("brand-list"))
+        self.assertContains(response, reverse("supplier-list"))
+
+    def test_admin_can_create_category_from_dashboard(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("category-create"),
+            {
+                "name": "Treats",
+                "description": "Snack products",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("category-list"))
+        self.assertTrue(Category.objects.filter(name="Treats").exists())
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.CREATE, object_type="Category").exists())
+
+    def test_admin_can_create_brand_from_dashboard(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("brand-create"),
+            {
+                "name": "Happy Paw",
+                "description": "",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("brand-list"))
+        self.assertTrue(Brand.objects.filter(name="Happy Paw").exists())
+
+    def test_admin_can_edit_supplier_from_dashboard(self):
+        supplier = Supplier.objects.create(name="Pet Wholesale", phone="010000000")
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("supplier-edit", kwargs={"supplier_id": supplier.id}),
+            {
+                "name": "Pet Wholesale",
+                "contact_person": "Sophea",
+                "phone": "012345678",
+                "telegram": "@supplier",
+                "address": "Phnom Penh",
+                "notes": "",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("supplier-list"))
+        supplier.refresh_from_db()
+        self.assertEqual(supplier.contact_person, "Sophea")
+        self.assertEqual(supplier.phone, "012345678")
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.UPDATE, object_type="Supplier").exists())
+
+    def test_cashier_cannot_access_master_data_pages(self):
+        self.client.force_login(self.cashier)
+
+        response = self.client.get(reverse("category-list"))
+
+        self.assertEqual(response.status_code, 302)

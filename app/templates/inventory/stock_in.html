@@ -5,6 +5,8 @@
 {% block page_title %}{% trans "Stock-In" %}{% endblock %}
 {% block page_subtitle %}{% trans "Receive stock into a new batch using the approved inventory service." %}{% endblock %}
 {% block header_actions %}
+    <a class="btn" href="{% url 'product-create' %}">{% trans "New Product" %}</a>
+    <a class="btn" href="{% url 'supplier-create' %}">{% trans "New Supplier" %}</a>
     <button class="btn btn-primary" type="button" data-scan-target="#stock-in-product-code" data-scan-select-target="#id_product" data-scan-select-match="product" data-scan-context="stock_in">{% trans "Scan Product" %}</button>
 {% endblock %}
 

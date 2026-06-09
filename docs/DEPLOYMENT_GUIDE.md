@@ -4,40 +4,34 @@
 
 1. Copy `.env.example` to `.env`.
 2. Set `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, and `DJANGO_ALLOWED_HOSTS`.
-3. Start services:
+3. Start PostgreSQL and Django. Use the local override when you want the app reachable from your browser or phone at port 8000:
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 ```
 
 4. Run migrations:
 
 ```bash
-docker compose exec web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py migrate
 ```
 
 5. Collect static files:
 
 ```bash
-docker compose exec web python manage.py collectstatic --noinput
+docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py collectstatic --noinput
 ```
 
-6. Create the first superuser:
+6. Create or reset the development admin user:
 
 ```bash
-docker compose exec web python manage.py createsuperuser
+docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py setup_roles --admin-username admin --password Admin123
 ```
 
 7. Open Django Admin:
 
 ```text
 http://localhost:8000/admin/
-```
-
-8. Create default roles and assign the development admin:
-
-```bash
-docker compose exec web python manage.py setup_roles --admin-username admin
 ```
 
 ## VPS Production Setup
@@ -47,7 +41,7 @@ docker compose exec web python manage.py setup_roles --admin-username admin
 3. Copy `.env.example` to `.env`.
 4. Set production values in `.env`.
 5. Point the domain DNS record to the VPS IP.
-6. Start production services:
+6. Start production services. Docker runs PostgreSQL and Django only; Nginx must run on the VPS host.
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
@@ -102,22 +96,26 @@ Use this mode when Nginx is installed on the VPS host and Docker should run only
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=melodu-pos.khlovepet.com,localhost,127.0.0.1,web
 DJANGO_CSRF_TRUSTED_ORIGINS=https://melodu-pos.khlovepet.com
+DJANGO_SECURE_SSL_REDIRECT=True
+DJANGO_SECURE_HSTS_SECONDS=31536000
+DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=True
+DJANGO_SECURE_HSTS_PRELOAD=True
 DJANGO_SESSION_COOKIE_SECURE=True
 DJANGO_CSRF_COOKIE_SECURE=True
 WEB_HOST_PORT=8001
 ```
 
-2. Start PostgreSQL and Django with the external-Nginx override:
+2. Start PostgreSQL and Django:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml up -d --build postgres web
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 3. Run migrations and collect static files:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py migrate
-docker compose -f docker-compose.yml -f docker-compose.external-nginx.yml exec web python manage.py collectstatic --noinput
+docker compose -f docker-compose.prod.yml exec web python manage.py migrate
+docker compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
 ```
 
 4. Point host Nginx to the Django port. In this mode, Nginx is only a reverse proxy. Django/Gunicorn serves collected static files through WhiteNoise.
@@ -147,12 +145,7 @@ nginx -t
 systemctl reload nginx
 ```
 
-Do not run the Docker `nginx` service in this mode. If it was already started, stop it:
-
-```bash
-docker compose stop nginx
-docker compose rm -f nginx
-```
+There is intentionally no Docker `nginx` service. Host Nginx proxies to Gunicorn/Django, and WhiteNoise serves collected static files from Django.
 
 ## Backup
 
@@ -173,13 +166,20 @@ scripts/backup_media.sh
 Database restore:
 
 ```bash
-scripts/restore_db.sh backups/melodu_pos_db_YYYYMMDD_HHMMSS.sql
+CONFIRM_RESTORE=yes scripts/restore_db.sh backups/melodu_pos_db_YYYYMMDD_HHMMSS.sql
 ```
 
 Media restore:
 
 ```bash
-tar -xzf backups/melodu_pos_media_YYYYMMDD_HHMMSS.tar.gz
+CONFIRM_RESTORE=yes scripts/restore_media.sh backups/melodu_pos_media_YYYYMMDD_HHMMSS.tar.gz
+```
+
+Expired stock maintenance:
+
+```bash
+docker compose -f docker-compose.prod.yml exec web python manage.py expire_batches --username admin --dry-run
+docker compose -f docker-compose.prod.yml exec web python manage.py expire_batches --username admin
 ```
 
 ## Production Checklist
@@ -188,6 +188,10 @@ tar -xzf backups/melodu_pos_media_YYYYMMDD_HHMMSS.tar.gz
 - Use a strong `POSTGRES_PASSWORD`.
 - Set `DJANGO_DEBUG=False`.
 - Set `DJANGO_ALLOWED_HOSTS` to the real domain.
+- Set `DJANGO_SECURE_SSL_REDIRECT=True` after HTTPS is working.
+- Set `DJANGO_SECURE_HSTS_SECONDS=31536000` only after confirming the domain is HTTPS-only.
+- Set HSTS subdomain and preload flags only after confirming all covered names are HTTPS-only.
 - Set secure cookie options to `True` when HTTPS is enabled.
 - Use HTTPS for camera-based barcode/QR scanning.
 - Confirm `data/postgres`, `data/media`, `data/static`, and `data/logs` are backed up.
+- Rehearse restore monthly on a non-production copy.

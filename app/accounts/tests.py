@@ -74,3 +74,12 @@ class RoleTests(TestCase):
 
         with self.assertRaises(CommandError):
             call_command("set_user_role", "cashier3", "cashier", "--django-admin")
+
+    def test_setup_roles_can_create_development_superuser(self):
+        call_command("setup_roles", "--admin-username", "admin", "--password", "Admin123")
+
+        user = get_user_model().objects.get(username="admin")
+        self.assertTrue(user.is_staff)
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.check_password("Admin123"))
+        self.assertTrue(user.groups.filter(name=ADMIN_GROUP).exists())

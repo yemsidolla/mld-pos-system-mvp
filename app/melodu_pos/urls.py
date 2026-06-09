@@ -12,7 +12,20 @@ from batch_upload.views import (
     batch_upload_row_update_view,
     batch_upload_template_view,
 )
-from catalog.views import product_create_view, product_edit_view, product_list_view
+from catalog.views import (
+    brand_create_view,
+    brand_edit_view,
+    brand_list_view,
+    category_create_view,
+    category_edit_view,
+    category_list_view,
+    product_create_view,
+    product_edit_view,
+    product_list_view,
+    supplier_create_view,
+    supplier_edit_view,
+    supplier_list_view,
+)
 from core.views import dashboard_home_view, health_check, scan_resolve_view
 from inventory.views import barcode_print_view, inventory_summary_view, stock_batch_detail_view, stock_in_view
 from pos.views import pos_sale_view, sale_cancel_view, sale_detail_view, sale_receipt_view, sales_history_view
@@ -36,6 +49,15 @@ urlpatterns = [
     path("dashboard/products/", product_list_view, name="product-list"),
     path("dashboard/products/new/", product_create_view, name="product-create"),
     path("dashboard/products/<int:product_id>/edit/", product_edit_view, name="product-edit"),
+    path("dashboard/categories/", category_list_view, name="category-list"),
+    path("dashboard/categories/new/", category_create_view, name="category-create"),
+    path("dashboard/categories/<int:category_id>/edit/", category_edit_view, name="category-edit"),
+    path("dashboard/brands/", brand_list_view, name="brand-list"),
+    path("dashboard/brands/new/", brand_create_view, name="brand-create"),
+    path("dashboard/brands/<int:brand_id>/edit/", brand_edit_view, name="brand-edit"),
+    path("dashboard/suppliers/", supplier_list_view, name="supplier-list"),
+    path("dashboard/suppliers/new/", supplier_create_view, name="supplier-create"),
+    path("dashboard/suppliers/<int:supplier_id>/edit/", supplier_edit_view, name="supplier-edit"),
     path("dashboard/batch-upload/", batch_upload_index_view, name="batch-upload"),
     path("dashboard/batch-upload/templates/<str:target>/", batch_upload_template_view, name="batch-upload-template"),
     path("dashboard/batch-upload/jobs/<int:job_id>/", batch_upload_detail_view, name="batch-upload-detail"),
