@@ -117,7 +117,8 @@ class ReportPageTests(TestCase):
         response = self.client.get(reverse("stock-movement-report"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, InventoryMovement.MovementType.SALE)
+        # The report renders the human-readable movement type label ("Sale").
+        self.assertContains(response, InventoryMovement.MovementType.SALE.label)
 
     def test_staff_sales_report_shows_cashier_sales(self):
         response = self.client.get(reverse("staff-sales-report"))

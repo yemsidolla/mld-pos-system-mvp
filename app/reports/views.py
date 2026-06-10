@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from catalog.models import Product
+from core.pagination import paginate
 from core.permissions import reports_required
 from inventory.models import InventoryMovement, StockBatch
 from inventory.services import get_expiry_status
@@ -90,8 +91,15 @@ def expiry_report_view(request):
 
 @reports_required
 def stock_movement_report_view(request):
-    movements = InventoryMovement.objects.select_related("product", "stock_batch", "created_by").order_by("-created_at")[:300]
-    return render(request, "reports/stock_movements.html", {"movements": movements})
+    movements = InventoryMovement.objects.select_related("product", "stock_batch", "created_by").order_by(
+        "-created_at"
+    )
+    page_obj, querystring = paginate(request, movements, per_page=50)
+    return render(
+        request,
+        "reports/stock_movements.html",
+        {"movements": page_obj, "page_obj": page_obj, "querystring": querystring},
+    )
 
 
 @reports_required

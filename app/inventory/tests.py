@@ -267,6 +267,33 @@ class InventoryAdjustmentTests(TestCase):
         self.assertTrue(InventoryMovement.objects.filter(movement_type=InventoryMovement.MovementType.ADJUSTMENT).exists())
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.STOCK_ADJUSTMENT).exists())
 
+    def test_inventory_summary_search_filters_server_side(self):
+        self.create_batch(quantity=5)
+        other = Product.objects.create(
+            product_code="P999",
+            original_barcode="8859999999999",
+            name="Bird Seed",
+            default_cost_price=Decimal("1.00"),
+            default_selling_price=Decimal("2.00"),
+        )
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            receive_stock(
+                product=other,
+                supplier=self.supplier,
+                quantity=3,
+                expiry_date=date(2027, 6, 1),
+                actual_unit_cost=Decimal("1.00"),
+                selling_price=Decimal("2.00"),
+                received_by=self.admin,
+            )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("inventory-summary"), {"q": "Bird"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Bird Seed")
+        self.assertNotContains(response, "Cat Food")
+
     def test_stock_adjustment_requires_reason(self):
         stock_batch = self.create_batch(quantity=10)
 

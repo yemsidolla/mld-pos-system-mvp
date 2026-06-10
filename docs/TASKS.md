@@ -391,3 +391,13 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add read-only audit log list view with filters and pagination | AI Generated |
 | Add Audit Logs navigation entry under Administration | AI Generated |
 | Add audit dashboard access and read-only tests | AI Generated |
+
+## V5 Phase 3: List Consistency
+
+| Task | Status |
+| --- | --- |
+| Add shared pagination helper and partial | AI Generated |
+| Paginate products, sales history, stock movements, and batches | AI Generated |
+| Convert Stock Overview search to server-side query | AI Generated |
+| Standardize status/movement display labels in tables | AI Generated |
+| Add pagination and server-side search tests | AI Generated |

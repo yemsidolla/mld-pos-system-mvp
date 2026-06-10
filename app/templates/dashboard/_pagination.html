@@ -1,0 +1,17 @@
+{% load i18n %}
+{% comment %}
+Shared pagination control. Expects:
+  page_obj    — a django.core.paginator.Page
+  querystring — current GET params minus "page", url-encoded (may be empty)
+{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="pagination" aria-label="{% trans 'Pagination' %}">
+    {% if page_obj.has_previous %}
+        <a class="btn" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="muted">{% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}</span>
+    {% if page_obj.has_next %}
+        <a class="btn" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Next" %}</a>
+    {% endif %}
+</nav>
+{% endif %}

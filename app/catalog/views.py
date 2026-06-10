@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
+from core.pagination import paginate
 from core.permissions import admin_required, is_admin_user
 
 from .forms import (
@@ -242,13 +243,18 @@ def product_list_view(request):
             products = products.filter(tags=tag)
         products = _apply_status_filter(products, status)
 
+    product_count = products.count()
+    page_obj, querystring = paginate(request, products)
+
     return render(
         request,
         "catalog/product_list.html",
         {
             "form": form,
-            "products": products,
-            "product_count": products.count(),
+            "products": page_obj,
+            "page_obj": page_obj,
+            "querystring": querystring,
+            "product_count": product_count,
         },
     )
 

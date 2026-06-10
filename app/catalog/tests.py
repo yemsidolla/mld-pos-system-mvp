@@ -123,6 +123,20 @@ class ProductDashboardTests(TestCase):
         self.assertContains(response, "Cat Food")
         self.assertNotContains(response, "Dog Toy")
 
+    def test_product_list_paginates(self):
+        for index in range(30):
+            Product.objects.create(product_code=f"PG{index:03d}", name=f"Bulk Product {index}")
+        self.client.force_login(self.admin)
+
+        first = self.client.get(reverse("product-list"))
+        second = self.client.get(reverse("product-list"), {"page": 2})
+
+        # 31 products total (1 from setUp + 30) across pages of 25.
+        self.assertEqual(first.context["page_obj"].paginator.num_pages, 2)
+        self.assertEqual(first.context["product_count"], 31)
+        self.assertEqual(len(first.context["page_obj"].object_list), 25)
+        self.assertEqual(len(second.context["page_obj"].object_list), 6)
+
     def test_cashier_cannot_access_product_list(self):
         self.client.force_login(self.cashier)
 

@@ -16,10 +16,12 @@
             <p>{% trans "Scan or type a product code, barcode, batch number, or custom code." %}</p>
         </div>
     </header>
-    <div class="input-row">
-        <input id="inventory-search" type="text" data-table-filter="[data-inventory-row]" placeholder="{% trans 'Search inventory' %}" autocomplete="off">
+    <form class="input-row" method="get">
+        <input id="inventory-search" name="q" type="text" value="{{ query }}" placeholder="{% trans 'Search inventory' %}" autocomplete="off">
+        <button class="btn btn-primary" type="submit">{% trans "Search" %}</button>
         <button class="btn" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan" %}</button>
-    </div>
+        {% if query %}<a class="btn" href="{% url 'inventory-summary' %}">{% trans "Reset" %}</a>{% endif %}
+    </form>
 </section>
 
 <section class="panel">
@@ -41,7 +43,7 @@
             </thead>
             <tbody>
             {% for product in products %}
-                <tr data-inventory-row>
+                <tr>
                     <td>{{ product.name }}</td>
                     <td>{{ product.product_code }}</td>
                     <td>{{ product.total_available|default:0 }}</td>
@@ -75,7 +77,7 @@
             </thead>
             <tbody>
             {% for batch in batches %}
-                <tr data-inventory-row>
+                <tr>
                     <td><a href="{% url 'stock-batch-detail' batch.id %}">{{ batch.batch_no }}</a><br><span class="muted">{{ batch.custom_code }}</span></td>
                     <td>{{ batch.product.name }}<br><span class="muted">{{ batch.product.product_code }}</span></td>
                     <td>{{ batch.expiry_date }}</td>
@@ -98,5 +100,6 @@
             </tbody>
         </table>
     </div>
+    {% include "dashboard/_pagination.html" %}
 </section>
 {% endblock %}

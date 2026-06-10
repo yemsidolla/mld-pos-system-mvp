@@ -2,6 +2,22 @@
 
 ## 2026-06-10
 
+### V5 Phase 3: List Consistency (search, pagination, status)
+
+- Added a shared `core.pagination.paginate` helper and a reusable
+  `dashboard/_pagination.html` partial. Applied pagination to Products (25),
+  Sales History (25), Stock Movement report (50), Stock Overview batches (25),
+  and the Audit Log page (refactored onto the shared helper). The Stock Movement
+  report no longer hard-caps at 300 rows.
+- Converted Stock Overview search from client-side JS row filtering to a
+  server-side `q` query (matches product name/code/barcode, batch number, and
+  custom code) — the last page using the ad-hoc `data-table-filter` pattern.
+- Standardized status rendering on human-readable display labels: colored batch
+  status badge (already added in Phase 1) plus movement-type display label in
+  the Stock Movement report ("Sale" instead of "SALE").
+- Verified: `manage.py check` clean; full suite 199 tests passing (was 197);
+  no migrations.
+
 ### V5 Phase 2: Audit Log Dashboard (read-only)
 
 - Added a read-only Audit Logs page (`/dashboard/audit-logs/`) under

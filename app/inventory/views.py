@@ -1,11 +1,12 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from catalog.models import Product
+from core.pagination import paginate
 from core.permissions import inventory_required
 
 from .forms import DamageStockForm, InventoryAdjustmentForm, LabelPrintForm, MarkExpiredForm, StockInForm
@@ -84,6 +85,8 @@ def barcode_print_view(request):
 
 @inventory_required
 def inventory_summary_view(request):
+    query = request.GET.get("q", "").strip()
+
     products = (
         Product.objects.filter(stock_batches__isnull=False)
         .annotate(total_available=Sum("stock_batches__quantity_available"))
@@ -91,7 +94,33 @@ def inventory_summary_view(request):
         .distinct()
     )
     batches = StockBatch.objects.select_related("product", "supplier").order_by("expiry_date", "batch_no")
-    return render(request, "inventory/inventory_summary.html", {"products": products, "batches": batches})
+
+    if query:
+        products = products.filter(
+            Q(name__icontains=query)
+            | Q(product_code__icontains=query)
+            | Q(original_barcode__icontains=query)
+        )
+        batches = batches.filter(
+            Q(product__name__icontains=query)
+            | Q(product__product_code__icontains=query)
+            | Q(product__original_barcode__icontains=query)
+            | Q(batch_no__icontains=query)
+            | Q(custom_code__icontains=query)
+        )
+
+    page_obj, querystring = paginate(request, batches)
+    return render(
+        request,
+        "inventory/inventory_summary.html",
+        {
+            "products": products,
+            "batches": page_obj,
+            "page_obj": page_obj,
+            "querystring": querystring,
+            "query": query,
+        },
+    )
 
 
 @inventory_required

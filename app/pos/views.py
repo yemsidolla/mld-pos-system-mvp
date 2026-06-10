@@ -8,6 +8,7 @@ from audit.models import AuditLog
 from audit.services import create_audit_log
 from inventory.models import StockBatch
 from core.models import StoreSetting
+from core.pagination import paginate
 from core.permissions import admin_required, pos_required, sales_history_required
 
 from .forms import CancelSaleForm, ConfirmSaleForm, PromotionForm, SaleFilterForm, ScanForm
@@ -232,7 +233,12 @@ def sales_history_view(request):
             sales = sales.filter(cashier=form.cleaned_data["cashier"])
         if form.cleaned_data["payment_method"]:
             sales = sales.filter(payment_method=form.cleaned_data["payment_method"])
-    return render(request, "pos/sales_history.html", {"form": form, "sales": sales})
+    page_obj, querystring = paginate(request, sales)
+    return render(
+        request,
+        "pos/sales_history.html",
+        {"form": form, "sales": page_obj, "page_obj": page_obj, "querystring": querystring},
+    )
 
 
 @sales_history_required
