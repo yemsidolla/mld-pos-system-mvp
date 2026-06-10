@@ -372,3 +372,13 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Preserve users, settings, templates, and audit logs | AI Generated |
 | Audit DATA_RESET before and after | AI Generated |
 | Add V4 Phase 6 tests and runbook documentation | AI Generated |
+
+## V5 Phase 1: Dashboard & Navigation Polish
+
+| Task | Status |
+| --- | --- |
+| Make dashboard home capability-aware (no POS dead-end for Inventory/Viewer) | AI Generated |
+| Apply staff-facing renames (Reference Costs, System Health, Receive Stock, Stock Overview) | AI Generated |
+| Add Live Logs navigation entry under Administration | AI Generated |
+| Color the batch status badge and use display labels in Stock Overview | AI Generated |
+| Add role-aware home tests | AI Generated |

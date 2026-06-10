@@ -28,6 +28,11 @@ from .forms import StoreSettingForm
 from .models import StoreSetting
 from .permissions import (
     can_access_dashboard,
+    can_access_pos,
+    can_manage_catalog,
+    can_manage_inventory,
+    can_view_reports,
+    can_view_sales_history,
     dashboard_required,
     is_admin_user,
     is_cashier_user,
@@ -247,35 +252,60 @@ def _resolve_warnings(product=None, stock_batch=None):
 
 @dashboard_required
 def dashboard_home_view(request):
+    """Role-aware home.
+
+    The home page is driven by capabilities rather than a single admin flag so
+    every role lands on a page made of areas they can actually open. Inventory
+    staff and Viewers must never be shown POS shortcuts (they cannot access POS
+    and would hit a 403).
+    """
+    user = request.user
     today = timezone.localdate()
-    context = {
-        "today": today,
-        "recent_sales": [],
-        "recent_uploads": [],
-        "stats": {},
+
+    caps = {
+        "is_admin": is_admin_user(user),
+        "can_pos": can_access_pos(user),
+        "can_inventory": can_manage_inventory(user),
+        "can_catalog": can_manage_catalog(user),
+        "can_reports": can_view_reports(user),
+        "can_sales_history": can_view_sales_history(user),
     }
 
-    if is_admin_user(request.user):
-        active_batches = StockBatch.objects.filter(status=StockBatch.Status.ACTIVE)
-        context["stats"] = {
-            "products": Product.objects.filter(is_active=True).count(),
-            "active_batches": active_batches.count(),
-            "low_stock_products": Product.objects.filter(stock_batches__isnull=False)
+    stats = {}
+    recent_sales = []
+    recent_uploads = []
+
+    if caps["can_inventory"]:
+        stats["products"] = Product.objects.filter(is_active=True).count()
+        stats["active_batches"] = StockBatch.objects.filter(status=StockBatch.Status.ACTIVE).count()
+        stats["low_stock_products"] = (
+            Product.objects.filter(stock_batches__isnull=False)
             .annotate(total_available=Sum("stock_batches__quantity_available"))
             .filter(total_available__lte=F("min_stock"))
             .distinct()
-            .count(),
-            "today_sales": Sale.objects.filter(created_at__date=today).count(),
-        }
-        context["recent_sales"] = Sale.objects.select_related("cashier").order_by("-created_at")[:5]
-        context["recent_uploads"] = BatchUploadJob.objects.select_related("uploaded_by").order_by("-created_at")[:5]
-    else:
-        context["stats"] = {
-            "today_sales": Sale.objects.filter(cashier=request.user, created_at__date=today).count(),
-            "cart_ready": 1,
-        }
-        context["recent_sales"] = Sale.objects.filter(cashier=request.user).order_by("-created_at")[:5]
+            .count()
+        )
 
+    if caps["can_sales_history"]:
+        # Owner/Manager/Viewer see store-wide sales activity (read-only for Viewer).
+        stats["today_sales"] = Sale.objects.filter(created_at__date=today).count()
+        recent_sales = Sale.objects.select_related("cashier").order_by("-created_at")[:5]
+    elif caps["can_pos"]:
+        # Cashier sees only their own activity.
+        stats["today_sales"] = Sale.objects.filter(cashier=user, created_at__date=today).count()
+        stats["cart_ready"] = 1
+        recent_sales = Sale.objects.filter(cashier=user).order_by("-created_at")[:5]
+
+    if caps["can_catalog"]:
+        recent_uploads = BatchUploadJob.objects.select_related("uploaded_by").order_by("-created_at")[:5]
+
+    context = {
+        "today": today,
+        "caps": caps,
+        "stats": stats,
+        "recent_sales": recent_sales,
+        "recent_uploads": recent_uploads,
+    }
     return render(request, "dashboard/home.html", context)
 
 

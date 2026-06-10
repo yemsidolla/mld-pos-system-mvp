@@ -48,7 +48,7 @@ def dashboard_context(request):
                 {"label": "Categories", "url_name": "category-list", "href": "/dashboard/categories/"},
                 {"label": "Brands", "url_name": "brand-list", "href": "/dashboard/brands/"},
                 {"label": "Suppliers", "url_name": "supplier-list", "href": "/dashboard/suppliers/"},
-                {"label": "Costs", "url_name": "supplier-product-cost-list", "href": "/dashboard/reference-costs/"},
+                {"label": "Reference Costs", "url_name": "supplier-product-cost-list", "href": "/dashboard/reference-costs/"},
             ]
         )
     if user and can_manage_promotions(user):
@@ -63,8 +63,8 @@ def dashboard_context(request):
 
     inventory_items = []
     if user and can_manage_inventory(user):
-        inventory_items.append({"label": "Stock-In", "url_name": "stock-in", "href": "/dashboard/stock-in/"})
-        inventory_items.append({"label": "Inventory", "url_name": "inventory-summary", "href": "/dashboard/inventory/"})
+        inventory_items.append({"label": "Receive Stock", "url_name": "stock-in", "href": "/dashboard/stock-in/"})
+        inventory_items.append({"label": "Stock Overview", "url_name": "inventory-summary", "href": "/dashboard/inventory/"})
         inventory_items.append(
             {"label": "Barcode / QR Print", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"}
         )
@@ -87,7 +87,8 @@ def dashboard_context(request):
     if user and can_manage_settings(user):
         admin_items.append({"label": "Settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
     if user and can_view_system(user):
-        admin_items.append({"label": "System", "url_name": "system-health", "href": "/dashboard/system-health/"})
+        admin_items.append({"label": "System Health", "url_name": "system-health", "href": "/dashboard/system-health/"})
+        admin_items.append({"label": "Live Logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
     if admin_items:
         nav_groups.append({"label": "Administration", "items": admin_items})
 

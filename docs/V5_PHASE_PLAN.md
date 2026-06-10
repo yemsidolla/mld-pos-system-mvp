@@ -38,7 +38,7 @@ phase begins.
 
 | # | Phase | Risk | Status |
 | --- | --- | --- | --- |
-| 1 | Dashboard & Navigation Polish (quick wins) | Low | Planned |
+| 1 | Dashboard & Navigation Polish (quick wins) | Low | Implemented |
 | 2 | Audit Log Dashboard (read-only) | Low–Med | Planned |
 | 3 | List Consistency: search + pagination + status badges | Medium | Planned |
 | 4 | Workflow Shortcuts: receive → print, label clarity | Medium | Planned |

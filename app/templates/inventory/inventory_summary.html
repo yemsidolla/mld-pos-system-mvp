@@ -1,8 +1,8 @@
 {% extends "dashboard/base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Inventory" %}{% endblock %}
-{% block page_title %}{% trans "Inventory" %}{% endblock %}
+{% block title %}{% trans "Stock Overview" %}{% endblock %}
+{% block page_title %}{% trans "Stock Overview" %}{% endblock %}
 {% block page_subtitle %}{% trans "Search products and batches, then drill into stock adjustments and expiry control." %}{% endblock %}
 {% block header_actions %}
     <button class="btn btn-primary" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan Search" %}</button>
@@ -80,7 +80,17 @@
                     <td>{{ batch.product.name }}<br><span class="muted">{{ batch.product.product_code }}</span></td>
                     <td>{{ batch.expiry_date }}</td>
                     <td>{{ batch.quantity_available }}</td>
-                    <td><span class="badge">{{ batch.status }}</span></td>
+                    <td>
+                        {% if batch.status == "ACTIVE" %}
+                            <span class="badge badge-success">{{ batch.get_status_display }}</span>
+                        {% elif batch.status == "SOLD_OUT" %}
+                            <span class="badge">{{ batch.get_status_display }}</span>
+                        {% elif batch.status == "EXPIRED" or batch.status == "DAMAGED" %}
+                            <span class="badge badge-danger">{{ batch.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge badge-warning">{{ batch.get_status_display }}</span>
+                        {% endif %}
+                    </td>
                 </tr>
             {% empty %}
                 <tr><td colspan="5" class="empty-cell">{% trans "No stock batches found." %}</td></tr>

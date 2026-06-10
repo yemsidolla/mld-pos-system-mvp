@@ -132,7 +132,7 @@ class StockInPageTests(TestCase):
         response = self.client.get(reverse("stock-in"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Stock-In")
+        self.assertContains(response, "Receive Stock")
         self.assertContains(response, "Actual Unit Cost")
         self.assertContains(response, "Landed Unit Cost")
 

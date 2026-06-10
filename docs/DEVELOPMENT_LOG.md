@@ -2,6 +2,24 @@
 
 ## 2026-06-10
 
+### V5 Phase 1: Dashboard & Navigation Polish
+
+- Made `dashboard_home_view` capability-aware instead of `is_admin_user`-only.
+  Inventory staff and Viewers no longer see POS shortcuts they cannot use (the
+  home page previously offered them an "Open POS" button and "POS Sale" card
+  that dead-ended at a 403). Each role now lands on metrics and quick actions
+  for areas it can actually open.
+- Applied the approved staff-facing renames in nav labels and page titles:
+  "Costs" → "Reference Costs", "System" → "System Health", "Stock-In" →
+  "Receive Stock", "Inventory" (item) → "Stock Overview". Model/field names are
+  unchanged.
+- Added a "Live Logs" entry under Administration (previously reachable only by
+  URL); gated by the same `can_view_system` capability as System Health.
+- Colored the batch status badge in Stock Overview and switched to
+  `get_status_display` (was a plain, uncolored raw enum value).
+- Verified: `manage.py check` clean; full suite 193 tests passing (was 190);
+  no migrations.
+
 ### Dashboard Sidebar Navigation Grouping
 
 - Restructured the dashboard sidebar (`app/templates/dashboard/base.html`) into

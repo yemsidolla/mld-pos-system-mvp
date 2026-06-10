@@ -12,11 +12,18 @@ from django.core.management.base import CommandError
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
+from accounts.models import StaffProfile
 from audit.models import AuditLog
 from batch_upload.models import BatchUploadJob, BatchUploadRow
 from catalog.models import Product, Supplier
 from core.models import StoreSetting
-from core.permissions import ADMIN_GROUP, CASHIER_GROUP
+from core.permissions import (
+    ADMIN_GROUP,
+    CASHIER_GROUP,
+    ROLE_CASHIER,
+    ROLE_INVENTORY,
+    ROLE_VIEWER,
+)
 from core.views import dashboard_server_error_view
 from inventory.models import StockBatch
 from inventory.services import receive_stock
@@ -72,6 +79,52 @@ class DashboardShellTests(TestCase):
         self.assertNotContains(response, "Promotions")
         self.assertNotContains(response, "Batch Upload")
         self.assertNotContains(response, "Django Admin")
+
+
+class RoleAwareHomeTests(TestCase):
+    """V5 Phase 1: the home page must match each role's real capabilities.
+
+    Inventory staff and Viewers cannot access POS, so the home page must never
+    offer them POS shortcuts (which would dead-end at a 403).
+    """
+
+    def _user(self, username, role):
+        user = get_user_model().objects.create_user(username=username, password="Admin123")
+        StaffProfile.objects.create(user=user, role=role)
+        return user
+
+    def test_inventory_home_shows_stock_tools_and_no_pos(self):
+        self.client.force_login(self._user("inv", ROLE_INVENTORY))
+
+        response = self.client.get(reverse("dashboard-home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Receive Stock")
+        self.assertContains(response, "Stock Overview")
+        self.assertNotContains(response, "Open POS")
+        self.assertNotContains(response, "POS Sale")
+
+    def test_viewer_home_shows_reports_and_no_pos(self):
+        self.client.force_login(self._user("aud", ROLE_VIEWER))
+
+        response = self.client.get(reverse("dashboard-home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Reports")
+        self.assertContains(response, "Sales History")
+        self.assertNotContains(response, "Open POS")
+        self.assertNotContains(response, "POS Sale")
+        # Viewer is read-only: no receiving shortcut.
+        self.assertNotContains(response, "Receive Stock")
+
+    def test_cashier_home_shows_pos(self):
+        self.client.force_login(self._user("csh", ROLE_CASHIER))
+
+        response = self.client.get(reverse("dashboard-home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Open POS")
+        self.assertContains(response, "POS Sale")
 
 
 class DashboardAuthTests(TestCase):

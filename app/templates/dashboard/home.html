@@ -5,20 +5,24 @@
 {% block page_title %}{% trans "Dashboard" %}{% endblock %}
 {% block page_subtitle %}{% trans "A calm control room for sales, inventory, receiving, and reports." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn btn-primary" href="{% url 'pos-sale' %}">{% trans "Open POS" %}</a>
-    {% if dashboard_is_admin %}
+    {% if caps.can_pos %}
+        <a class="btn btn-primary" href="{% url 'pos-sale' %}">{% trans "Open POS" %}</a>
+    {% endif %}
+    {% if caps.can_inventory %}
         <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
     {% endif %}
 {% endblock %}
 
 {% block content %}
 <section class="metric-grid">
-    {% if dashboard_is_admin %}
+    {% if caps.can_inventory %}
         <article class="metric-card"><span>{% trans "Active Products" %}</span><strong>{{ stats.products }}</strong></article>
         <article class="metric-card"><span>{% trans "Active Batches" %}</span><strong>{{ stats.active_batches }}</strong></article>
         <article class="metric-card"><span>{% trans "Low Stock" %}</span><strong>{{ stats.low_stock_products }}</strong></article>
+    {% endif %}
+    {% if caps.can_sales_history %}
         <article class="metric-card"><span>{% trans "Sales Today" %}</span><strong>{{ stats.today_sales }}</strong></article>
-    {% else %}
+    {% elif caps.can_pos %}
         <article class="metric-card"><span>{% trans "Your Sales Today" %}</span><strong>{{ stats.today_sales }}</strong></article>
         <article class="metric-card"><span>{% trans "POS Ready" %}</span><strong>{% trans "Yes" %}</strong></article>
     {% endif %}
@@ -33,9 +37,15 @@
             </div>
         </header>
         <div class="action-grid">
-            <a class="action-card" href="{% url 'pos-sale' %}"><strong>{% trans "POS Sale" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
-            {% if dashboard_is_admin %}
-                <a class="action-card" href="{% url 'stock-in' %}"><strong>{% trans "Stock-In" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
+            {% if caps.can_pos %}
+                <a class="action-card" href="{% url 'pos-sale' %}"><strong>{% trans "POS Sale" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
+            {% endif %}
+            {% if caps.can_inventory %}
+                <a class="action-card" href="{% url 'stock-in' %}"><strong>{% trans "Receive Stock" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
+                <a class="action-card" href="{% url 'inventory-summary' %}"><strong>{% trans "Stock Overview" %}</strong><span>{% trans "Review batches, expiry, and stock levels." %}</span></a>
+                <a class="action-card" href="{% url 'barcode-print' %}"><strong>{% trans "Print Labels" %}</strong><span>{% trans "Print barcode and QR labels for batches." %}</span></a>
+            {% endif %}
+            {% if caps.can_catalog %}
                 <a class="action-card" href="{% url 'product-list' %}"><strong>{% trans "Products" %}</strong><span>{% trans "Create, search, and update product master data." %}</span></a>
                 <a class="action-card" href="{% url 'category-list' %}"><strong>{% trans "Categories" %}</strong><span>{% trans "Maintain product groups for the catalog." %}</span></a>
                 <a class="action-card" href="{% url 'brand-list' %}"><strong>{% trans "Brands" %}</strong><span>{% trans "Maintain brand master data." %}</span></a>
@@ -43,18 +53,24 @@
                 <a class="action-card" href="{% url 'supplier-product-cost-list' %}"><strong>{% trans "Reference Costs" %}</strong><span>{% trans "Track expected vendor cost by product." %}</span></a>
                 <a class="action-card" href="{% url 'promotion-list' %}"><strong>{% trans "Promotions" %}</strong><span>{% trans "Manage simple product and category discounts." %}</span></a>
                 <a class="action-card" href="{% url 'batch-upload' %}"><strong>{% trans "Batch Upload" %}</strong><span>{% trans "Import master data and receiving rows." %}</span></a>
-                <a class="action-card" href="{% url 'inventory-summary' %}"><strong>{% trans "Inventory" %}</strong><span>{% trans "Review batches, expiry, and stock levels." %}</span></a>
+            {% endif %}
+            {% if caps.can_sales_history %}
+                <a class="action-card" href="{% url 'sales-history' %}"><strong>{% trans "Sales History" %}</strong><span>{% trans "Filter and inspect completed sales." %}</span></a>
+            {% endif %}
+            {% if caps.can_reports %}
+                <a class="action-card" href="{% url 'reports-index' %}"><strong>{% trans "Reports" %}</strong><span>{% trans "Daily sales, stock, low stock, and expiry." %}</span></a>
             {% endif %}
         </div>
     </article>
 
+    {% if caps.can_sales_history or caps.can_pos %}
     <article class="panel">
         <header class="panel-header">
             <div>
                 <h2>{% trans "Recent Sales" %}</h2>
                 <p>{% trans "Latest completed sales." %}</p>
             </div>
-            {% if dashboard_is_admin %}<a href="{% url 'sales-history' %}">{% trans "View all" %}</a>{% endif %}
+            {% if caps.can_sales_history %}<a href="{% url 'sales-history' %}">{% trans "View all" %}</a>{% endif %}
         </header>
         <table class="data-table">
             <thead><tr><th>{% trans "Sale" %}</th><th>{% trans "Cashier" %}</th><th>{% trans "Total" %}</th></tr></thead>
@@ -71,8 +87,9 @@
             </tbody>
         </table>
     </article>
+    {% endif %}
 
-    {% if dashboard_is_admin %}
+    {% if caps.can_catalog %}
     <article class="panel">
         <header class="panel-header">
             <div>
