@@ -394,7 +394,10 @@ button.btn-danger {
     text-transform: uppercase;
     letter-spacing: 0;
 }
-.table-scroll { overflow-x: auto; }
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 .pagination {
     display: flex;
     align-items: center;
@@ -695,6 +698,14 @@ button.btn-danger {
     .cart-total {
         text-align: left;
         font-size: 24px;
+    }
+    /* Denser tables so more columns fit before horizontal scroll kicks in. */
+    .data-table th,
+    .data-table td {
+        padding: 8px 7px;
+    }
+    .pagination {
+        justify-content: space-between;
     }
 }
 

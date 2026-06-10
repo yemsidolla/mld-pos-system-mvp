@@ -43,7 +43,7 @@ phase begins.
 | 3 | List Consistency: search + pagination + status badges | Medium | Implemented |
 | 4 | Workflow Shortcuts: receive → print, label clarity | Medium | Implemented |
 | 5 | Shared CRUD list/form component (consistency hardening) | Medium | Implemented |
-| 6 | Mobile & Visual Polish (tables, icons, bottom nav) | Med–High | Future |
+| 6 | Mobile & Visual Polish (tables, icons, bottom nav) | Med–High | Implemented (slice) |
 
 Dependencies: Phase 5 benefits from Phases 1 & 3 landing first. Phases 1–4 are
 largely independent. Phase 6 is a future candidate, scoped after 1–5.
@@ -172,26 +172,39 @@ block because of the inline scan control.
 
 ---
 
-## Phase 6 — Mobile & Visual Polish (future)
+## Phase 6 — Mobile & Visual Polish
 
 **Goal:** Improve phone/tablet ergonomics once 1–5 are stable.
 
-**Candidate scope (to be detailed):**
-- Stacked/card layout for wide tables on phones.
-- Lightweight icon set for sidebar + a role-weighted mobile bottom nav (not
-  first-5).
-- Cost-terminology rationalization with inline help (Reference / List /
-  Actual-landed).
-- Optional unified "Labels" hub.
+**Done (this phase)**
+- **Role-weighted mobile bottom nav.** The phone bottom bar now shows a curated,
+  capability-prioritized set (Dashboard → POS → Stock Overview → Products →
+  Sales History → Reports → Receive Stock, capped at 5) instead of the first
+  five sidebar items. A cashier sees Dashboard + POS; an Owner sees the five
+  highest-value destinations (Stock Overview instead of Categories).
+- **Mobile table affordance.** Touch-momentum horizontal scrolling and denser
+  cell padding on small screens so more columns fit before scroll; pagination
+  controls space out on phones.
+- **Cost-terminology help.** Inline clarification on Receive Stock (Actual vs
+  Landed unit cost) and Reference Costs (expected vendor cost vs the price
+  actually paid per batch).
 
-**Status:** Future — scoped after Phase 5 review.
+**Deferred (optional future polish — high churn, low risk-adjusted benefit)**
+- Full stacked/card layout for wide tables on phones. This needs a `data-label`
+  on every `<td>` across ~15 templates; horizontal scroll (now smooth) is an
+  acceptable interim. Revisit if a specific table proves painful in the field.
+- A graphical icon set for the sidebar/bottom nav (currently text-only by
+  design; would add markup weight without a dependency).
+- A unified "Labels" hub (Phase 4 already cross-links the label features).
+
+**Status:** Implemented (slice). Remaining items are explicitly optional.
 
 ---
 
 ## Verification expectations (every phase)
 
 - `manage.py check` clean; `manage.py check --deploy` introduces no new warnings.
-- Full test suite passes (currently 190 tests); new tests added per phase.
+- Full test suite passes (203 tests after Phase 6); new tests added per phase.
 - Migrations (if any) are additive/safe with reverse operations.
 - `docs/TASKS.md` and `docs/DEVELOPMENT_LOG.md` updated; compose service list
   remains `postgres` + `web` only.

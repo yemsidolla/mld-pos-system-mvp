@@ -420,3 +420,12 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Adopt partial on master-data, sales history, and audit lists | AI Generated |
 | Add Reset to sales history and daily sales report | AI Generated |
 | Standardize remaining raw-enum cells onto display labels | AI Generated |
+
+## V5 Phase 6: Mobile & Visual Polish
+
+| Task | Status |
+| --- | --- |
+| Add role-weighted mobile bottom navigation | AI Generated |
+| Add mobile table affordance (touch scroll, denser cells) | AI Generated |
+| Add cost-terminology help on Receive Stock and Reference Costs | AI Generated |
+| Add mobile navigation tests | AI Generated |

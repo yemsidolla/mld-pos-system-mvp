@@ -36,6 +36,7 @@
     {% if form.non_field_errors %}
         <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}
+    <p class="muted">{% trans "Actual Unit Cost is the price paid to the supplier. Landed Unit Cost adds shipping or handling (optional). These are recorded on the batch — separate from the product's Reference Cost." %}</p>
     <div class="form-stack scan-lookup">
         <div>
             <label for="stock-in-product-code">{% trans "Scan Product Code or Barcode" %}</label>

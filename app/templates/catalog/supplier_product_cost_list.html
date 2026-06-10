@@ -3,7 +3,7 @@
 
 {% block title %}{% trans "Reference Costs" %}{% endblock %}
 {% block page_title %}{% trans "Reference Costs" %}{% endblock %}
-{% block page_subtitle %}{% trans "Vendor-specific expected cost for each product." %}{% endblock %}
+{% block page_subtitle %}{% trans "Expected vendor cost per product — for reference only. The price actually paid is recorded per batch at Receive Stock (Actual / Landed unit cost)." %}{% endblock %}
 {% block header_actions %}
     <a class="btn btn-primary" href="{% url 'supplier-product-cost-create' %}">{% trans "New Reference Cost" %}</a>
 {% endblock %}

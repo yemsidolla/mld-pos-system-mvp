@@ -89,7 +89,7 @@
 </div>
 
 <nav class="mobile-nav" aria-label="{% trans 'Mobile navigation' %}">
-    {% for item in dashboard_nav_items|slice:":5" %}
+    {% for item in dashboard_mobile_nav_items %}
         <a class="{% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">{{ item.label }}</a>
     {% endfor %}
 </nav>

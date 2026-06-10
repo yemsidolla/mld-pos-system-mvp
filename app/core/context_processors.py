@@ -97,6 +97,21 @@ def dashboard_context(request):
 
     nav_items = [item for group in nav_groups for item in group["items"]]
 
+    # Mobile bottom nav: a curated, role-weighted set of the most-used
+    # destinations (max 5), rather than the first five sidebar items. Built from
+    # the already-computed capability flags so it always matches access.
+    by_url = {item["url_name"]: item for item in nav_items}
+    mobile_priority = [
+        "dashboard-home",
+        "pos-sale",
+        "inventory-summary",
+        "product-list",
+        "sales-history",
+        "reports-index",
+        "stock-in",
+    ]
+    mobile_nav_items = [by_url[name] for name in mobile_priority if name in by_url][:5]
+
     try:
         store_setting = StoreSetting.load()
     except Exception:  # pragma: no cover - defensive (e.g. before migrations)
@@ -106,6 +121,7 @@ def dashboard_context(request):
         "app_version": getattr(settings, "APP_VERSION", "dev"),
         "dashboard_nav_groups": nav_groups,
         "dashboard_nav_items": nav_items,
+        "dashboard_mobile_nav_items": mobile_nav_items,
         "dashboard_is_admin": is_admin,
         "dashboard_is_cashier": is_cashier,
         "dashboard_role": role,

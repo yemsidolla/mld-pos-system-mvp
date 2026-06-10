@@ -126,6 +126,24 @@ class RoleAwareHomeTests(TestCase):
         self.assertContains(response, "Open POS")
         self.assertContains(response, "POS Sale")
 
+    def test_mobile_nav_is_role_weighted_and_capped(self):
+        self.client.force_login(self._user("cmob", ROLE_CASHIER))
+        cashier_nav = self.client.get(reverse("dashboard-home")).context["dashboard_mobile_nav_items"]
+        cashier_urls = [item["url_name"] for item in cashier_nav]
+        # Cashier only gets the destinations they can actually use.
+        self.assertEqual(cashier_urls, ["dashboard-home", "pos-sale"])
+
+        owner = get_user_model().objects.create_user(
+            username="omob", password="Admin123", is_superuser=True, is_staff=True
+        )
+        self.client.force_login(owner)
+        owner_nav = self.client.get(reverse("dashboard-home")).context["dashboard_mobile_nav_items"]
+        owner_urls = [item["url_name"] for item in owner_nav]
+        # Capped at 5, prioritized by usefulness (Stock Overview over Categories).
+        self.assertEqual(len(owner_urls), 5)
+        self.assertIn("inventory-summary", owner_urls)
+        self.assertNotIn("category-list", owner_urls)
+
 
 class DashboardAuthTests(TestCase):
     def setUp(self):

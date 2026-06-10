@@ -2,6 +2,23 @@
 
 ## 2026-06-10
 
+### V5 Phase 6: Mobile & Visual Polish
+
+- Replaced the mobile bottom nav's "first five sidebar items" with a curated,
+  role-weighted set (Dashboard → POS → Stock Overview → Products → Sales History
+  → Reports → Receive Stock, capped at 5), built from the same capability flags
+  so it always matches access. Cashiers get Dashboard + POS; Owners get the five
+  highest-value destinations instead of Categories/Brands.
+- Added a mobile table affordance: touch-momentum horizontal scrolling and
+  denser cell padding on small screens; pagination controls space out on phones.
+- Added cost-terminology help inline on Receive Stock (Actual vs Landed unit
+  cost) and Reference Costs (expected vendor cost vs price paid per batch).
+- Deferred (documented in `docs/V5_PHASE_PLAN.md`): full stacked-card tables and
+  a graphical icon set — high template churn for low risk-adjusted benefit;
+  smooth horizontal scroll is the interim.
+- Verified: `manage.py check` clean; full suite 203 tests passing (was 202);
+  no migrations.
+
 ### V5 Phase 5: Shared List Filter & Consistency Hardening
 
 - Extracted a shared `dashboard/_list_filter.html` partial (filter grid +
