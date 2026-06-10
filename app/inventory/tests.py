@@ -151,6 +151,37 @@ class StockInPageTests(TestCase):
         self.assertContains(response, 'data-quick-create-type="supplier"')
         self.assertContains(response, 'data-quick-create-target="#id_supplier"')
 
+    def test_created_batch_shows_print_shortcuts(self):
+        user = get_user_model().objects.create_user(
+            username="stock-admin", password="Admin123", is_staff=True, is_superuser=True
+        )
+        supplier = Supplier.objects.create(name="Pet Wholesale")
+        product = Product.objects.create(
+            product_code="P010",
+            original_barcode="8850000000010",
+            name="Puppy Food",
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            batch, _ = receive_stock(
+                product=product,
+                supplier=supplier,
+                quantity=5,
+                expiry_date=date(2027, 6, 1),
+                actual_unit_cost=Decimal("1.50"),
+                selling_price=Decimal("2.50"),
+                received_by=user,
+            )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("stock-in"), {"created": batch.pk})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Batch Received")
+        self.assertContains(response, f"{reverse('barcode-print')}?batch={batch.pk}")
+        self.assertContains(response, f"{reverse('label-print')}?batch={batch.pk}")
+
     def test_anonymous_user_is_redirected_from_stock_in_page(self):
         response = self.client.get(reverse("stock-in"))
 
@@ -219,6 +250,15 @@ class BarcodePrintPageTests(TestCase):
                 object_id=str(stock_batch.pk),
             ).exists()
         )
+
+    def test_batch_query_param_preselects_batch(self):
+        self.client.force_login(self.user)
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            stock_batch = self.create_batch()
+            response = self.client.get(reverse("barcode-print"), {"batch": stock_batch.pk})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"].initial.get("stock_batch"), stock_batch.pk)
 
 
 class InventoryAdjustmentTests(TestCase):

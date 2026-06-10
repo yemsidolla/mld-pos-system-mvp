@@ -4,6 +4,10 @@
 {% block title %}{% trans "Low Stock Report" %}{% endblock %}
 {% block page_title %}{% trans "Low Stock Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Products whose available stock is at or below the minimum." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'stock-summary-report' %}">{% trans "Stock Summary" %}</a>
+    <a class="btn" href="{% url 'expiry-report' %}">{% trans "Expiry" %}</a>
+{% endblock %}
 
 {% block content %}
 <section class="panel">

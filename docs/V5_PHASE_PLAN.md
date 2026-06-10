@@ -41,7 +41,7 @@ phase begins.
 | 1 | Dashboard & Navigation Polish (quick wins) | Low | Implemented |
 | 2 | Audit Log Dashboard (read-only) | Low–Med | Implemented |
 | 3 | List Consistency: search + pagination + status badges | Medium | Implemented |
-| 4 | Workflow Shortcuts: receive → print, label clarity | Medium | Planned |
+| 4 | Workflow Shortcuts: receive → print, label clarity | Medium | Implemented |
 | 5 | Shared CRUD list/form component (consistency hardening) | Medium | Planned |
 | 6 | Mobile & Visual Polish (tables, icons, bottom nav) | Med–High | Future |
 

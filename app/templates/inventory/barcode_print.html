@@ -3,8 +3,9 @@
 
 {% block title %}{% trans "Barcode / QR Print" %}{% endblock %}
 {% block page_title %}{% trans "Barcode / QR Print" %}{% endblock %}
-{% block page_subtitle %}{% trans "Preview and print labels for active stock batches." %}{% endblock %}
+{% block page_subtitle %}{% trans "Quick label for a single batch's barcode and QR code. For custom layouts or multiple batches, use Print Labels." %}{% endblock %}
 {% block header_actions %}
+    <a class="btn no-print" href="{% url 'label-print' %}">{% trans "Print Labels (templates)" %}</a>
     <button class="btn btn-primary no-print" type="button" data-scan-target="#label-batch-code" data-scan-select-target="#id_stock_batch" data-scan-select-match="stock_batch" data-scan-context="barcode_print">{% trans "Scan Batch" %}</button>
 {% endblock %}
 

@@ -401,3 +401,13 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Convert Stock Overview search to server-side query | AI Generated |
 | Standardize status/movement display labels in tables | AI Generated |
 | Add pagination and server-side search tests | AI Generated |
+
+## V5 Phase 4: Workflow Shortcuts & Label Clarity
+
+| Task | Status |
+| --- | --- |
+| Add print shortcuts to Receive Stock success state and Batch Detail | AI Generated |
+| Pre-select batch (and default template) via `?batch=` on print pages | AI Generated |
+| Clarify and cross-link the two label print entry points | AI Generated |
+| Add lateral links between related stock reports | AI Generated |
+| Add workflow shortcut tests | AI Generated |

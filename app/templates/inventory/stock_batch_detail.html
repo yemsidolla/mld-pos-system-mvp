@@ -5,6 +5,10 @@
 {% block page_title %}{{ stock_batch.batch_no }}{% endblock %}
 {% block page_subtitle %}{{ stock_batch.product.name }} · {{ stock_batch.custom_code }}{% endblock %}
 {% block header_actions %}
+    {% if stock_batch.status == "ACTIVE" %}
+        <a class="btn btn-primary" href="{% url 'barcode-print' %}?batch={{ stock_batch.pk }}">{% trans "Print Barcode / QR" %}</a>
+        <a class="btn" href="{% url 'label-print' %}?batch={{ stock_batch.pk }}">{% trans "Print Template Label" %}</a>
+    {% endif %}
     <a class="btn" href="{% url 'inventory-summary' %}">{% trans "Back to Inventory" %}</a>
 {% endblock %}
 
@@ -13,7 +17,7 @@
     <article class="metric-card"><span>{% trans "Product" %}</span><strong class="small-value">{{ stock_batch.product.name }}</strong></article>
     <article class="metric-card"><span>{% trans "Expiry Status" %}</span><strong class="small-value">{{ expiry_status }}</strong></article>
     <article class="metric-card"><span>{% trans "Available" %}</span><strong>{{ stock_batch.quantity_available }}</strong></article>
-    <article class="metric-card"><span>{% trans "Status" %}</span><strong class="small-value">{{ stock_batch.status }}</strong></article>
+    <article class="metric-card"><span>{% trans "Status" %}</span><strong class="small-value">{{ stock_batch.get_status_display }}</strong></article>
 </section>
 
 <section class="panel">

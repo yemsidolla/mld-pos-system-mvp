@@ -5,6 +5,7 @@ from audit.models import AuditLog
 from audit.services import create_audit_log
 from catalog.models import Product
 from core.permissions import admin_required, inventory_required
+from inventory.models import StockBatch
 from pos.pricing import calculate_promotion_price
 
 from .forms import LabelPrintForm, LabelTemplateForm, PromotionLabelForm
@@ -74,7 +75,18 @@ def label_template_edit_view(request, template_id):
 
 @inventory_required
 def label_print_view(request):
-    form = LabelPrintForm(request.POST or None)
+    initial = {}
+    if request.method == "GET" and request.GET.get("batch"):
+        batch = StockBatch.objects.filter(
+            pk=request.GET["batch"], status=StockBatch.Status.ACTIVE
+        ).first()
+        if batch:
+            initial["stock_batches"] = [batch.pk]
+            default_template = LabelTemplate.default_for(LabelTemplate.TemplateType.PRODUCT)
+            if default_template:
+                initial["template"] = default_template.pk
+
+    form = LabelPrintForm(request.POST or None, initial=initial or None)
     context = {"form": form, "labels": [], "template": None, "auto_print": False}
 
     if request.method == "POST" and form.is_valid():

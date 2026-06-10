@@ -109,6 +109,18 @@ class LabelPrintTests(TestCase):
         self.client.force_login(_profile_user("inv2", ROLE_INVENTORY))
         self.assertEqual(self.client.get(reverse("label-print")).status_code, 200)
 
+    def test_batch_query_param_preselects_batch_and_template(self):
+        batch = self._batch()
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("label-print"), {"batch": batch.id})
+
+        self.assertEqual(response.status_code, 200)
+        initial = response.context["form"].initial
+        self.assertEqual(initial.get("stock_batches"), [batch.pk])
+        # The default PRODUCT template is pre-selected for a one-click flow.
+        self.assertEqual(initial.get("template"), LabelTemplate.default_for("PRODUCT").pk)
+
     def test_print_renders_labels_and_audits(self):
         batch = self._batch()
         template = LabelTemplate.default_for("PRODUCT")

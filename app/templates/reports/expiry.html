@@ -4,6 +4,10 @@
 {% block title %}{% trans "Expiry Report" %}{% endblock %}
 {% block page_title %}{% trans "Expiry Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Batches due within the warning window or already expired." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'low-stock-report' %}">{% trans "Low Stock" %}</a>
+    <a class="btn" href="{% url 'stock-summary-report' %}">{% trans "Stock Summary" %}</a>
+{% endblock %}
 
 {% block content %}
 <section class="panel">

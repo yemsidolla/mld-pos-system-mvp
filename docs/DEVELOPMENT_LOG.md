@@ -2,6 +2,24 @@
 
 ## 2026-06-10
 
+### V5 Phase 4: Workflow Shortcuts & Label Clarity
+
+- After receiving stock, the Receive Stock page now shows a "Batch Received"
+  panel with one-click "Print Barcode / QR", "Print Template Label", and "View
+  Batch" actions (via a `?created=<id>` redirect param) — removing the old
+  re-selection round-trip. The Batch Detail page gained the same print
+  shortcuts for active batches.
+- `Barcode / QR Print` and `Print Labels` now accept `?batch=<id>` to
+  pre-select the batch (and, for Print Labels, the default product template),
+  so the shortcuts land ready to print.
+- Clarified the two label entry points: each page now explains its role
+  (quick single-batch barcode vs template-driven multi-batch) and cross-links
+  to the other plus Label Templates.
+- Added lateral links between the related stock reports (Low Stock, Expiry,
+  Stock Summary). Switched the Batch Detail status to its display label.
+- Verified: `manage.py check` clean; full suite 202 tests passing (was 199);
+  no migrations.
+
 ### V5 Phase 3: List Consistency (search, pagination, status)
 
 - Added a shared `core.pagination.paginate` helper and a reusable

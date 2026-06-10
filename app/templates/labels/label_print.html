@@ -3,9 +3,10 @@
 
 {% block title %}{% trans "Print Labels" %}{% endblock %}
 {% block page_title %}{% trans "Print Labels" %}{% endblock %}
-{% block page_subtitle %}{% trans "Pick a template and stock batches, preview, then print." %}{% endblock %}
+{% block page_subtitle %}{% trans "Pick a template and one or more stock batches, preview, then print. For a quick single-batch barcode, use Barcode / QR Print." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
+    <a class="btn no-print" href="{% url 'barcode-print' %}">{% trans "Barcode / QR Print" %}</a>
+    <a class="btn no-print" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
 {% endblock %}
 
 {% block extra_head %}

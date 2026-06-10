@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
@@ -37,14 +38,34 @@ def stock_in_view(request):
             form.add_error(None, exc)
         else:
             messages.success(request, f"Stock batch {stock_batch.batch_no} was created.")
-            return redirect("stock-in")
+            return redirect(f"{reverse('stock-in')}?created={stock_batch.pk}")
 
-    return render(request, "inventory/stock_in.html", {"form": form, "stock_batch": stock_batch})
+    created_batch = None
+    if request.method == "GET" and request.GET.get("created"):
+        created_batch = (
+            StockBatch.objects.select_related("product")
+            .filter(pk=request.GET["created"])
+            .first()
+        )
+
+    return render(
+        request,
+        "inventory/stock_in.html",
+        {"form": form, "stock_batch": stock_batch, "created_batch": created_batch},
+    )
 
 
 @inventory_required
 def barcode_print_view(request):
-    form = LabelPrintForm(request.POST or None)
+    initial = {}
+    if request.method == "GET" and request.GET.get("batch"):
+        batch = StockBatch.objects.filter(
+            pk=request.GET["batch"], status=StockBatch.Status.ACTIVE
+        ).first()
+        if batch:
+            initial["stock_batch"] = batch.pk
+
+    form = LabelPrintForm(request.POST or None, initial=initial or None)
     stock_batch = None
     labels = []
     print_recorded = False
