@@ -136,6 +136,11 @@ def can_view_system(user):
     return has_role(user, ROLE_OWNER, ROLE_MANAGER)
 
 
+def can_view_audit(user):
+    """Read-only access to the audit trail. Owner/Manager (V5 Phase 2)."""
+    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+
+
 def can_manage_settings(user):
     return has_role(user, ROLE_OWNER, ROLE_MANAGER)
 
@@ -227,6 +232,10 @@ def sales_history_required(view_func):
 
 def system_required(view_func):
     return dashboard_role_required(can_view_system)(view_func)
+
+
+def audit_required(view_func):
+    return dashboard_role_required(can_view_audit)(view_func)
 
 
 def settings_required(view_func):

@@ -30,6 +30,7 @@ Five dashboard roles, stored on `accounts.StaffProfile.role`. Resolution order
 | Sale cancellation | ✓ | ✓ | – | – | – |
 | Reports | ✓ | ✓ | – | – | ✓ |
 | System health / live logs | ✓ | ✓ | – | – | – |
+| Audit logs (read-only, V5) | ✓ | ✓ | – | – | – |
 | User management | ✓ | ✓ | – | – | – |
 | **Data reset (Phase 6)** | ✓ | – | – | – | – |
 

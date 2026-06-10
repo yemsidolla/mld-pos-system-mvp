@@ -382,3 +382,12 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add Live Logs navigation entry under Administration | AI Generated |
 | Color the batch status badge and use display labels in Stock Overview | AI Generated |
 | Add role-aware home tests | AI Generated |
+
+## V5 Phase 2: Audit Log Dashboard (read-only)
+
+| Task | Status |
+| --- | --- |
+| Add `can_view_audit` capability and `audit_required` decorator | AI Generated |
+| Add read-only audit log list view with filters and pagination | AI Generated |
+| Add Audit Logs navigation entry under Administration | AI Generated |
+| Add audit dashboard access and read-only tests | AI Generated |

@@ -8,6 +8,7 @@ from .permissions import (
     can_manage_promotions,
     can_manage_settings,
     can_manage_users,
+    can_view_audit,
     can_view_reports,
     can_view_sales_history,
     can_view_system,
@@ -86,6 +87,8 @@ def dashboard_context(request):
         admin_items.append({"label": "Users", "url_name": "user-list", "href": "/dashboard/users/"})
     if user and can_manage_settings(user):
         admin_items.append({"label": "Settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
+    if user and can_view_audit(user):
+        admin_items.append({"label": "Audit Logs", "url_name": "audit-log-list", "href": "/dashboard/audit-logs/"})
     if user and can_view_system(user):
         admin_items.append({"label": "System Health", "url_name": "system-health", "href": "/dashboard/system-health/"})
         admin_items.append({"label": "Live Logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})

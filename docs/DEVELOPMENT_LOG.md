@@ -2,6 +2,19 @@
 
 ## 2026-06-10
 
+### V5 Phase 2: Audit Log Dashboard (read-only)
+
+- Added a read-only Audit Logs page (`/dashboard/audit-logs/`) under
+  Administration for Owner/Manager, surfacing the existing `audit.AuditLog`
+  trail without requiring Django Admin access. New capability `can_view_audit`
+  and `audit_required` decorator.
+- Filters by action, module, user, and date range; paginated 25 per page
+  (introduces the shared pagination control reused in Phase 3). Old/new value
+  detail is shown in an expandable row.
+- Strictly read-only: no create/update/delete routes; a POST writes nothing.
+- Verified: `manage.py check` clean; full suite 197 tests passing (was 193);
+  no migrations.
+
 ### V5 Phase 1: Dashboard & Navigation Polish
 
 - Made `dashboard_home_view` capability-aware instead of `is_admin_user`-only.

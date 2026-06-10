@@ -1,0 +1,94 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Audit Logs" %}{% endblock %}
+{% block page_title %}{% trans "Audit Logs" %}{% endblock %}
+{% block page_subtitle %}{% trans "Read-only record of sensitive actions. Audit entries cannot be edited or deleted." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Filters" %}</h2>
+            <p>{% blocktrans count count=total_count %}{{ count }} entry found.{% plural %}{{ count }} entries found.{% endblocktrans %}</p>
+        </div>
+    </header>
+    <form class="form-stack" method="get">
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+            <a class="btn" href="{% url 'audit-log-list' %}">{% trans "Reset" %}</a>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Activity" %}</h2>
+            <p>{% trans "Most recent actions first." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Time" %}</th>
+                    <th>{% trans "User" %}</th>
+                    <th>{% trans "Action" %}</th>
+                    <th>{% trans "Module" %}</th>
+                    <th>{% trans "Object" %}</th>
+                    <th>{% trans "IP" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for log in page_obj %}
+                <tr>
+                    <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td>{{ log.user.username|default:"—" }}</td>
+                    <td><span class="badge">{{ log.get_action_display }}</span></td>
+                    <td>{{ log.module }}</td>
+                    <td>
+                        {% if log.object_display or log.object_type %}
+                            {{ log.object_display|default:log.object_type }}
+                            {% if log.old_value or log.new_value %}
+                                <details>
+                                    <summary class="muted">{% trans "Details" %}</summary>
+                                    {% if log.old_value %}<div class="muted"><strong>{% trans "Before" %}:</strong> {{ log.old_value }}</div>{% endif %}
+                                    {% if log.new_value %}<div class="muted"><strong>{% trans "After" %}:</strong> {{ log.new_value }}</div>{% endif %}
+                                </details>
+                            {% endif %}
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="muted">{{ log.ip_address|default:"—" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty-cell">{% trans "No audit entries found." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="pagination" aria-label="{% trans 'Pagination' %}">
+            {% if page_obj.has_previous %}
+                <a class="btn" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Previous" %}</a>
+            {% endif %}
+            <span class="muted">{% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}</span>
+            {% if page_obj.has_next %}
+                <a class="btn" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Next" %}</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,6 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
+
+from accounts.models import StaffProfile
+from core.permissions import ROLE_CASHIER, ROLE_MANAGER, ROLE_VIEWER
 
 from .admin import AuditLogAdmin
 from .models import AuditLog
@@ -66,3 +70,53 @@ class AuditLoginSignalTests(TestCase):
         self.assertEqual(log.object_display, "missing")
         self.assertNotIn("wrong-password", str(log.old_value))
         self.assertNotIn("wrong-password", str(log.new_value))
+
+
+class AuditLogDashboardTests(TestCase):
+    """V5 Phase 2: read-only audit dashboard for Owner/Manager."""
+
+    def _user(self, username, role):
+        user = get_user_model().objects.create_user(username=username, password="Admin123")
+        StaffProfile.objects.create(user=user, role=role)
+        return user
+
+    def setUp(self):
+        self.manager = self._user("mgr", ROLE_MANAGER)
+        AuditLog.objects.create(action=AuditLog.Action.CREATE, module="catalog", object_display="Widget")
+        AuditLog.objects.create(action=AuditLog.Action.SETTING_CHANGE, module="core", object_display="Store")
+
+    def test_manager_can_view_audit_logs(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse("audit-log-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Widget")
+        self.assertContains(response, "Store")
+
+    def test_cashier_and_viewer_cannot_view_audit_logs(self):
+        for username, role in (("csh", ROLE_CASHIER), ("aud", ROLE_VIEWER)):
+            self.client.force_login(self._user(username, role))
+            response = self.client.get(reverse("audit-log-list"))
+            self.assertEqual(response.status_code, 403)
+
+    def test_action_filter_narrows_results(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(
+            reverse("audit-log-list"), {"action": AuditLog.Action.SETTING_CHANGE}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Store")
+        self.assertNotContains(response, "Widget")
+
+    def test_audit_dashboard_does_not_write_audit_records(self):
+        # The page is strictly read-only: a POST must not create/modify entries.
+        self.client.force_login(self.manager)
+        count_before = AuditLog.objects.count()
+
+        response = self.client.post(reverse("audit-log-list"), {})
+
+        self.assertEqual(AuditLog.objects.count(), count_before)
+        self.assertIn(response.status_code, (200, 405))

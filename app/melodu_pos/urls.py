@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 from accounts.views import user_create_view, user_edit_view, user_list_view
+from audit.views import audit_log_list_view
 from batch_upload.views import (
     batch_upload_commit_view,
     batch_upload_detail_view,
@@ -139,6 +140,7 @@ urlpatterns = [
     path("dashboard/sales/", sales_history_view, name="sales-history"),
     path("dashboard/sales/<int:sale_id>/", sale_detail_view, name="sale-detail"),
     path("dashboard/sales/<int:sale_id>/cancel/", sale_cancel_view, name="sale-cancel"),
+    path("dashboard/audit-logs/", audit_log_list_view, name="audit-log-list"),
     path("dashboard/live-logs/", live_logs_view, name="live-logs"),
     path("dashboard/system-health/", system_health_view, name="system-health"),
     path("dashboard/stock-in/", stock_in_view, name="stock-in"),

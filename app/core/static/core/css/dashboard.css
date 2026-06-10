@@ -395,6 +395,13 @@ button.btn-danger {
     letter-spacing: 0;
 }
 .table-scroll { overflow-x: auto; }
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
 .empty-cell,
 .muted { color: var(--text-soft); }
 .badge {
