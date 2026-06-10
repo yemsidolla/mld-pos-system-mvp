@@ -1,5 +1,27 @@
 # Development Log
 
+## 2026-06-10
+
+### Dashboard Sidebar Navigation Grouping
+
+- Restructured the dashboard sidebar (`app/templates/dashboard/base.html`) into
+  a header / scrollable body / footer layout: brand stays pinned at the top,
+  the Django Admin link and version stay pinned at the bottom, and the
+  navigation list scrolls independently when it overflows the viewport.
+- Grouped sidebar navigation by functional area in
+  `core.context_processors.dashboard_context` (new `dashboard_nav_groups`):
+  Overview, Sales, Catalog, Inventory, Reports, Administration. The flat
+  `dashboard_nav_items` list (used by the mobile bottom nav) is now derived
+  from the grouped list, preserving its existing order.
+- Renamed the "Labels" nav entry to "Barcode / QR Print" (matches its existing
+  page title) to disambiguate it from "Print Labels", "Promotion Labels", and
+  "Label Templates" now that they sit in the same group.
+- Added `.sidebar-header`, `.sidebar-body` (scrollable, thin scrollbar), and
+  `.nav-group`/`.nav-group-title` styles to `dashboard.css`. No new
+  dependencies; mobile bottom nav and print styles unchanged.
+- Verified: full suite 190 tests passing; rendered sidebar markup checked via
+  Django test client for an Owner/superuser session.
+
 ## 2026-06-09
 
 ### V4 Phase 6: Safe Data Reset / Admin Maintenance

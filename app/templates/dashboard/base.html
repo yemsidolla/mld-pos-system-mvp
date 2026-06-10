@@ -11,20 +11,31 @@
 <body class="melodu-app">
 <a class="skip-link" href="#main-content">{% trans "Skip to content" %}</a>
 <aside class="app-sidebar" aria-label="{% trans 'Primary navigation' %}">
-    <a class="brand" href="{% url 'dashboard-home' %}">
-        <span class="brand-mark">M</span>
-        <span>
-            <strong>Melodu</strong>
-            <small>{% trans "Pet Store POS" %}</small>
-        </span>
-    </a>
-    <nav class="nav-list">
-        {% for item in dashboard_nav_items %}
-            <a class="nav-item {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">
-                <span>{{ item.label }}</span>
-            </a>
-        {% endfor %}
-    </nav>
+    <div class="sidebar-header">
+        <a class="brand" href="{% url 'dashboard-home' %}">
+            <span class="brand-mark">M</span>
+            <span>
+                <strong>Melodu</strong>
+                <small>{% trans "Pet Store POS" %}</small>
+            </span>
+        </a>
+    </div>
+    <div class="sidebar-body">
+        <nav class="nav-groups">
+            {% for group in dashboard_nav_groups %}
+                <div class="nav-group">
+                    <p class="nav-group-title">{{ group.label }}</p>
+                    <div class="nav-list">
+                        {% for item in group.items %}
+                            <a class="nav-item {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">
+                                <span>{{ item.label }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </nav>
+    </div>
     <div class="sidebar-footer">
         {% if dashboard_is_admin %}
             <a class="nav-item compact" href="{% url 'admin:index' %}">{% trans "Django Admin" %}</a>

@@ -23,16 +23,26 @@ def dashboard_context(request):
     role = get_user_role(user) if user else None
     is_admin = bool(user and is_admin_user(user))
     is_cashier = bool(user and is_cashier_user(user))
-    nav_items = []
 
+    nav_groups = []
+
+    overview_items = []
     if role is not None:
-        nav_items.append({"label": "Dashboard", "url_name": "dashboard-home", "href": "/dashboard/"})
+        overview_items.append({"label": "Dashboard", "url_name": "dashboard-home", "href": "/dashboard/"})
+    if overview_items:
+        nav_groups.append({"label": "Overview", "items": overview_items})
+
+    sales_items = []
     if user and can_access_pos(user):
-        nav_items.append({"label": "POS", "url_name": "pos-sale", "href": "/dashboard/pos/"})
-    if user and can_manage_inventory(user):
-        nav_items.append({"label": "Stock-In", "url_name": "stock-in", "href": "/dashboard/stock-in/"})
+        sales_items.append({"label": "POS", "url_name": "pos-sale", "href": "/dashboard/pos/"})
+    if user and can_view_sales_history(user):
+        sales_items.append({"label": "Sales History", "url_name": "sales-history", "href": "/dashboard/sales/"})
+    if sales_items:
+        nav_groups.append({"label": "Sales", "items": sales_items})
+
+    catalog_items = []
     if user and can_manage_catalog(user):
-        nav_items.extend(
+        catalog_items.extend(
             [
                 {"label": "Products", "url_name": "product-list", "href": "/dashboard/products/"},
                 {"label": "Categories", "url_name": "category-list", "href": "/dashboard/categories/"},
@@ -42,31 +52,46 @@ def dashboard_context(request):
             ]
         )
     if user and can_manage_promotions(user):
-        nav_items.append({"label": "Promotions", "url_name": "promotion-list", "href": "/dashboard/promotions/"})
-    if user and can_manage_inventory(user):
-        nav_items.append({"label": "Inventory", "url_name": "inventory-summary", "href": "/dashboard/inventory/"})
+        catalog_items.append({"label": "Promotions", "url_name": "promotion-list", "href": "/dashboard/promotions/"})
     if user and can_manage_catalog(user):
-        nav_items.append({"label": "Batch Upload", "url_name": "batch-upload", "href": "/dashboard/batch-upload/"})
-    if user and can_manage_inventory(user):
-        nav_items.append({"label": "Labels", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"})
-        nav_items.append({"label": "Print Labels", "url_name": "label-print", "href": "/dashboard/labels/print/"})
-        nav_items.append(
-            {"label": "Promotion Labels", "url_name": "promotion-label-print", "href": "/dashboard/labels/promotions/"}
-        )
-    if user and can_manage_catalog(user):
-        nav_items.append(
+        catalog_items.append(
             {"label": "Label Templates", "url_name": "label-template-list", "href": "/dashboard/labels/templates/"}
         )
-    if user and can_view_sales_history(user):
-        nav_items.append({"label": "Sales", "url_name": "sales-history", "href": "/dashboard/sales/"})
+        catalog_items.append({"label": "Batch Upload", "url_name": "batch-upload", "href": "/dashboard/batch-upload/"})
+    if catalog_items:
+        nav_groups.append({"label": "Catalog", "items": catalog_items})
+
+    inventory_items = []
+    if user and can_manage_inventory(user):
+        inventory_items.append({"label": "Stock-In", "url_name": "stock-in", "href": "/dashboard/stock-in/"})
+        inventory_items.append({"label": "Inventory", "url_name": "inventory-summary", "href": "/dashboard/inventory/"})
+        inventory_items.append(
+            {"label": "Barcode / QR Print", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"}
+        )
+        inventory_items.append({"label": "Print Labels", "url_name": "label-print", "href": "/dashboard/labels/print/"})
+        inventory_items.append(
+            {"label": "Promotion Labels", "url_name": "promotion-label-print", "href": "/dashboard/labels/promotions/"}
+        )
+    if inventory_items:
+        nav_groups.append({"label": "Inventory", "items": inventory_items})
+
+    reports_items = []
     if user and can_view_reports(user):
-        nav_items.append({"label": "Reports", "url_name": "reports-index", "href": "/dashboard/reports/"})
+        reports_items.append({"label": "Reports", "url_name": "reports-index", "href": "/dashboard/reports/"})
+    if reports_items:
+        nav_groups.append({"label": "Reports", "items": reports_items})
+
+    admin_items = []
     if user and can_manage_users(user):
-        nav_items.append({"label": "Users", "url_name": "user-list", "href": "/dashboard/users/"})
+        admin_items.append({"label": "Users", "url_name": "user-list", "href": "/dashboard/users/"})
     if user and can_manage_settings(user):
-        nav_items.append({"label": "Settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
+        admin_items.append({"label": "Settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
     if user and can_view_system(user):
-        nav_items.append({"label": "System", "url_name": "system-health", "href": "/dashboard/system-health/"})
+        admin_items.append({"label": "System", "url_name": "system-health", "href": "/dashboard/system-health/"})
+    if admin_items:
+        nav_groups.append({"label": "Administration", "items": admin_items})
+
+    nav_items = [item for group in nav_groups for item in group["items"]]
 
     try:
         store_setting = StoreSetting.load()
@@ -75,6 +100,7 @@ def dashboard_context(request):
 
     return {
         "app_version": getattr(settings, "APP_VERSION", "dev"),
+        "dashboard_nav_groups": nav_groups,
         "dashboard_nav_items": nav_items,
         "dashboard_is_admin": is_admin,
         "dashboard_is_cashier": is_cashier,
