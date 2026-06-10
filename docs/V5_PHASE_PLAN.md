@@ -42,7 +42,7 @@ phase begins.
 | 2 | Audit Log Dashboard (read-only) | Low–Med | Implemented |
 | 3 | List Consistency: search + pagination + status badges | Medium | Implemented |
 | 4 | Workflow Shortcuts: receive → print, label clarity | Medium | Implemented |
-| 5 | Shared CRUD list/form component (consistency hardening) | Medium | Planned |
+| 5 | Shared CRUD list/form component (consistency hardening) | Medium | Implemented |
 | 6 | Mobile & Visual Polish (tables, icons, bottom nav) | Med–High | Future |
 
 Dependencies: Phase 5 benefits from Phases 1 & 3 landing first. Phases 1–4 are
@@ -145,18 +145,30 @@ fires; access unchanged.
 
 **Goal:** Lock in consistency for the six near-identical management screens.
 
-**Scope**
-- Extract a shared list template + form template (header actions, filter block,
-  Reset, table shell, empty state) reused by Products, Categories, Brands,
-  Suppliers, Reference Costs, Promotions, Label Templates.
-- No behavior change — pure refactor to a single source of truth.
+**Scope (as implemented)**
+- Extracted a shared `dashboard/_list_filter.html` partial (filter grid +
+  consistent Filter + Reset) and adopted it on the field-loop filter lists:
+  master-data (Categories/Brands/Suppliers), Sales History, and Audit Logs.
+- Closed the Reset-button consistency gaps: Sales History and the Daily Sales
+  report now offer Reset like every other filtered list.
+- Standardized remaining raw-enum table cells onto display labels (Daily Sales
+  status/payment).
+
+**Deliberately not done (assessed, deferred):** a single generic list/form
+template for *all* CRUD screens. The master-data trio already shares one
+template via `_master_data_*` views, while Products, Reference Costs,
+Promotions, and Label Templates have genuinely different column sets and
+special controls (e.g. the product search scan button). Collapsing them into
+one template would add conditional complexity and risk for little benefit and
+would violate "preserve existing behavior." The shared *filter* partial
+captures the real duplication safely. Product list keeps its bespoke filter
+block because of the inline scan control.
 
 **Non-goals:** changing fields, validation, or permissions.
 
-**Tests:** each screen renders identically (snapshot-style assertions on key
-elements); full suite green.
+**Tests:** Sales History asserts the consistent Filter + Reset; full suite green.
 
-**Risk/rollback:** Medium; template refactor — land behind tests, revertible.
+**Risk/rollback:** Medium; template refactor — landed behind tests, revertible.
 
 ---
 

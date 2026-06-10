@@ -411,3 +411,12 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Clarify and cross-link the two label print entry points | AI Generated |
 | Add lateral links between related stock reports | AI Generated |
 | Add workflow shortcut tests | AI Generated |
+
+## V5 Phase 5: Shared List Filter & Consistency
+
+| Task | Status |
+| --- | --- |
+| Extract shared list-filter partial (Filter + Reset) | AI Generated |
+| Adopt partial on master-data, sales history, and audit lists | AI Generated |
+| Add Reset to sales history and daily sales report | AI Generated |
+| Standardize remaining raw-enum cells onto display labels | AI Generated |

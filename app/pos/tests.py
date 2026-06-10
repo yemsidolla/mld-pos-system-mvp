@@ -526,6 +526,9 @@ class SalesCancellationTests(TestCase):
 
         self.assertEqual(history.status_code, 200)
         self.assertContains(history, sale.sale_no)
+        # V5 Phase 5: every filtered list offers a consistent Filter + Reset.
+        self.assertContains(history, "Filter")
+        self.assertContains(history, "Reset")
         self.assertEqual(detail.status_code, 200)
         self.assertContains(detail, "Cancel Sale")
 

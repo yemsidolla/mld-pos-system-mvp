@@ -11,7 +11,10 @@
         <div class="form-grid">
             <div><label for="report-date">{% trans "Date" %}</label><input id="report-date" type="date" name="date" value="{{ report_date }}"></div>
         </div>
-        <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+            <a class="btn" href="{% url 'daily-sales-report' %}">{% trans "Reset" %}</a>
+        </div>
     </form>
 </section>
 <section class="metric-grid">
@@ -23,7 +26,7 @@
         <thead><tr><th>{% trans "Sale No" %}</th><th>{% trans "Cashier" %}</th><th>{% trans "Status" %}</th><th>{% trans "Payment" %}</th><th>{% trans "Final" %}</th></tr></thead>
         <tbody>
         {% for sale in sales %}
-            <tr><td>{{ sale.sale_no }}</td><td>{{ sale.cashier.username }}</td><td><span class="badge">{{ sale.status }}</span></td><td>{{ sale.payment_method }}</td><td>{{ sale.final_amount }}</td></tr>
+            <tr><td>{{ sale.sale_no }}</td><td>{{ sale.cashier.username }}</td><td><span class="badge">{{ sale.get_status_display }}</span></td><td>{{ sale.get_payment_method_display }}</td><td>{{ sale.final_amount }}</td></tr>
         {% empty %}
             <tr><td colspan="5" class="empty-cell">{% trans "No sales found." %}</td></tr>
         {% endfor %}

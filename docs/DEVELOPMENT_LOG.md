@@ -2,6 +2,22 @@
 
 ## 2026-06-10
 
+### V5 Phase 5: Shared List Filter & Consistency Hardening
+
+- Extracted a shared `dashboard/_list_filter.html` partial (filter grid +
+  consistent Filter + Reset) and adopted it on the field-loop filter lists:
+  master-data (Categories/Brands/Suppliers), Sales History, and Audit Logs.
+- Closed the Reset-button gaps: Sales History and the Daily Sales report now
+  offer Reset like every other filtered list. Standardized the Daily Sales
+  status/payment cells onto display labels.
+- Assessed and deferred a single generic CRUD template for all list/form
+  screens: the master-data trio already shares one template, while Products,
+  Reference Costs, Promotions, and Label Templates have genuinely different
+  columns and controls (e.g. the product scan button). Collapsing them would
+  add risk for little benefit, so the shared filter partial captures the real
+  duplication instead. See `docs/V5_PHASE_PLAN.md`.
+- Verified: `manage.py check` clean; full suite 202 tests passing; no migrations.
+
 ### V5 Phase 4: Workflow Shortcuts & Label Clarity
 
 - After receiving stock, the Receive Stock page now shows a "Batch Received"

@@ -1,0 +1,22 @@
+{% load i18n %}
+{% comment %}
+Shared filter form for list pages. Expects:
+  form       — a forms.Form whose fields are GET filters
+  reset_url  — optional URL for the Reset link (defaults to the current path)
+Renders a consistent filter grid with Filter + Reset actions.
+{% endcomment %}
+<form class="form-stack" method="get">
+    <div class="form-grid">
+        {% for field in form %}
+            <div>
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+    </div>
+    <div class="form-actions">
+        <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+        <a class="btn" href="{{ reset_url|default:request.path }}">{% trans "Reset" %}</a>
+    </div>
+</form>
