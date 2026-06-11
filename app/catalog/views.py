@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from core.pagination import paginate
-from core.permissions import admin_required, is_admin_user
+from core.permissions import admin_required, can_manage_catalog
 
 from .forms import (
     BrandForm,
@@ -75,7 +75,7 @@ def _form_errors_payload(form):
 @require_POST
 @login_required
 def catalog_quick_create_view(request):
-    if not is_admin_user(request.user):
+    if not can_manage_catalog(request.user):
         return JsonResponse({"status": "error", "error": "Access denied."}, status=403)
 
     item_type = request.POST.get("type", "").strip().lower()
