@@ -34,6 +34,32 @@ class HealthUrlTests(SimpleTestCase):
         self.assertEqual(reverse("health-check"), "/health/")
 
 
+class HealthCheckTests(TestCase):
+    def test_health_reports_migrations_ok_when_database_is_current(self):
+        response = self.client.get(reverse("health-check"))
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["database"], "ok")
+        self.assertEqual(payload["migrations"], "ok")
+
+    @mock.patch("core.views.MigrationExecutor")
+    def test_health_reports_unapplied_migrations(self, executor_class):
+        migration = mock.Mock(app_label="sessions", name="0001_initial")
+        executor = executor_class.return_value
+        executor.loader.graph.leaf_nodes.return_value = [("sessions", "0001_initial")]
+        executor.migration_plan.return_value = [(migration, False)]
+
+        response = self.client.get(reverse("health-check"))
+
+        self.assertEqual(response.status_code, 503)
+        payload = response.json()
+        self.assertEqual(payload["status"], "degraded")
+        self.assertEqual(payload["migrations"], "unapplied")
+        self.assertEqual(payload["unapplied_migration_count"], 1)
+        self.assertEqual(payload["unapplied_migrations"], ["sessions.0001_initial"])
+
+
 class DashboardShellTests(TestCase):
     def setUp(self):
         self.admin = get_user_model().objects.create_user(

@@ -110,6 +110,30 @@ After `collectstatic`, restart `web` so the running Django process reads the lat
 docker compose -f docker-compose.prod.yml restart web
 ```
 
+## Missing Migration Recovery
+
+If `/dashboard/login/` raises an error like this, the database migrations have not been applied to the active PostgreSQL database:
+
+```text
+ProgrammingError: relation "django_session" does not exist
+```
+
+Run migrations immediately:
+
+```bash
+docker compose -f docker-compose.prod.yml exec web python manage.py migrate
+docker compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
+docker compose -f docker-compose.prod.yml restart web
+```
+
+Then verify health:
+
+```bash
+curl -fsS https://melodu-pos.khlovepet.com/health/
+```
+
+The health endpoint reports `migrations: "unapplied"` with HTTP `503` when code has migrations that have not been applied yet.
+
 ## Host Nginx
 
 Nginx should be installed on the host and proxy to Django/Gunicorn:

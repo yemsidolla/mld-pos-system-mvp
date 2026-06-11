@@ -6,6 +6,7 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
 from django.db import connections
+from django.db.migrations.executor import MigrationExecutor
 from django.db.models import F, Sum
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
@@ -196,12 +197,25 @@ def health_check(request):
         "service": "Melodu POS & Inventory Control System",
         "status": "ok",
         "database": "ok",
+        "migrations": "ok",
     }
 
     try:
-        with connections["default"].cursor() as cursor:
+        connection = connections["default"]
+        with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
+
+        executor = MigrationExecutor(connection)
+        unapplied = executor.migration_plan(executor.loader.graph.leaf_nodes())
+        if unapplied:
+            payload["status"] = "degraded"
+            payload["migrations"] = "unapplied"
+            payload["unapplied_migration_count"] = len(unapplied)
+            payload["unapplied_migrations"] = [
+                f"{migration.app_label}.{migration.name}" for migration, _backwards in unapplied[:20]
+            ]
+            status_code = 503
     except Exception as exc:
         logger.exception("Health check database probe failed.")
         payload["status"] = "degraded"
