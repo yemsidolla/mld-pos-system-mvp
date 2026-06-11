@@ -12,9 +12,11 @@ staticfiles/
 
 # Environment
 .env
+.env.authentik
 
 # Local data and generated files
 backups/
+data/authentik/
 data/postgres/*
 data/media/*
 data/static/*
