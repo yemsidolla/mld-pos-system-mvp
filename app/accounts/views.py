@@ -1,6 +1,5 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -8,11 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from core.permissions import (
-    ADMIN_GROUP,
-    CASHIER_GROUP,
     ROLE_CASHIER,
     ROLE_LABELS,
-    ROLE_MANAGER,
     ROLE_OWNER,
     get_user_role,
     is_owner,
@@ -20,29 +16,10 @@ from core.permissions import (
 )
 
 from .forms import StaffUserCreateForm, StaffUserEditForm
-from .models import StaffProfile
+from .services import set_role as _set_role, sync_legacy_group as _sync_legacy_group
 
 User = get_user_model()
 MODULE = "accounts"
-
-
-def _set_role(user, role):
-    profile, created = StaffProfile.objects.get_or_create(user=user, defaults={"role": role})
-    if not created and profile.role != role:
-        profile.role = role
-        profile.save(update_fields=["role", "updated_at"])
-    return profile
-
-
-def _sync_legacy_group(user, role):
-    """Keep the legacy Admin/Cashier groups aligned with the role (map and keep)."""
-    admin_group, _ = Group.objects.get_or_create(name=ADMIN_GROUP)
-    cashier_group, _ = Group.objects.get_or_create(name=CASHIER_GROUP)
-    user.groups.remove(admin_group, cashier_group)
-    if role in (ROLE_OWNER, ROLE_MANAGER):
-        user.groups.add(admin_group)
-    elif role == ROLE_CASHIER:
-        user.groups.add(cashier_group)
 
 
 def _active_owner_count(exclude_pk=None):
