@@ -10,6 +10,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from audit.models import AuditLog
+from accounts.models import StaffProfile
 from catalog.models import Brand, Category, Product, Supplier
 
 from .models import InventoryMovement, StockBatch
@@ -274,6 +275,7 @@ class InventoryAdjustmentTests(TestCase):
             password="Admin123",
             is_staff=True,
         )
+        StaffProfile.objects.create(user=self.cashier, role=StaffProfile.Role.CASHIER)
         self.supplier = Supplier.objects.create(name="Pet Wholesale")
         self.product = Product.objects.create(
             product_code="P001",

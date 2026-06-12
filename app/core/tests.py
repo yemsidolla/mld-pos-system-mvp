@@ -45,7 +45,9 @@ class HealthCheckTests(TestCase):
 
     @mock.patch("core.views.MigrationExecutor")
     def test_health_reports_unapplied_migrations(self, executor_class):
-        migration = mock.Mock(app_label="sessions", name="0001_initial")
+        # Mock(name=...) sets the mock's repr name, so assign .name explicitly.
+        migration = mock.Mock(app_label="sessions")
+        migration.name = "0001_initial"
         executor = executor_class.return_value
         executor.loader.graph.leaf_nodes.return_value = [("sessions", "0001_initial")]
         executor.migration_plan.return_value = [(migration, False)]
@@ -250,7 +252,7 @@ class DashboardAuthTests(TestCase):
         response = self.client.get(reverse("dashboard-home"))
 
         self.assertEqual(response.status_code, 403)
-        self.assertContains(response, "Access denied", status_code=403)
+        self.assertContains(response, "No role assigned", status_code=403)
 
     def test_force_logged_inactive_user_is_treated_as_anonymous(self):
         inactive = get_user_model().objects.create_user(username="forced-inactive", password="Admin123", is_active=False)

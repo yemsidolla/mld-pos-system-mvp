@@ -151,9 +151,39 @@ def can_reset_data(user):
 
 
 # --- Access-denied rendering & decorators ----------------------------------
+def _log_permission_denied(request):
+    # Imported lazily so core.permissions stays importable before apps load.
+    from audit.models import AuditLog
+    from audit.services import create_audit_log
+
+    create_audit_log(
+        action=AuditLog.Action.PERMISSION_DENIED,
+        module="core",
+        request=request,
+        object_type="Path",
+        object_display=request.path[:255],
+        new_value={"method": request.method, "role": get_user_role(request.user)},
+    )
+
+
 def dashboard_access_denied_response(request):
     user = request.user
-    if is_cashier_user(user) and not is_admin_user(user):
+    title = "Access denied"
+    message = "Your account does not have permission to open this area."
+    if user.is_authenticated:
+        _log_permission_denied(request)
+
+    if user.is_authenticated and get_user_role(user) is None:
+        title = "No role assigned"
+        message = (
+            "Your account is signed in but has no Melodu role yet. "
+            "Ask an administrator to assign you a role, then log in again."
+        )
+        action_label = "Login again"
+        action_url = reverse("dashboard-login")
+        secondary_label = ""
+        secondary_url = ""
+    elif is_cashier_user(user) and not is_admin_user(user):
         action_label = "Back to POS"
         action_url = reverse("pos-sale")
         secondary_label = "Login again"
@@ -174,8 +204,8 @@ def dashboard_access_denied_response(request):
         "dashboard/error.html",
         {
             "status_code": "403",
-            "title": "Access denied",
-            "message": "Your account does not have permission to open this area.",
+            "title": title,
+            "message": message,
             "action_label": action_label,
             "action_url": action_url,
             "secondary_label": secondary_label,

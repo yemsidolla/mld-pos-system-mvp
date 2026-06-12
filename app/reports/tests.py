@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from catalog.models import Product, Supplier
+from accounts.models import StaffProfile
 from inventory.models import InventoryMovement, StockBatch
 from inventory.services import receive_stock
 from pos.models import Sale
@@ -27,6 +28,7 @@ class ReportPageTests(TestCase):
             password="Admin123",
             is_staff=True,
         )
+        StaffProfile.objects.create(user=self.cashier, role=StaffProfile.Role.CASHIER)
         self.supplier = Supplier.objects.create(name="Pet Wholesale")
         self.product = Product.objects.create(
             product_code="P001",

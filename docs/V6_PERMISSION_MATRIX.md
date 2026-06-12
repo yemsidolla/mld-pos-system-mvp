@@ -13,7 +13,7 @@ pre-V4 accounts ("map and keep").
 | POS sale screen, create sale | ✅ | ✅ | — | ✅ | — | `@pos_required` |
 | Print receipt (own sale) | ✅ | ✅ | — | ✅ | — | `@pos_required` |
 | Reprint receipt | ✅ | ✅ | — | — | — | `@admin_required` |
-| Below-cost override (with reason) | ✅ | ✅ | — | ⚠️→— | — | **V6 Phase 5**: `can_override_below_cost` |
+| Below-cost override (with reason) | ✅ | ✅ | — | — | — | `pos.services.confirm_sale` (`is_admin_user` + required reason) |
 | Manual discount on sale | ✅ | ✅ | — | ✅ | — | `@pos_required` (unchanged in V6) |
 | Sales history / sale detail | ✅ | ✅ | — | own only | ✅ | `@sales_history_required` |
 | Cancel sale (with reason) | ✅ | ✅ | — | — | — | `@admin_required` |

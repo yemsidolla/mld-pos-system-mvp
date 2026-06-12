@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from accounts.models import StaffProfile
 
 from .views import read_latest_log_lines, redact_log_line
 
@@ -21,6 +22,7 @@ class SystemLogTests(TestCase):
             password="Admin123",
             is_staff=True,
         )
+        StaffProfile.objects.create(user=self.cashier, role=StaffProfile.Role.CASHIER)
 
     def test_read_latest_log_lines_returns_newest_first(self):
         with TemporaryDirectory() as tmpdir:
