@@ -80,8 +80,8 @@
                 <tr>
                     <td><a href="{% url 'stock-batch-detail' batch.id %}">{{ batch.batch_no }}</a><br><span class="muted">{{ batch.custom_code }}</span></td>
                     <td>{{ batch.product.name }}<br><span class="muted">{{ batch.product.product_code }}</span></td>
-                    <td>{{ batch.expiry_date }}</td>
-                    <td>{{ batch.quantity_available }}</td>
+                    <td class="mono">{{ batch.expiry_date }}</td>
+                    <td class="mono">{{ batch.quantity_available }}</td>
                     <td>
                         {% if batch.status == "ACTIVE" %}
                             <span class="badge badge-success">{{ batch.get_status_display }}</span>

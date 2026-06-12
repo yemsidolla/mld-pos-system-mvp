@@ -38,12 +38,12 @@
             <tbody>
             {% for sale in sales %}
                 <tr>
-                    <td><a href="{% url 'sale-detail' sale.id %}">{{ sale.sale_no }}</a></td>
+                    <td><a href="{% url 'sale-detail' sale.id %}"><span class="mono">{{ sale.sale_no }}</span></a></td>
                     <td>{{ sale.created_at }}</td>
                     <td>{{ sale.cashier.username }}</td>
                     <td>{{ sale.payment_method }}</td>
                     <td><span class="badge">{{ sale.status }}</span></td>
-                    <td>{{ sale.final_amount }}</td>
+                    <td class="mono">{{ sale.final_amount }}</td>
                 </tr>
             {% empty %}
                 <tr><td colspan="6" class="empty-cell">{% trans "No sales found." %}</td></tr>

@@ -1,11 +1,11 @@
 {% extends "dashboard/base.html" %}
-{% load i18n %}
+{% load i18n melodu_icons %}
 
 {% block title %}{% trans "POS Sale" %}{% endblock %}
 {% block page_title %}{% trans "POS Sale" %}{% endblock %}
 {% block page_subtitle %}{% trans "Scan a barcode or QR code, choose the correct stock batch, and complete checkout." %}{% endblock %}
 {% block header_actions %}
-    <button class="btn btn-primary" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% trans "Scan With Camera" %}</button>
+    <button class="btn btn-primary" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% icon "camera" 16 %} {% trans "Scan With Camera" %}</button>
 {% endblock %}
 
 {% block content %}
@@ -24,7 +24,7 @@
                 {{ scan_form.scan_value.label_tag }}
                 <div class="input-row">
                     {{ scan_form.scan_value }}
-                    <button class="btn" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% trans "Scan" %}</button>
+                    <button class="btn" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% icon "scan" 16 %} {% trans "Scan" %}</button>
                 </div>
                 {{ scan_form.scan_value.errors }}
             </div>
@@ -63,10 +63,10 @@
                         <tbody>
                         {% for batch in available_batches %}
                             <tr>
-                                <td>{{ batch.batch_no }}</td>
-                                <td>{{ batch.expiry_date }}</td>
-                                <td>{{ batch.quantity_available }}</td>
-                                <td>{{ batch.selling_price }}</td>
+                                <td><span class="mono">{{ batch.batch_no }}</span>{% if forloop.first and available_batches|length > 1 %} <span class="pill pill-warning">{% trans "Sell first" %}</span>{% endif %}</td>
+                                <td class="mono">{{ batch.expiry_date }}</td>
+                                <td class="mono">{{ batch.quantity_available }}</td>
+                                <td class="mono">{{ batch.selling_price }}</td>
                                 <td colspan="2">
                                     <form class="input-row" method="post">
                                         {% csrf_token %}
@@ -115,7 +115,7 @@
                     <tr>
                         <td>
                             {{ row.stock_batch.product.name }}<br>
-                            <span class="muted">{{ row.stock_batch.batch_no }}</span>
+                            <span class="muted mono">{{ row.stock_batch.batch_no }}</span>
                             {% if row.final_unit_price != row.original_unit_price %}
                                 <br><span class="muted">{% trans "Unit" %}: {{ row.final_unit_price }}</span>
                             {% endif %}
@@ -137,7 +137,7 @@
                                 <span class="muted">-</span>
                             {% endif %}
                         </td>
-                        <td>{{ row.subtotal }}</td>
+                        <td class="mono">{{ row.subtotal }}</td>
                         <td>
                             <form method="post">
                                 {% csrf_token %}
@@ -152,7 +152,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="cart-total"><span>{% trans "Cart Total" %}</span>{{ cart_total }}</div>
+        <div class="cart-total"><span>{% trans "Cart Total" %}</span><span class="mono cart-total-amount">{{ cart_total }}</span></div>
         <form class="form-stack" method="post" data-disable-on-submit>
             {% csrf_token %}
             <div>
@@ -171,7 +171,7 @@
                 </div>
             {% endif %}
             <div class="form-actions">
-                <button class="btn btn-success" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}" {% if not cart_rows %}disabled{% endif %}>{% trans "Complete Sale" %}</button>
+                <button class="btn btn-success btn-charge" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
                 <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}">{% trans "Clear Cart" %}</button>
             </div>
         </form>

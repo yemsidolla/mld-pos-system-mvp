@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import messages
@@ -328,17 +329,29 @@ def dashboard_home_view(request):
     stats = {}
     recent_sales = []
     recent_uploads = []
+    low_stock_list = []
+    expiring_list = []
 
     if caps["can_inventory"]:
         stats["products"] = Product.objects.filter(is_active=True).count()
         stats["active_batches"] = StockBatch.objects.filter(status=StockBatch.Status.ACTIVE).count()
-        stats["low_stock_products"] = (
+        low_stock_qs = (
             Product.objects.filter(stock_batches__isnull=False)
             .annotate(total_available=Sum("stock_batches__quantity_available"))
             .filter(total_available__lte=F("min_stock"))
             .distinct()
-            .count()
         )
+        stats["low_stock_products"] = low_stock_qs.count()
+        low_stock_list = list(low_stock_qs.order_by("total_available")[:5])
+
+        expiring_qs = StockBatch.objects.select_related("product").filter(
+            status=StockBatch.Status.ACTIVE,
+            quantity_available__gt=0,
+            expiry_date__lte=today + timedelta(days=30),
+            expiry_date__gte=today,
+        )
+        stats["expiring_batches"] = expiring_qs.count()
+        expiring_list = list(expiring_qs.order_by("expiry_date")[:5])
 
     if caps["can_sales_history"]:
         # Owner/Manager/Viewer see store-wide sales activity (read-only for Viewer).
@@ -359,6 +372,8 @@ def dashboard_home_view(request):
         "stats": stats,
         "recent_sales": recent_sales,
         "recent_uploads": recent_uploads,
+        "low_stock_list": low_stock_list,
+        "expiring_list": expiring_list,
     }
     return render(request, "dashboard/home.html", context)
 

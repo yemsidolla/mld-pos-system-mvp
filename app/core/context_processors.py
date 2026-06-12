@@ -30,15 +30,15 @@ def dashboard_context(request):
 
     overview_items = []
     if role is not None:
-        overview_items.append({"label": "Dashboard", "url_name": "dashboard-home", "href": "/dashboard/"})
+        overview_items.append({"label": "Dashboard", "icon": "home", "url_name": "dashboard-home", "href": "/dashboard/"})
     if overview_items:
         nav_groups.append({"label": "Overview", "items": overview_items})
 
     sales_items = []
     if user and can_access_pos(user):
-        sales_items.append({"label": "POS", "url_name": "pos-sale", "href": "/dashboard/pos/"})
+        sales_items.append({"label": "POS", "icon": "cart", "url_name": "pos-sale", "href": "/dashboard/pos/"})
     if user and can_view_sales_history(user):
-        sales_items.append({"label": "Sales History", "url_name": "sales-history", "href": "/dashboard/sales/"})
+        sales_items.append({"label": "Sales History", "icon": "receipt", "url_name": "sales-history", "href": "/dashboard/sales/"})
     if sales_items:
         nav_groups.append({"label": "Sales", "items": sales_items})
 
@@ -48,56 +48,56 @@ def dashboard_context(request):
     if user and can_manage_catalog(user):
         catalog_items.extend(
             [
-                {"label": "Products", "url_name": "product-list", "href": "/dashboard/products/"},
-                {"label": "Categories", "url_name": "category-list", "href": "/dashboard/categories/"},
-                {"label": "Brands", "url_name": "brand-list", "href": "/dashboard/brands/"},
-                {"label": "Suppliers", "url_name": "supplier-list", "href": "/dashboard/suppliers/"},
+                {"label": "Products", "icon": "package", "url_name": "product-list", "href": "/dashboard/products/"},
+                {"label": "Categories", "icon": "category", "url_name": "category-list", "href": "/dashboard/categories/"},
+                {"label": "Brands", "icon": "tag", "url_name": "brand-list", "href": "/dashboard/brands/"},
+                {"label": "Suppliers", "icon": "users", "url_name": "supplier-list", "href": "/dashboard/suppliers/"},
             ]
         )
         if user_sees_costs:
             catalog_items.append(
-                {"label": "Reference Costs", "url_name": "supplier-product-cost-list", "href": "/dashboard/reference-costs/"}
+                {"label": "Reference Costs", "icon": "dollar", "url_name": "supplier-product-cost-list", "href": "/dashboard/reference-costs/"}
             )
     if user and can_manage_promotions(user):
-        catalog_items.append({"label": "Promotions", "url_name": "promotion-list", "href": "/dashboard/promotions/"})
+        catalog_items.append({"label": "Promotions", "icon": "percent", "url_name": "promotion-list", "href": "/dashboard/promotions/"})
     if user and can_manage_catalog(user):
         catalog_items.append(
-            {"label": "Label Templates", "url_name": "label-template-list", "href": "/dashboard/labels/templates/"}
+            {"label": "Label Templates", "icon": "printer", "url_name": "label-template-list", "href": "/dashboard/labels/templates/"}
         )
-        catalog_items.append({"label": "Batch Upload", "url_name": "batch-upload", "href": "/dashboard/batch-upload/"})
+        catalog_items.append({"label": "Batch Upload", "icon": "upload", "url_name": "batch-upload", "href": "/dashboard/batch-upload/"})
     if catalog_items:
         nav_groups.append({"label": "Catalog", "items": catalog_items})
 
     inventory_items = []
     if user and can_manage_inventory(user):
-        inventory_items.append({"label": "Receive Stock", "url_name": "stock-in", "href": "/dashboard/stock-in/"})
-        inventory_items.append({"label": "Stock Overview", "url_name": "inventory-summary", "href": "/dashboard/inventory/"})
+        inventory_items.append({"label": "Receive Stock", "icon": "truck", "url_name": "stock-in", "href": "/dashboard/stock-in/"})
+        inventory_items.append({"label": "Stock Overview", "icon": "package", "url_name": "inventory-summary", "href": "/dashboard/inventory/"})
         inventory_items.append(
-            {"label": "Barcode / QR Print", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"}
+            {"label": "Barcode / QR Print", "icon": "barcode", "url_name": "barcode-print", "href": "/dashboard/barcode-print/"}
         )
-        inventory_items.append({"label": "Print Labels", "url_name": "label-print", "href": "/dashboard/labels/print/"})
+        inventory_items.append({"label": "Print Labels", "icon": "printer", "url_name": "label-print", "href": "/dashboard/labels/print/"})
         inventory_items.append(
-            {"label": "Promotion Labels", "url_name": "promotion-label-print", "href": "/dashboard/labels/promotions/"}
+            {"label": "Promotion Labels", "icon": "percent", "url_name": "promotion-label-print", "href": "/dashboard/labels/promotions/"}
         )
     if inventory_items:
         nav_groups.append({"label": "Inventory", "items": inventory_items})
 
     reports_items = []
     if user and can_view_reports(user):
-        reports_items.append({"label": "Reports", "url_name": "reports-index", "href": "/dashboard/reports/"})
+        reports_items.append({"label": "Reports", "icon": "chart", "url_name": "reports-index", "href": "/dashboard/reports/"})
     if reports_items:
         nav_groups.append({"label": "Reports", "items": reports_items})
 
     admin_items = []
     if user and can_manage_users(user):
-        admin_items.append({"label": "Users", "url_name": "user-list", "href": "/dashboard/users/"})
+        admin_items.append({"label": "Users", "icon": "user", "url_name": "user-list", "href": "/dashboard/users/"})
     if user and can_manage_settings(user):
-        admin_items.append({"label": "Settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
+        admin_items.append({"label": "Settings", "icon": "settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
     if user and can_view_audit(user):
-        admin_items.append({"label": "Audit Logs", "url_name": "audit-log-list", "href": "/dashboard/audit-logs/"})
+        admin_items.append({"label": "Audit Logs", "icon": "shield", "url_name": "audit-log-list", "href": "/dashboard/audit-logs/"})
     if user and can_view_system(user):
-        admin_items.append({"label": "System Health", "url_name": "system-health", "href": "/dashboard/system-health/"})
-        admin_items.append({"label": "Live Logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
+        admin_items.append({"label": "System Health", "icon": "activity", "url_name": "system-health", "href": "/dashboard/system-health/"})
+        admin_items.append({"label": "Live Logs", "icon": "logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
     if admin_items:
         nav_groups.append({"label": "Administration", "items": admin_items})
 

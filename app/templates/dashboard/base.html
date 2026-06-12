@@ -1,4 +1,4 @@
-{% load i18n static %}
+{% load i18n static melodu_icons %}
 <!doctype html>
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
@@ -28,6 +28,7 @@
                     <div class="nav-list">
                         {% for item in group.items %}
                             <a class="nav-item {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">
+                                {% if item.icon %}{% icon item.icon 17 "nav-ic" %}{% endif %}
                                 <span>{{ item.label }}</span>
                             </a>
                         {% endfor %}
@@ -38,9 +39,18 @@
     </div>
     <div class="sidebar-footer">
         {% if dashboard_is_admin %}
-            <a class="nav-item compact" href="{% url 'admin:index' %}">{% trans "Django Admin" %}</a>
+            <a class="nav-item compact" href="{% url 'admin:index' %}">{% icon "settings" 15 "nav-ic" %}<span>{% trans "Django Admin" %}</span></a>
         {% endif %}
-        <span class="version">v{{ app_version }}</span>
+        {% if request.user.is_authenticated %}
+            <div class="sidebar-user">
+                <span class="sidebar-avatar">{{ request.user.get_full_name|default:request.user.username|first|upper }}</span>
+                <span class="sidebar-user-text">
+                    <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                    {% if dashboard_role_label %}<small>{{ dashboard_role_label }}</small>{% endif %}
+                </span>
+            </div>
+        {% endif %}
+        <span class="version mono">v{{ app_version }}</span>
     </div>
 </aside>
 
@@ -111,7 +121,10 @@
 
 <nav class="mobile-nav" aria-label="{% trans 'Mobile navigation' %}">
     {% for item in dashboard_mobile_nav_items %}
-        <a class="{% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">{{ item.label }}</a>
+        <a class="{% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">
+            {% if item.icon %}{% icon item.icon 20 %}{% endif %}
+            <span>{{ item.label }}</span>
+        </a>
     {% endfor %}
 </nav>
 

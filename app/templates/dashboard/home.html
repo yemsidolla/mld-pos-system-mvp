@@ -1,30 +1,54 @@
 {% extends "dashboard/base.html" %}
-{% load i18n %}
+{% load i18n melodu_icons %}
 
 {% block title %}{% trans "Dashboard" %}{% endblock %}
 {% block page_title %}{% trans "Dashboard" %}{% endblock %}
 {% block page_subtitle %}{% trans "A calm control room for sales, inventory, receiving, and reports." %}{% endblock %}
 {% block header_actions %}
     {% if caps.can_pos %}
-        <a class="btn btn-primary" href="{% url 'pos-sale' %}">{% trans "Open POS" %}</a>
+        <a class="btn btn-primary" href="{% url 'pos-sale' %}">{% icon "cart" 16 %} {% trans "Open POS" %}</a>
     {% endif %}
     {% if caps.can_inventory %}
-        <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
+        <a class="btn" href="{% url 'stock-in' %}">{% icon "truck" 16 %} {% trans "Receive Stock" %}</a>
     {% endif %}
 {% endblock %}
 
 {% block content %}
-<section class="metric-grid">
-    {% if caps.can_inventory %}
-        <article class="metric-card"><span>{% trans "Active Products" %}</span><strong>{{ stats.products }}</strong></article>
-        <article class="metric-card"><span>{% trans "Active Batches" %}</span><strong>{{ stats.active_batches }}</strong></article>
-        <article class="metric-card"><span>{% trans "Low Stock" %}</span><strong>{{ stats.low_stock_products }}</strong></article>
-    {% endif %}
+<section class="kpi-grid">
     {% if caps.can_sales_history %}
-        <article class="metric-card"><span>{% trans "Sales Today" %}</span><strong>{{ stats.today_sales }}</strong></article>
+        <article class="kpi-card">
+            <span class="kpi-label">{% icon "cash" 15 %}{% trans "Sales Today" %}</span>
+            <strong class="kpi-value">{{ stats.today_sales }}</strong>
+            <span class="kpi-hint">{% trans "store-wide" %}</span>
+        </article>
     {% elif caps.can_pos %}
-        <article class="metric-card"><span>{% trans "Your Sales Today" %}</span><strong>{{ stats.today_sales }}</strong></article>
-        <article class="metric-card"><span>{% trans "POS Ready" %}</span><strong>{% trans "Yes" %}</strong></article>
+        <article class="kpi-card">
+            <span class="kpi-label">{% icon "cash" 15 %}{% trans "Your Sales Today" %}</span>
+            <strong class="kpi-value">{{ stats.today_sales }}</strong>
+            <span class="kpi-hint">{% trans "completed by you" %}</span>
+        </article>
+        <article class="kpi-card">
+            <span class="kpi-label">{% icon "check" 15 %}{% trans "POS Ready" %}</span>
+            <strong class="kpi-value">{% trans "Yes" %}</strong>
+            <span class="kpi-hint">{% trans "scanner & cart online" %}</span>
+        </article>
+    {% endif %}
+    {% if caps.can_inventory %}
+        <article class="kpi-card">
+            <span class="kpi-label">{% icon "package" 15 %}{% trans "Active Products" %}</span>
+            <strong class="kpi-value">{{ stats.products }}</strong>
+            <span class="kpi-hint">{{ stats.active_batches }} {% trans "active batches" %}</span>
+        </article>
+        <article class="kpi-card {% if stats.low_stock_products %}kpi-warning{% endif %}">
+            <span class="kpi-label">{% icon "alert" 15 %}{% trans "Low Stock" %}</span>
+            <strong class="kpi-value">{{ stats.low_stock_products }}</strong>
+            <span class="kpi-hint">{% trans "at or below minimum" %}</span>
+        </article>
+        <article class="kpi-card {% if stats.expiring_batches %}kpi-danger{% endif %}">
+            <span class="kpi-label">{% icon "clock" 15 %}{% trans "Expiring ≤30d" %}</span>
+            <strong class="kpi-value">{{ stats.expiring_batches }}</strong>
+            <span class="kpi-hint">{% trans "active batches" %}</span>
+        </article>
     {% endif %}
 </section>
 
@@ -38,30 +62,52 @@
         </header>
         <div class="action-grid">
             {% if caps.can_pos %}
-                <a class="action-card" href="{% url 'pos-sale' %}"><strong>{% trans "POS Sale" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
+                <a class="action-card" href="{% url 'pos-sale' %}">{% icon "cart" 20 "action-ic" %}<strong>{% trans "POS Sale" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
             {% endif %}
             {% if caps.can_inventory %}
-                <a class="action-card" href="{% url 'stock-in' %}"><strong>{% trans "Receive Stock" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
-                <a class="action-card" href="{% url 'inventory-summary' %}"><strong>{% trans "Stock Overview" %}</strong><span>{% trans "Review batches, expiry, and stock levels." %}</span></a>
-                <a class="action-card" href="{% url 'barcode-print' %}"><strong>{% trans "Print Labels" %}</strong><span>{% trans "Print barcode and QR labels for batches." %}</span></a>
+                <a class="action-card" href="{% url 'stock-in' %}">{% icon "truck" 20 "action-ic" %}<strong>{% trans "Receive Stock" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
+                <a class="action-card" href="{% url 'inventory-summary' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Stock Overview" %}</strong><span>{% trans "Batches, expiry, and stock levels." %}</span></a>
             {% endif %}
             {% if caps.can_catalog %}
-                <a class="action-card" href="{% url 'product-list' %}"><strong>{% trans "Products" %}</strong><span>{% trans "Create, search, and update product master data." %}</span></a>
-                <a class="action-card" href="{% url 'category-list' %}"><strong>{% trans "Categories" %}</strong><span>{% trans "Maintain product groups for the catalog." %}</span></a>
-                <a class="action-card" href="{% url 'brand-list' %}"><strong>{% trans "Brands" %}</strong><span>{% trans "Maintain brand master data." %}</span></a>
-                <a class="action-card" href="{% url 'supplier-list' %}"><strong>{% trans "Suppliers" %}</strong><span>{% trans "Maintain contacts used during stock-in." %}</span></a>
-                {% if dashboard_can_view_costs %}<a class="action-card" href="{% url 'supplier-product-cost-list' %}"><strong>{% trans "Reference Costs" %}</strong><span>{% trans "Track expected vendor cost by product." %}</span></a>{% endif %}
-                <a class="action-card" href="{% url 'promotion-list' %}"><strong>{% trans "Promotions" %}</strong><span>{% trans "Manage simple product and category discounts." %}</span></a>
-                <a class="action-card" href="{% url 'batch-upload' %}"><strong>{% trans "Batch Upload" %}</strong><span>{% trans "Import master data and receiving rows." %}</span></a>
+                <a class="action-card" href="{% url 'product-list' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Products" %}</strong><span>{% trans "Search and update master data." %}</span></a>
             {% endif %}
             {% if caps.can_sales_history %}
-                <a class="action-card" href="{% url 'sales-history' %}"><strong>{% trans "Sales History" %}</strong><span>{% trans "Filter and inspect completed sales." %}</span></a>
+                <a class="action-card" href="{% url 'sales-history' %}">{% icon "receipt" 20 "action-ic" %}<strong>{% trans "Sales History" %}</strong><span>{% trans "Filter and inspect completed sales." %}</span></a>
             {% endif %}
             {% if caps.can_reports %}
-                <a class="action-card" href="{% url 'reports-index' %}"><strong>{% trans "Reports" %}</strong><span>{% trans "Daily sales, stock, low stock, and expiry." %}</span></a>
+                <a class="action-card" href="{% url 'reports-index' %}">{% icon "chart" 20 "action-ic" %}<strong>{% trans "Reports" %}</strong><span>{% trans "Daily sales, stock, and expiry." %}</span></a>
             {% endif %}
         </div>
     </article>
+
+    {% if caps.can_inventory %}
+    <article class="panel">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Needs Attention" %}</h2>
+                <p>{% trans "Low stock and batches expiring soon." %}</p>
+            </div>
+        </header>
+        {% if low_stock_list or expiring_list %}
+            <div class="attention-list">
+                {% for product in low_stock_list %}
+                    <div class="attention-row warn">
+                        <span>{% icon "alert" 15 %} {{ product.name }}</span>
+                        <span class="attention-metric">{{ product.total_available }} {% trans "left" %}</span>
+                    </div>
+                {% endfor %}
+                {% for batch in expiring_list %}
+                    <div class="attention-row crit">
+                        <span>{% icon "clock" 15 %} {{ batch.product.name }} · <span class="mono">{{ batch.batch_no }}</span></span>
+                        <span class="attention-metric">{% trans "exp" %} {{ batch.expiry_date }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">{% icon "check" 16 %} {% trans "All clear — nothing needs attention." %}</p>
+        {% endif %}
+    </article>
+    {% endif %}
 
     {% if caps.can_sales_history or caps.can_pos %}
     <article class="panel">
@@ -77,9 +123,9 @@
             <tbody>
             {% for sale in recent_sales %}
                 <tr>
-                    <td>{{ sale.sale_no }}</td>
+                    <td class="mono">{{ sale.sale_no }}</td>
                     <td>{{ sale.cashier.username }}</td>
-                    <td>{{ sale.final_amount }}</td>
+                    <td class="mono">{{ sale.final_amount }}</td>
                 </tr>
             {% empty %}
                 <tr><td colspan="3" class="empty-cell">{% trans "No recent sales yet." %}</td></tr>
@@ -104,8 +150,8 @@
             {% for job in recent_uploads %}
                 <tr>
                     <td>{{ job.get_target_display }}</td>
-                    <td><span class="badge">{{ job.status }}</span></td>
-                    <td>{{ job.original_filename }}</td>
+                    <td><span class="pill pill-info">{{ job.status }}</span></td>
+                    <td class="mono">{{ job.original_filename }}</td>
                 </tr>
             {% empty %}
                 <tr><td colspan="3" class="empty-cell">{% trans "No upload jobs yet." %}</td></tr>
