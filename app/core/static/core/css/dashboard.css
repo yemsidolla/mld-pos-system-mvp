@@ -1267,3 +1267,73 @@ body.auth-page .error-message { color: #b8d0e6; font-size: 15px; }
 .badge-success { background: #e1f5ee; color: #085041; border: none; }
 .badge-warning { background: #faeeda; color: #633806; border: none; }
 .badge-danger { background: #fcebeb; color: #791f1f; border: none; }
+
+/* === V7.1: global refinements (tables, forms, panels, pagination) ========= */
+.data-table th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    padding: 8px 9px;
+}
+.data-table td { vertical-align: middle; }
+.data-table tbody tr:hover { background: var(--surface-subtle); }
+.data-table .empty-cell { text-align: center; color: var(--text-soft); padding: 24px 9px; }
+
+.panel { border-radius: var(--radius); }
+.panel-header h2 { font-size: 16px; }
+
+.btn, .btn-primary, .btn-success, .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 8px;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.14);
+}
+label { font-size: 12.5px; font-weight: 600; color: var(--text-soft); }
+input[type="checkbox"], input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    accent-color: var(--accent);
+    vertical-align: -2px;
+}
+.form-grid ul {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+}
+.form-grid ul li label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 500;
+    color: var(--text);
+    font-size: 13px;
+}
+.helptext, .form-grid small, .form-stack small {
+    color: var(--text-soft);
+    font-size: 12px;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 14px 0 4px;
+}
+.pagination .muted { font-family: var(--font-mono); font-size: 12px; }
+
+.alert { border-left-width: 3px; border-radius: 0 8px 8px 0; }
+.alert-danger { border-left-color: var(--danger); }
+.alert-warning { border-left-color: var(--warning); }
+.alert-success { border-left-color: var(--success); }

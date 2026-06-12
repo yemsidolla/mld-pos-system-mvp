@@ -36,7 +36,7 @@
                         {% if row.is_superuser %}<br><span class="badge">{% trans "Superuser" %}</span>{% endif %}
                     </td>
                     <td>{{ row.user.get_full_name|default:"—" }}</td>
-                    <td>{{ row.role_label }}</td>
+                    <td>{% if row.role %}<span class="role-badge role-{{ row.role|lower }}">{{ row.role_label }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
                     <td>
                         {% if row.user.is_active %}
                             <span class="badge badge-success">{% trans "Active" %}</span>
