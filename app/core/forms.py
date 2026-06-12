@@ -33,6 +33,8 @@ class StoreSettingForm(forms.ModelForm):
             "receipt_font_size_px",
             "show_logo_on_receipt",
             "currency_symbol",
+            "khr_exchange_rate",
+            "khqr_image",
             "cost_visible_roles",
             "quick_key_products",
         )

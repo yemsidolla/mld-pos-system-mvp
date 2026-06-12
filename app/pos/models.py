@@ -82,6 +82,8 @@ class Sale(models.Model):
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     final_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.CASH)
+    amount_received = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    change_due = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.COMPLETED)
     cancel_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

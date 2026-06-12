@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load i18n melodu_icons %}
+{% load i18n melodu_icons pos_extras %}
 
 {% block title %}{% trans "POS Sale" %}{% endblock %}
 {% block page_title %}{% trans "POS Sale" %}{% endblock %}
@@ -208,19 +208,12 @@
             </table>
         </div>
         <div class="cart-total"><span>{% trans "Cart Total" %}</span><span class="mono cart-total-amount" data-cart-total="{{ cart_total }}">{{ cart_total }}</span></div>
-        <div class="change-calc">
-            <label for="amount-received">{% trans "Amount Received" %}</label>
-            <div class="input-row">
-                <input id="amount-received" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-change-input>
-                <span class="change-due"><span class="muted">{% trans "Change" %}</span> <span class="mono" data-change-output>—</span></span>
-            </div>
-        </div>
+        {% if store_setting and store_setting.khr_exchange_rate %}
+            <div class="cart-total-khr"><span>≈ {% trans "Riel" %}</span><span class="mono">៛ {{ cart_total|khr:store_setting.khr_exchange_rate }}</span></div>
+        {% endif %}
         <form class="form-stack" method="post" data-disable-on-submit data-full-submit>
             {% csrf_token %}
-            <div>
-                {{ confirm_form.payment_method.label_tag }}
-                {{ confirm_form.payment_method }}
-            </div>
+            <input type="hidden" name="payment_method" value="CASH" data-payment-method>
             <div>
                 {{ confirm_form.discount_amount.label_tag }}
                 {{ confirm_form.discount_amount }}
@@ -233,8 +226,42 @@
                 </div>
             {% endif %}
             <div class="form-actions">
-                <button class="btn btn-success btn-charge" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}" data-shortcut="F9" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
+                <button class="btn btn-success btn-charge" type="button" data-open-payment data-shortcut="F9" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
                 <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}" data-confirm-message="{% trans 'Clear the whole cart?' %}">{% trans "Clear Cart" %}</button>
+            </div>
+
+            <div class="payment-dialog" data-payment-dialog hidden>
+                <div class="payment-panel">
+                    <p class="terminal-line" aria-hidden="true"><span class="terminal-dot"></span>{% trans "PAYMENT" %} · <span class="mono">{{ cart_total }}</span>{% if store_setting and store_setting.khr_exchange_rate %} · <span class="mono">៛ {{ cart_total|khr:store_setting.khr_exchange_rate }}</span>{% endif %}</p>
+                    <div class="payment-methods">
+                        <button class="payment-method active" type="button" data-payment-choose="CASH">{% icon "cash" 18 %} {% trans "Cash" %}</button>
+                        <button class="payment-method" type="button" data-payment-choose="KHQR">{% icon "scan" 18 %} KHQR</button>
+                        <button class="payment-method" type="button" data-payment-choose="ABA">ABA</button>
+                        <button class="payment-method" type="button" data-payment-choose="CARD">{% trans "Card" %}</button>
+                    </div>
+
+                    <div class="payment-pane" data-payment-pane="CASH">
+                        <label for="amount-received">{% trans "Amount Received" %}</label>
+                        <div class="input-row">
+                            <input id="amount-received" name="amount_received" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-change-input>
+                            <span class="change-due"><span class="muted">{% trans "Change" %}</span> <span class="mono" data-change-output>—</span></span>
+                        </div>
+                    </div>
+
+                    <div class="payment-pane" data-payment-pane="KHQR" hidden>
+                        {% if store_setting.khqr_image %}
+                            <img class="khqr-image" src="{{ store_setting.khqr_image.url }}" alt="KHQR">
+                        {% else %}
+                            <p class="muted">{% trans "No KHQR code uploaded yet. Add one in Store Settings." %}</p>
+                        {% endif %}
+                        <p class="khqr-amount mono">{{ store_setting.currency_symbol }}{{ cart_total }}</p>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-success btn-charge" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}">{% icon "check" 16 %} <span data-payment-confirm-label>{% trans "Confirm Cash Payment" %}</span></button>
+                        <button class="btn" type="button" data-payment-close>{% trans "Back" %}</button>
+                    </div>
+                </div>
             </div>
         </form>
     </aside>

@@ -24,6 +24,10 @@ class StoreSetting(models.Model):
     receipt_font_size_px = models.PositiveIntegerField(default=12)
     show_logo_on_receipt = models.BooleanField(default=False)
     currency_symbol = models.CharField(max_length=8, default="$")
+    # USD -> KHR display rate for the POS and receipts (e.g. 4100).
+    khr_exchange_rate = models.PositiveIntegerField(default=4100)
+    # Static KHQR/Bakong code shown in the POS payment dialog.
+    khqr_image = models.ImageField(upload_to="store/", blank=True, null=True)
     # Roles (besides Owner, who always sees costs) allowed to view cost and
     # profit data. List of StaffProfile.Role values, e.g. ["MANAGER"].
     cost_visible_roles = models.JSONField(default=default_cost_visible_roles, blank=True)

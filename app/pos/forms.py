@@ -18,6 +18,7 @@ class AddBatchForm(forms.Form):
 class ConfirmSaleForm(forms.Form):
     payment_method = forms.ChoiceField(choices=Sale.PaymentMethod.choices)
     discount_amount = forms.DecimalField(min_value=0, max_digits=12, decimal_places=2, initial=0)
+    amount_received = forms.DecimalField(required=False, min_value=0, max_digits=12, decimal_places=2)
     override_reason = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 2}),

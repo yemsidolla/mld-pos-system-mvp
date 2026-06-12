@@ -315,6 +315,7 @@ def pos_sale_view(request):
                         cashier=request.user,
                         payment_method=confirm_form.cleaned_data["payment_method"],
                         discount_amount=confirm_form.cleaned_data["discount_amount"],
+                        amount_received=confirm_form.cleaned_data.get("amount_received"),
                         override_reason=confirm_form.cleaned_data["override_reason"],
                         request=request,
                     )

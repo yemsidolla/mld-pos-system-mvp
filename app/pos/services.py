@@ -149,6 +149,7 @@ def confirm_sale(
     cashier,
     payment_method=Sale.PaymentMethod.CASH,
     discount_amount=Decimal("0.00"),
+    amount_received=None,
     override_reason="",
     request=None,
 ):
@@ -231,13 +232,25 @@ def confirm_sale(
 
     final_amount = sum((item["final_line_total"] for item in normalized_items), Decimal("0.00"))
 
+    final_money = money(final_amount)
+    change_due = None
+    if amount_received is not None and payment_method == Sale.PaymentMethod.CASH:
+        amount_received = money(amount_received)
+        if amount_received < final_money:
+            raise ValidationError("Amount received is less than the total due.")
+        change_due = money(amount_received - final_money)
+    elif payment_method != Sale.PaymentMethod.CASH:
+        amount_received = None
+
     sale = Sale.objects.create(
         sale_no=generate_sale_no(),
         cashier=cashier,
         total_amount=total_amount,
         discount_amount=money(promotion_discount_amount + discount_amount),
-        final_amount=money(final_amount),
+        final_amount=final_money,
         payment_method=payment_method,
+        amount_received=amount_received,
+        change_due=change_due,
         status=Sale.Status.COMPLETED,
     )
 

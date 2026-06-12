@@ -753,3 +753,75 @@ class QuickKeyTests(TestCase):
 
         self.assertContains(response, "Promotions")
         self.assertContains(response, "-10%")
+
+
+class PaymentFlowTests(TestCase):
+    def setUp(self):
+        self.cashier = get_user_model().objects.create_user(username="pay-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get(name=CASHIER_GROUP))
+        self.supplier = Supplier.objects.create(name="Pet Wholesale")
+        self.product = Product.objects.create(
+            product_code="P920",
+            original_barcode="8852222222229",
+            name="Pay Test Food",
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+        self.client.force_login(self.cashier)
+
+    def create_batch(self):
+        from tempfile import TemporaryDirectory
+
+        from django.test import override_settings
+        from inventory.services import receive_stock
+
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            stock_batch, _movement = receive_stock(
+                product=self.product,
+                supplier=self.supplier,
+                quantity=10,
+                expiry_date=date(2027, 6, 1),
+                actual_unit_cost=Decimal("1.50"),
+                selling_price=Decimal("2.50"),
+                received_by=self.cashier,
+            )
+        return stock_batch
+
+    def _checkout(self, **extra):
+        stock_batch = self.create_batch()
+        self.client.post(
+            reverse("pos-sale"),
+            {"action": "add_batch", "stock_batch_id": stock_batch.id, "quantity": "2"},
+        )
+        data = {"action": "confirm", "payment_method": "CASH", "discount_amount": "0"}
+        data.update(extra)
+        return self.client.post(reverse("pos-sale"), data, follow=True)
+
+    def test_cash_sale_persists_received_and_change(self):
+        response = self._checkout(amount_received="10.00")
+        self.assertEqual(response.status_code, 200)
+        sale = Sale.objects.latest("id")
+        self.assertEqual(sale.amount_received, Decimal("10.00"))
+        self.assertEqual(sale.change_due, Decimal("5.00"))
+
+    def test_cash_sale_rejects_insufficient_amount(self):
+        response = self._checkout(amount_received="1.00")
+        self.assertContains(response, "less than the total due")
+        self.assertEqual(Sale.objects.count(), 0)
+
+    def test_khqr_sale_ignores_received_amount(self):
+        response = self._checkout(payment_method="KHQR", amount_received="10.00")
+        self.assertEqual(response.status_code, 200)
+        sale = Sale.objects.latest("id")
+        self.assertEqual(sale.payment_method, "KHQR")
+        self.assertIsNone(sale.amount_received)
+        self.assertIsNone(sale.change_due)
+
+    def test_receipt_shows_change_and_khr(self):
+        self._checkout(amount_received="10.00")
+        sale = Sale.objects.latest("id")
+        response = self.client.get(reverse("sale-receipt", kwargs={"sale_id": sale.id}))
+        self.assertContains(response, "Received")
+        self.assertContains(response, "10.00")
+        self.assertContains(response, "៛")
+        self.assertContains(response, "20,500")

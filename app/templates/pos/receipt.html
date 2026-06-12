@@ -1,4 +1,4 @@
-{% load i18n %}<!doctype html>
+{% load i18n pos_extras %}<!doctype html>
 <html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
     <meta charset="utf-8">
@@ -83,7 +83,14 @@
         <tr><td>{% trans "Total" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.total_amount }}</td></tr>
         <tr><td>{% trans "Discount" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.discount_amount }}</td></tr>
         <tr class="grand"><td>{% trans "Final" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.final_amount }}</td></tr>
-        <tr><td>{% trans "Payment" %}</td><td class="right">{{ sale.payment_method }}</td></tr>
+        {% if store.khr_exchange_rate %}
+        <tr><td>≈ {% trans "Riel" %}</td><td class="right">៛ {{ sale.final_amount|khr:store.khr_exchange_rate }}</td></tr>
+        {% endif %}
+        <tr><td>{% trans "Payment" %}</td><td class="right">{{ sale.get_payment_method_display }}</td></tr>
+        {% if sale.amount_received is not None %}
+        <tr><td>{% trans "Received" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.amount_received }}</td></tr>
+        <tr><td>{% trans "Change" %}</td><td class="right">{{ store.currency_symbol }}{{ sale.change_due }}</td></tr>
+        {% endif %}
     </table>
     <hr>
     {% if store.receipt_footer %}<div class="center">{{ store.receipt_footer }}</div>{% endif %}

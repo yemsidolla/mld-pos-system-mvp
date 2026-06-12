@@ -129,6 +129,7 @@ class CostVisibilitySettingsFormTests(TestCase):
                 "receipt_footer": setting.receipt_footer,
                 "receipt_paper_width_mm": setting.receipt_paper_width_mm,
                 "receipt_font_size_px": setting.receipt_font_size_px,
+                "khr_exchange_rate": 4100,
                 "currency_symbol": setting.currency_symbol,
                 "cost_visible_roles": ["MANAGER"],
             },

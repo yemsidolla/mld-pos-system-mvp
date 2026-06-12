@@ -464,6 +464,7 @@ class StoreSettingTests(TestCase):
                 "receipt_footer": "Thank you!",
                 "receipt_paper_width_mm": "80",
                 "receipt_font_size_px": "12",
+                "khr_exchange_rate": 4100,
                 "currency_symbol": "$",
             },
         )
@@ -482,6 +483,7 @@ class StoreSettingTests(TestCase):
                 "receipt_footer": "Thanks",
                 "receipt_paper_width_mm": "5",
                 "receipt_font_size_px": "12",
+                "khr_exchange_rate": 4100,
                 "currency_symbol": "$",
             },
         )
