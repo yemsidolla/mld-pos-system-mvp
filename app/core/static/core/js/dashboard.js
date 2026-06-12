@@ -238,3 +238,133 @@
         });
     });
 })();
+
+(function () {
+    "use strict";
+
+    var scanInput = document.querySelector("[data-pos-scan-form]")
+        ? document.getElementById("id_scan_value")
+        : null;
+    if (scanInput) {
+        scanInput.focus();
+        scanInput.select();
+    }
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "F9") {
+            var shortcutButton = document.querySelector('[data-shortcut="F9"]');
+            if (shortcutButton && !shortcutButton.disabled) {
+                event.preventDefault();
+                shortcutButton.click();
+            }
+        }
+        if (event.key === "Escape" && scanInput) {
+            scanInput.value = "";
+            scanInput.focus();
+        }
+    });
+
+    var changeInput = document.querySelector("[data-change-input]");
+    var changeOutput = document.querySelector("[data-change-output]");
+    var totalNode = document.querySelector("[data-cart-total]");
+    if (changeInput && changeOutput && totalNode) {
+        var total = parseFloat(totalNode.getAttribute("data-cart-total")) || 0;
+        changeInput.addEventListener("input", function () {
+            var received = parseFloat(changeInput.value);
+            if (isNaN(received)) {
+                changeOutput.textContent = "—";
+                changeOutput.classList.remove("change-negative");
+                return;
+            }
+            var change = received - total;
+            changeOutput.textContent = change.toFixed(2);
+            changeOutput.classList.toggle("change-negative", change < 0);
+        });
+    }
+
+    document.querySelectorAll(".alert-success").forEach(function (alert) {
+        window.setTimeout(function () {
+            alert.classList.add("alert-fade");
+            window.setTimeout(function () { alert.remove(); }, 600);
+        }, 4000);
+    });
+})();
+
+(function () {
+    "use strict";
+
+    var overlay = document.getElementById("quick-find");
+    if (!overlay) return;
+    var input = overlay.querySelector("input");
+    var results = overlay.querySelector("[data-qf-results]");
+    var endpoint = overlay.getAttribute("data-endpoint");
+
+    function open() {
+        overlay.hidden = false;
+        results.innerHTML = "";
+        input.value = "";
+        input.focus();
+    }
+    function close() { overlay.hidden = true; }
+
+    document.addEventListener("keydown", function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+            event.preventDefault();
+            overlay.hidden ? open() : close();
+        }
+        if (event.key === "Escape" && !overlay.hidden) close();
+    });
+    overlay.addEventListener("click", function (event) {
+        if (event.target === overlay) close();
+    });
+
+    function row(label, sub) {
+        var div = document.createElement("div");
+        div.className = "qf-row";
+        var strong = document.createElement("strong");
+        strong.textContent = label;
+        var small = document.createElement("small");
+        small.className = "mono";
+        small.textContent = sub;
+        div.appendChild(strong);
+        div.appendChild(small);
+        return div;
+    }
+
+    input.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        var value = input.value.trim();
+        if (!value) return;
+        results.innerHTML = "";
+        results.appendChild(row("Searching…", value));
+        fetch(endpoint + "?value=" + encodeURIComponent(value) + "&context=quickfind", {
+            headers: { Accept: "application/json" },
+            credentials: "same-origin",
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                results.innerHTML = "";
+                if (data.status !== "ok") {
+                    results.appendChild(row(data.error || "No match found.", value));
+                    return;
+                }
+                if (data.product) {
+                    results.appendChild(row(data.product.name, data.product.product_code + " · " + (data.product.original_barcode || "")));
+                }
+                var batches = data.stock_batches || (data.stock_batch ? [data.stock_batch] : []);
+                batches.forEach(function (batch) {
+                    results.appendChild(
+                        row("Batch " + batch.batch_no, "exp " + batch.expiry_date + " · " + batch.quantity_available + " avail · " + batch.selling_price)
+                    );
+                });
+                (data.warnings || []).forEach(function (warning) {
+                    results.appendChild(row("⚠ " + warning, ""));
+                });
+            })
+            .catch(function () {
+                results.innerHTML = "";
+                results.appendChild(row("Lookup failed. Try again.", value));
+            });
+    });
+})();

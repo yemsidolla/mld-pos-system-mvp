@@ -13,7 +13,7 @@ from core.permissions import admin_required, pos_required, sales_history_require
 
 from .forms import CancelSaleForm, ConfirmSaleForm, PromotionForm, SaleFilterForm, ScanForm
 from .models import Promotion, Sale
-from .pricing import choose_best_promotion, money
+from .pricing import choose_best_promotion, get_cost_snapshot, money
 from .services import cancel_sale, confirm_sale, scan_code, validate_sellable_batch
 
 
@@ -77,9 +77,14 @@ def get_cart_rows(request):
         original_subtotal = money(promotion_price.original_unit_price * item["quantity"])
         subtotal = money(promotion_price.final_unit_price * item["quantity"])
         total += subtotal
+        cost_snapshot = get_cost_snapshot(stock_batch)
+        below_cost = promotion_price.final_unit_price < cost_snapshot.cost_basis and not (
+            promotion_price.promotion and promotion_price.promotion.allow_below_cost
+        )
         rows.append(
             {
                 "stock_batch": stock_batch,
+                "below_cost": below_cost,
                 "quantity": item["quantity"],
                 "original_unit_price": promotion_price.original_unit_price,
                 "final_unit_price": promotion_price.final_unit_price,
@@ -131,6 +136,12 @@ def pos_sale_view(request):
                         return redirect("pos-sale")
                     scanned_product = result["product"]
                     available_batches = result["available_batches"]
+                    if len(available_batches) == 1:
+                        # One sellable batch: skip the picker and add it directly.
+                        only_batch = available_batches[0]
+                        add_batch_to_cart(request, only_batch, 1)
+                        messages.success(request, f"Added {only_batch.batch_no} to cart.")
+                        return redirect("pos-sale")
             elif action == "add_batch":
                 stock_batch = get_object_or_404(StockBatch.objects.select_related("product"), pk=request.POST.get("stock_batch_id"))
                 quantity = int(request.POST.get("quantity", "1"))

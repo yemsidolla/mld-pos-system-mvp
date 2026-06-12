@@ -128,6 +128,14 @@
     {% endfor %}
 </nav>
 
+<div id="quick-find" class="quick-find" data-endpoint="{% url 'scan-resolve' %}" hidden>
+    <div class="quick-find-panel">
+        <label class="sr-only" for="quick-find-input">{% trans "Quick find" %}</label>
+        <input id="quick-find-input" type="text" placeholder="{% trans 'Find product, barcode, or batch… (Enter)' %}" autocomplete="off">
+        <div class="qf-results" data-qf-results></div>
+        <p class="qf-hint mono">Ctrl+K · Esc {% trans "to close" %}</p>
+    </div>
+</div>
 {% include "dashboard/scanner_modal.html" %}
 {% include "dashboard/quick_create_modal.html" %}
 <script src="{% static 'core/js/dashboard.js' %}"></script>

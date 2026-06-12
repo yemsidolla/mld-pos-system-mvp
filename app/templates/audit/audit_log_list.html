@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load i18n %}
+{% load i18n audit_extras %}
 
 {% block title %}{% trans "Audit Logs" %}{% endblock %}
 {% block page_title %}{% trans "Audit Logs" %}{% endblock %}
@@ -48,8 +48,23 @@
                             {% if log.old_value or log.new_value %}
                                 <details>
                                     <summary class="muted">{% trans "Details" %}</summary>
-                                    {% if log.old_value %}<div class="muted"><strong>{% trans "Before" %}:</strong> {{ log.old_value }}</div>{% endif %}
-                                    {% if log.new_value %}<div class="muted"><strong>{% trans "After" %}:</strong> {{ log.new_value }}</div>{% endif %}
+                                    {% with rows=log|change_rows %}
+                                    {% if rows %}
+                                        <table class="diff-table">
+                                            {% for row in rows %}
+                                                <tr class="{% if row.changed %}diff-changed{% endif %}">
+                                                    <td class="mono diff-key">{{ row.key }}</td>
+                                                    <td class="diff-before">{{ row.before|default:"—" }}</td>
+                                                    <td class="diff-arrow">→</td>
+                                                    <td class="diff-after">{{ row.after|default:"—" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </table>
+                                    {% else %}
+                                        {% if log.old_value %}<div class="muted"><strong>{% trans "Before" %}:</strong> {{ log.old_value }}</div>{% endif %}
+                                        {% if log.new_value %}<div class="muted"><strong>{% trans "After" %}:</strong> {{ log.new_value }}</div>{% endif %}
+                                    {% endif %}
+                                    {% endwith %}
                                 </details>
                             {% endif %}
                         {% else %}

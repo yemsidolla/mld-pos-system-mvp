@@ -339,10 +339,17 @@ class PosPageTests(TestCase):
         stock_batch = self.create_batch()
         self.client.force_login(self.cashier)
 
-        response = self.client.post(reverse("pos-sale"), {"scan_value": self.product.original_barcode})
+        response = self.client.post(
+            reverse("pos-sale"), {"scan_value": self.product.original_barcode}, follow=True
+        )
 
+        # A product with exactly one sellable batch is added to the cart directly.
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, stock_batch.batch_no)
+        self.assertEqual(
+            self.client.session["pos_cart"],
+            [{"stock_batch_id": stock_batch.id, "quantity": 1}],
+        )
 
     def test_cart_rejects_total_quantity_above_available(self):
         stock_batch = self.create_batch(quantity=2)

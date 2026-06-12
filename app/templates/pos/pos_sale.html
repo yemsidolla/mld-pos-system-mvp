@@ -19,7 +19,7 @@
         </header>
         <form class="form-stack" method="post">
             {% csrf_token %}
-            <input type="hidden" name="action" value="scan">
+            <input type="hidden" name="action" value="scan" data-pos-scan-form>
             <div>
                 {{ scan_form.scan_value.label_tag }}
                 <div class="input-row">
@@ -114,7 +114,8 @@
                 {% for row in cart_rows %}
                     <tr>
                         <td>
-                            {{ row.stock_batch.product.name }}<br>
+                            {{ row.stock_batch.product.name }}
+                            {% if row.below_cost and dashboard_is_admin %}<span class="pill pill-danger">{% trans "Below cost" %}</span>{% endif %}<br>
                             <span class="muted mono">{{ row.stock_batch.batch_no }}</span>
                             {% if row.final_unit_price != row.original_unit_price %}
                                 <br><span class="muted">{% trans "Unit" %}: {{ row.final_unit_price }}</span>
@@ -142,7 +143,7 @@
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
-                                <button class="btn btn-danger" type="submit" name="action" value="remove_item">{% trans "Remove" %}</button>
+                                <button class="btn btn-danger" type="submit" name="action" value="remove_item" data-confirm-message="{% trans 'Remove this item from the cart?' %}">{% trans "Remove" %}</button>
                             </form>
                         </td>
                     </tr>
@@ -152,7 +153,14 @@
                 </tbody>
             </table>
         </div>
-        <div class="cart-total"><span>{% trans "Cart Total" %}</span><span class="mono cart-total-amount">{{ cart_total }}</span></div>
+        <div class="cart-total"><span>{% trans "Cart Total" %}</span><span class="mono cart-total-amount" data-cart-total="{{ cart_total }}">{{ cart_total }}</span></div>
+        <div class="change-calc">
+            <label for="amount-received">{% trans "Amount Received" %}</label>
+            <div class="input-row">
+                <input id="amount-received" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-change-input>
+                <span class="change-due"><span class="muted">{% trans "Change" %}</span> <span class="mono" data-change-output>—</span></span>
+            </div>
+        </div>
         <form class="form-stack" method="post" data-disable-on-submit>
             {% csrf_token %}
             <div>
@@ -171,8 +179,8 @@
                 </div>
             {% endif %}
             <div class="form-actions">
-                <button class="btn btn-success btn-charge" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
-                <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}">{% trans "Clear Cart" %}</button>
+                <button class="btn btn-success btn-charge" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}" data-shortcut="F9" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
+                <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}" data-confirm-message="{% trans 'Clear the whole cart?' %}">{% trans "Clear Cart" %}</button>
             </div>
         </form>
     </aside>
