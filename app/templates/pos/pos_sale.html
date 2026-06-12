@@ -9,6 +9,23 @@
 {% endblock %}
 
 {% block content %}
+<div class="pos-tabs">
+    {% for c in carts_summary %}
+        {% if c.active %}
+            <span class="pos-tab active">{% trans "Sale" %} {{ c.id }} · {{ c.count }}</span>
+        {% else %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="cart_id" value="{{ c.id }}">
+                <button class="pos-tab" type="submit" name="action" value="resume">{% trans "Held" %} {{ c.id }} · {{ c.count }}</button>
+            </form>
+        {% endif %}
+    {% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        <button class="pos-tab pos-tab-new" type="submit" name="action" value="hold">{% icon "plus" 14 %} {% trans "Hold & new" %}</button>
+    </form>
+</div>
 <div class="pos-layout">
     <section class="panel">
         <header class="panel-header">
@@ -161,7 +178,7 @@
                 <span class="change-due"><span class="muted">{% trans "Change" %}</span> <span class="mono" data-change-output>—</span></span>
             </div>
         </div>
-        <form class="form-stack" method="post" data-disable-on-submit>
+        <form class="form-stack" method="post" data-disable-on-submit data-full-submit>
             {% csrf_token %}
             <div>
                 {{ confirm_form.payment_method.label_tag }}

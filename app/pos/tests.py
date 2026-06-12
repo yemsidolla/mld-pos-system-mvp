@@ -19,6 +19,14 @@ from .models import Promotion, Sale, SaleItem
 from .services import cancel_sale, confirm_sale, parse_custom_code, scan_code
 
 
+
+def active_cart_items(session):
+    state = session["pos_carts"]
+    for cart in state["carts"]:
+        if cart["id"] == state["active"]:
+            return cart["items"]
+    return []
+
 class PosServiceTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username="cashier", password="Admin123", is_staff=True)
@@ -347,7 +355,7 @@ class PosPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, stock_batch.batch_no)
         self.assertEqual(
-            self.client.session["pos_cart"],
+            active_cart_items(self.client.session),
             [{"stock_batch_id": stock_batch.id, "quantity": 1}],
         )
 
@@ -366,7 +374,7 @@ class PosPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Not enough stock available.")
-        self.assertEqual(self.client.session["pos_cart"][0]["quantity"], 2)
+        self.assertEqual(active_cart_items(self.client.session)[0]["quantity"], 2)
 
     def test_cart_quantity_can_be_updated_and_removed(self):
         stock_batch = self.create_batch(quantity=5)
@@ -380,10 +388,10 @@ class PosPageTests(TestCase):
             reverse("pos-sale"),
             {"action": "update_item", "stock_batch_id": stock_batch.id, "quantity": "3"},
         )
-        self.assertEqual(self.client.session["pos_cart"][0]["quantity"], 3)
+        self.assertEqual(active_cart_items(self.client.session)[0]["quantity"], 3)
 
         self.client.post(reverse("pos-sale"), {"action": "remove_item", "stock_batch_id": stock_batch.id})
-        self.assertEqual(self.client.session["pos_cart"], [])
+        self.assertEqual(active_cart_items(self.client.session), [])
 
 
 class PromotionDashboardTests(TestCase):
@@ -603,3 +611,97 @@ class ReceiptTests(TestCase):
         response = self.client.post(reverse("sale-reprint", kwargs={"sale_id": self.sale.id}))
 
         self.assertEqual(response.status_code, 403)
+
+
+class HeldSalesTests(TestCase):
+    def setUp(self):
+        self.cashier = get_user_model().objects.create_user(username="hold-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get(name=CASHIER_GROUP))
+        self.supplier = Supplier.objects.create(name="Pet Wholesale")
+        self.product = Product.objects.create(
+            product_code="P900",
+            original_barcode="8859999999990",
+            name="Hold Test Food",
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+        self.client.force_login(self.cashier)
+
+    def create_batch(self, **kwargs):
+        from tempfile import TemporaryDirectory
+
+        from django.test import override_settings
+        from inventory.services import receive_stock
+
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            stock_batch, _movement = receive_stock(
+                product=self.product,
+                supplier=self.supplier,
+                quantity=kwargs.get("quantity", 10),
+                expiry_date=date(2027, 6, 1),
+                actual_unit_cost=Decimal("1.50"),
+                selling_price=Decimal("2.50"),
+                received_by=self.cashier,
+            )
+        return stock_batch
+
+    def _add_to_cart(self, stock_batch, quantity=1):
+        self.client.post(
+            reverse("pos-sale"),
+            {"action": "add_batch", "stock_batch_id": stock_batch.id, "quantity": str(quantity)},
+        )
+
+    def test_hold_parks_cart_and_starts_new_sale(self):
+        stock_batch = self.create_batch()
+        self._add_to_cart(stock_batch)
+
+        response = self.client.post(reverse("pos-sale"), {"action": "hold"}, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        state = self.client.session["pos_carts"]
+        self.assertEqual(len(state["carts"]), 2)
+        self.assertEqual(active_cart_items(self.client.session), [])
+        held = [cart for cart in state["carts"] if cart["id"] != state["active"]][0]
+        self.assertEqual(held["items"][0]["stock_batch_id"], stock_batch.id)
+        self.assertContains(response, "Held 1")
+
+    def test_resume_switches_back_to_held_sale(self):
+        stock_batch = self.create_batch()
+        self._add_to_cart(stock_batch)
+        self.client.post(reverse("pos-sale"), {"action": "hold"})
+        held_id = self.client.session["pos_carts"]["carts"][0]["id"]
+
+        self.client.post(reverse("pos-sale"), {"action": "resume", "cart_id": held_id})
+
+        self.assertEqual(self.client.session["pos_carts"]["active"], held_id)
+        self.assertEqual(active_cart_items(self.client.session)[0]["stock_batch_id"], stock_batch.id)
+
+    def test_hold_empty_cart_is_rejected(self):
+        response = self.client.post(reverse("pos-sale"), {"action": "hold"}, follow=True)
+        self.assertContains(response, "nothing to hold")
+        self.assertEqual(len(self.client.session["pos_carts"]["carts"]), 1)
+
+    def test_hold_limit_is_ten_open_sales(self):
+        stock_batch = self.create_batch(quantity=50)
+        for _ in range(9):
+            self._add_to_cart(stock_batch)
+            self.client.post(reverse("pos-sale"), {"action": "hold"})
+        self.assertEqual(len(self.client.session["pos_carts"]["carts"]), 10)
+
+        self._add_to_cart(stock_batch)
+        response = self.client.post(reverse("pos-sale"), {"action": "hold"}, follow=True)
+
+        self.assertContains(response, "Limit of 10 open sales")
+        self.assertEqual(len(self.client.session["pos_carts"]["carts"]), 10)
+
+    def test_legacy_single_cart_session_is_migrated(self):
+        stock_batch = self.create_batch()
+        session = self.client.session
+        session["pos_cart"] = [{"stock_batch_id": stock_batch.id, "quantity": 2}]
+        session.save()
+
+        response = self.client.get(reverse("pos-sale"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(active_cart_items(self.client.session)[0]["quantity"], 2)
+        self.assertNotIn("pos_cart", self.client.session)

@@ -1,70 +1,70 @@
 (function () {
     "use strict";
 
-    document.querySelectorAll("[data-confirm-message]").forEach(function (element) {
-        element.addEventListener("click", function (event) {
-            var message = element.getAttribute("data-confirm-message");
+    // Event delegation throughout: bindings survive partial-navigation DOM
+    // swaps without re-initialization.
+    document.addEventListener("click", function (event) {
+        var confirmEl = event.target.closest("[data-confirm-message]");
+        if (confirmEl) {
+            var message = confirmEl.getAttribute("data-confirm-message");
             if (message && !window.confirm(message)) {
                 event.preventDefault();
+                event.stopImmediatePropagation();
             }
-        });
-    });
-
-    document.querySelectorAll("[data-table-filter]").forEach(function (input) {
-        var selector = input.getAttribute("data-table-filter");
-        var rows = Array.prototype.slice.call(document.querySelectorAll(selector));
-        function applyFilter() {
-            var query = input.value.trim().toLowerCase();
-            rows.forEach(function (row) {
-                var text = row.textContent.toLowerCase();
-                row.hidden = query && text.indexOf(query) === -1;
-            });
         }
-        input.addEventListener("input", applyFilter);
-        input.addEventListener("change", applyFilter);
-    });
+    }, true);
 
-    document.querySelectorAll("form[data-disable-on-submit]").forEach(function (form) {
-        form.addEventListener("submit", function (event) {
-            if (form.getAttribute("data-submitting") === "true") {
-                event.preventDefault();
-                return;
-            }
-
-            var submitter = event.submitter;
-            if (submitter && submitter.name) {
-                var proxy = document.createElement("input");
-                proxy.type = "hidden";
-                proxy.name = submitter.name;
-                proxy.value = submitter.value;
-                proxy.setAttribute("data-submit-proxy", "true");
-                form.appendChild(proxy);
-            }
-
-            form.setAttribute("data-submitting", "true");
-            Array.prototype.forEach.call(form.querySelectorAll("button[type='submit']"), function (button) {
-                var loadingText = button.getAttribute("data-loading-text");
-                if (loadingText && button === submitter) button.textContent = loadingText;
-                button.disabled = true;
-            });
+    document.addEventListener("input", function (event) {
+        var input = event.target.closest("[data-table-filter]");
+        if (!input) return;
+        var rows = document.querySelectorAll(input.getAttribute("data-table-filter"));
+        var query = input.value.trim().toLowerCase();
+        rows.forEach(function (row) {
+            row.hidden = query && row.textContent.toLowerCase().indexOf(query) === -1;
         });
     });
 
-    document.querySelectorAll("[data-quantity-step]").forEach(function (button) {
-        button.addEventListener("click", function () {
-            var form = button.closest("form");
-            var input = form ? form.querySelector("[data-quantity-input]") : null;
-            if (!input) return;
+    document.addEventListener("submit", function (event) {
+        var form = event.target.closest("form[data-disable-on-submit]");
+        if (!form) return;
+        if (form.getAttribute("data-submitting") === "true") {
+            event.preventDefault();
+            return;
+        }
 
-            var step = parseInt(button.getAttribute("data-quantity-step") || "0", 10);
-            var current = parseInt(input.value || input.getAttribute("min") || "1", 10);
-            var min = parseInt(input.getAttribute("min") || "1", 10);
-            var max = parseInt(input.getAttribute("max") || "999999", 10);
-            var next = Math.max(min, Math.min(max, current + step));
-            input.value = String(next);
-            input.dispatchEvent(new Event("change", { bubbles: true }));
-            input.focus();
+        var submitter = event.submitter;
+        if (submitter && submitter.name) {
+            var proxy = document.createElement("input");
+            proxy.type = "hidden";
+            proxy.name = submitter.name;
+            proxy.value = submitter.value;
+            proxy.setAttribute("data-submit-proxy", "true");
+            form.appendChild(proxy);
+        }
+
+        form.setAttribute("data-submitting", "true");
+        Array.prototype.forEach.call(form.querySelectorAll("button[type='submit']"), function (button) {
+            var loadingText = button.getAttribute("data-loading-text");
+            if (loadingText && button === submitter) button.textContent = loadingText;
+            button.disabled = true;
         });
+    });
+
+    document.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-quantity-step]");
+        if (!button) return;
+        var form = button.closest("form");
+        var input = form ? form.querySelector("[data-quantity-input]") : null;
+        if (!input) return;
+
+        var step = parseInt(button.getAttribute("data-quantity-step") || "0", 10);
+        var current = parseInt(input.value || input.getAttribute("min") || "1", 10);
+        var min = parseInt(input.getAttribute("min") || "1", 10);
+        var max = parseInt(input.getAttribute("max") || "999999", 10);
+        var next = Math.max(min, Math.min(max, current + step));
+        input.value = String(next);
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        input.focus();
     });
 
     var quickCreateModal = document.querySelector("[data-quick-create-modal]");
@@ -186,8 +186,9 @@
         select.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
-    document.querySelectorAll("[data-quick-create]").forEach(function (button) {
-        button.addEventListener("click", function () { openQuickCreate(button); });
+    document.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-quick-create]");
+        if (button) openQuickCreate(button);
     });
 
     quickCreateModal.querySelectorAll("[data-quick-create-close]").forEach(function (button) {
@@ -242,12 +243,10 @@
 (function () {
     "use strict";
 
-    var scanInput = document.querySelector("[data-pos-scan-form]")
-        ? document.getElementById("id_scan_value")
-        : null;
-    if (scanInput) {
-        scanInput.focus();
-        scanInput.select();
+    function posScanInput() {
+        return document.querySelector("[data-pos-scan-form]")
+            ? document.getElementById("id_scan_value")
+            : null;
     }
 
     document.addEventListener("keydown", function (event) {
@@ -258,36 +257,51 @@
                 shortcutButton.click();
             }
         }
-        if (event.key === "Escape" && scanInput) {
-            scanInput.value = "";
-            scanInput.focus();
+        if (event.key === "Escape") {
+            var scanInput = posScanInput();
+            if (scanInput) {
+                scanInput.value = "";
+                scanInput.focus();
+            }
         }
     });
 
-    var changeInput = document.querySelector("[data-change-input]");
-    var changeOutput = document.querySelector("[data-change-output]");
-    var totalNode = document.querySelector("[data-cart-total]");
-    if (changeInput && changeOutput && totalNode) {
+    document.addEventListener("input", function (event) {
+        var changeInput = event.target.closest("[data-change-input]");
+        if (!changeInput) return;
+        var changeOutput = document.querySelector("[data-change-output]");
+        var totalNode = document.querySelector("[data-cart-total]");
+        if (!changeOutput || !totalNode) return;
         var total = parseFloat(totalNode.getAttribute("data-cart-total")) || 0;
-        changeInput.addEventListener("input", function () {
-            var received = parseFloat(changeInput.value);
-            if (isNaN(received)) {
-                changeOutput.textContent = "—";
-                changeOutput.classList.remove("change-negative");
-                return;
-            }
-            var change = received - total;
-            changeOutput.textContent = change.toFixed(2);
-            changeOutput.classList.toggle("change-negative", change < 0);
-        });
-    }
-
-    document.querySelectorAll(".alert-success").forEach(function (alert) {
-        window.setTimeout(function () {
-            alert.classList.add("alert-fade");
-            window.setTimeout(function () { alert.remove(); }, 600);
-        }, 4000);
+        var received = parseFloat(changeInput.value);
+        if (isNaN(received)) {
+            changeOutput.textContent = "—";
+            changeOutput.classList.remove("change-negative");
+            return;
+        }
+        var change = received - total;
+        changeOutput.textContent = change.toFixed(2);
+        changeOutput.classList.toggle("change-negative", change < 0);
     });
+
+    // Page-load effects that must re-run after a partial navigation swap.
+    window.meloduPageInit = function (root) {
+        root = root || document;
+        var scanInput = posScanInput();
+        if (scanInput) {
+            scanInput.focus();
+            scanInput.select();
+        }
+        root.querySelectorAll(".alert-success").forEach(function (alert) {
+            if (alert.getAttribute("data-toast-bound")) return;
+            alert.setAttribute("data-toast-bound", "1");
+            window.setTimeout(function () {
+                alert.classList.add("alert-fade");
+                window.setTimeout(function () { alert.remove(); }, 600);
+            }, 4000);
+        });
+    };
+    window.meloduPageInit(document);
 })();
 
 (function () {

@@ -17,13 +17,84 @@ from .pricing import choose_best_promotion, get_cost_snapshot, money
 from .services import cancel_sale, confirm_sale, scan_code, validate_sellable_batch
 
 
+MAX_HELD_SALES = 10
+
+
+def _carts_state(request):
+    """Multi-cart session state: {"carts": [{"id", "items"}], "active": id}.
+
+    Migrates the legacy single-cart "pos_cart" key on first access so open
+    carts survive the V8 upgrade.
+    """
+    state = request.session.get("pos_carts")
+    if state is None:
+        legacy = request.session.pop("pos_cart", None) or []
+        state = {"carts": [{"id": 1, "items": legacy}], "active": 1}
+        request.session["pos_carts"] = state
+        request.session.modified = True
+    return state
+
+
+def _save_carts_state(request, state):
+    # Drop empty parked carts so the tab row only shows real held sales.
+    state["carts"] = [
+        cart for cart in state["carts"] if cart["items"] or cart["id"] == state["active"]
+    ]
+    request.session["pos_carts"] = state
+    request.session.modified = True
+
+
+def _active_cart(state):
+    for cart in state["carts"]:
+        if cart["id"] == state["active"]:
+            return cart
+    state["active"] = state["carts"][0]["id"]
+    return state["carts"][0]
+
+
 def get_cart(request):
-    return request.session.setdefault("pos_cart", [])
+    return _active_cart(_carts_state(request))["items"]
 
 
 def save_cart(request, cart):
-    request.session["pos_cart"] = cart
-    request.session.modified = True
+    state = _carts_state(request)
+    _active_cart(state)["items"] = cart
+    _save_carts_state(request, state)
+
+
+def hold_current_sale(request):
+    """Park the active cart and start a new empty one. Returns an error string."""
+    state = _carts_state(request)
+    if not _active_cart(state)["items"]:
+        return "Cart is empty — nothing to hold."
+    if len(state["carts"]) >= MAX_HELD_SALES:
+        return f"Limit of {MAX_HELD_SALES} open sales reached. Complete or clear one first."
+    new_id = max(cart["id"] for cart in state["carts"]) + 1
+    state["carts"].append({"id": new_id, "items": []})
+    state["active"] = new_id
+    _save_carts_state(request, state)
+    return ""
+
+
+def resume_sale(request, cart_id):
+    state = _carts_state(request)
+    if not any(cart["id"] == cart_id for cart in state["carts"]):
+        return "That held sale no longer exists."
+    state["active"] = cart_id
+    _save_carts_state(request, state)
+    return ""
+
+
+def carts_summary(request):
+    state = _carts_state(request)
+    return [
+        {
+            "id": cart["id"],
+            "count": sum(item["quantity"] for item in cart["items"]),
+            "active": cart["id"] == state["active"],
+        }
+        for cart in state["carts"]
+    ]
 
 
 def add_batch_to_cart(request, stock_batch, quantity=1):
@@ -162,6 +233,18 @@ def pos_sale_view(request):
             elif action == "clear":
                 save_cart(request, [])
                 return redirect("pos-sale")
+            elif action == "hold":
+                error = hold_current_sale(request)
+                if error:
+                    messages.error(request, error)
+                else:
+                    messages.success(request, "Sale held. Started a new sale.")
+                return redirect("pos-sale")
+            elif action == "resume":
+                error = resume_sale(request, int(request.POST.get("cart_id", "0")))
+                if error:
+                    messages.error(request, error)
+                return redirect("pos-sale")
             elif action == "confirm":
                 confirm_form = ConfirmSaleForm(request.POST)
                 if confirm_form.is_valid():
@@ -190,6 +273,7 @@ def pos_sale_view(request):
         request,
         "pos/pos_sale.html",
         {
+            "carts_summary": carts_summary(request),
             "scan_form": scan_form,
             "confirm_form": confirm_form,
             "scanned_product": scanned_product,

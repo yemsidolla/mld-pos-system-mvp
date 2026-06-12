@@ -1420,3 +1420,35 @@ input[type="checkbox"], input[type="radio"] {
 .diff-after { color: var(--success); }
 .diff-table tr:not(.diff-changed) .diff-before,
 .diff-table tr:not(.diff-changed) .diff-after { color: var(--text-soft); }
+
+.frame-loading { opacity: 0.6; transition: opacity 0.15s ease; }
+
+/* === V8: held sale tabs ==================================================== */
+.pos-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.pos-tabs form { margin: 0; }
+.pos-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-soft);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.pos-tab.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--accent-bright);
+}
+.pos-tab:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+.pos-tab-new { border-style: dashed; }

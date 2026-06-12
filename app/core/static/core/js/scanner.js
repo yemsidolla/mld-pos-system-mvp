@@ -163,8 +163,9 @@
             });
     }
 
-    document.querySelectorAll("[data-scan-target]").forEach(function (button) {
-        button.addEventListener("click", function () { openModal(button); });
+    document.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-scan-target]");
+        if (button) openModal(button);
     });
     modal.querySelectorAll("[data-scanner-close]").forEach(function (button) {
         button.addEventListener("click", closeModal);
