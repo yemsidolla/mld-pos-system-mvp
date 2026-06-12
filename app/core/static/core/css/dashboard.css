@@ -1626,3 +1626,77 @@ input[type="checkbox"], input[type="radio"] {
 @media (max-width: 900px) {
     .sidebar-toggle { display: none; }
 }
+
+/* === V8.1: POS space usage + responsive layout ============================ */
+.content-shell:has(.pos-layout) {
+    width: 100%;
+    max-width: none;
+    padding: 16px 20px 64px;
+}
+.pos-layout {
+    grid-template-columns: minmax(0, 1fr) clamp(330px, 30vw, 480px);
+}
+.pos-scan-panel > .form-stack { margin-top: 2px; }
+
+.cart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+.cart-header form { margin: 0; }
+.pos-cart-panel .btn-hold {
+    background: transparent;
+    border: 1px dashed var(--ink-border);
+    color: var(--ink-text);
+    padding: 6px 12px;
+    font-size: 12px;
+}
+.pos-cart-panel .btn-hold:hover:not(:disabled) {
+    border-color: var(--accent-bright);
+    color: var(--accent-bright);
+}
+.pos-cart-panel .btn-hold:disabled { opacity: 0.45; }
+
+.cart-adjust { margin: 0 0 12px; }
+.cart-adjust summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px dashed var(--ink-border);
+    border-radius: 8px;
+    color: var(--ink-text);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+.cart-adjust summary::-webkit-details-marker { display: none; }
+.cart-adjust summary:hover { border-color: var(--accent-bright); color: var(--accent-bright); }
+.cart-adjust .adjust-caret { margin-left: auto; font-size: 10px; color: var(--ink-text-dim); }
+.cart-adjust[open] .adjust-caret { transform: rotate(180deg); }
+.cart-adjust .adjust-block {
+    padding: 12px 4px 4px;
+    display: grid;
+    gap: 5px;
+}
+.cart-adjust .adjust-block + .adjust-block {
+    border-top: 1px solid var(--ink-border);
+    margin-top: 8px;
+}
+.cart-adjust .adjust-block .muted { font-size: 11.5px; }
+
+@media (min-width: 1500px) {
+    .quick-key-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .pos-cart-scroll { max-height: min(54vh, 640px); }
+}
+@media (max-width: 1100px) {
+    .pos-layout { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+@media (max-width: 860px) {
+    .pos-layout { grid-template-columns: 1fr; }
+    .pos-cart-panel { position: static; }
+    .pos-cart-scroll { max-height: 38vh; }
+    .content-shell:has(.pos-layout) { padding: 12px 12px 96px; }
+}

@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block content %}
+{% if carts_summary|length > 1 %}
 <div class="pos-tabs">
     {% for c in carts_summary %}
         {% if c.active %}
@@ -21,19 +22,10 @@
             </form>
         {% endif %}
     {% endfor %}
-    <form method="post">
-        {% csrf_token %}
-        <button class="pos-tab pos-tab-new" type="submit" name="action" value="hold">{% icon "plus" 14 %} {% trans "Hold & new" %}</button>
-    </form>
 </div>
+{% endif %}
 <div class="pos-layout">
-    <section class="panel">
-        <header class="panel-header">
-            <div>
-                <h2>{% trans "Scan Item" %}</h2>
-                <p>{% trans "Use a scanner, camera, uploaded image, or manual code." %}</p>
-            </div>
-        </header>
+    <section class="panel pos-scan-panel">
         <form class="form-stack" method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="scan" data-pos-scan-form>
@@ -147,11 +139,15 @@
     </section>
 
     <aside class="panel pos-cart-panel">
-        <header class="panel-header">
+        <header class="panel-header cart-header">
             <div>
                 <h2>{% trans "Cart" %}</h2>
                 <p>{% trans "Batch-level sale items." %}</p>
             </div>
+            <form method="post">
+                {% csrf_token %}
+                <button class="btn btn-hold" type="submit" name="action" value="hold" title="{% trans 'Hold this sale and start a new one' %}" {% if not cart_rows %}disabled{% endif %}>{% icon "hold" 14 %} {% trans "Hold" %}</button>
+            </form>
         </header>
         <div class="table-scroll pos-cart-scroll">
             <table class="data-table" aria-live="polite">
@@ -214,17 +210,21 @@
         <form class="form-stack" method="post" data-disable-on-submit data-full-submit>
             {% csrf_token %}
             <input type="hidden" name="payment_method" value="CASH" data-payment-method>
-            <div>
-                {{ confirm_form.discount_amount.label_tag }}
-                {{ confirm_form.discount_amount }}
-            </div>
-            {% if dashboard_is_admin %}
-                <div>
-                    {{ confirm_form.override_reason.label_tag }}
-                    {{ confirm_form.override_reason }}
-                    <p class="muted">{% trans "Required only when approving a below-cost sale." %}</p>
+            <details class="cart-adjust">
+                <summary>{% icon "percent" 14 %} {% trans "Adjustments" %}<span class="adjust-caret" aria-hidden="true">▾</span></summary>
+                <div class="adjust-block">
+                    <label for="{{ confirm_form.discount_amount.id_for_label }}">{% trans "Cart discount" %}</label>
+                    {{ confirm_form.discount_amount }}
+                    <p class="muted">{% trans "Money off the whole cart. Allocated across items at checkout." %}</p>
                 </div>
-            {% endif %}
+                {% if dashboard_is_admin %}
+                <div class="adjust-block">
+                    <label for="{{ confirm_form.override_reason.id_for_label }}">{% trans "Below-cost override reason" %}</label>
+                    {{ confirm_form.override_reason }}
+                    <p class="muted">{% trans "Not a discount: a written justification, required only when approving a sale below cost." %}</p>
+                </div>
+                {% endif %}
+            </details>
             <div class="form-actions">
                 <button class="btn btn-success btn-charge" type="button" data-open-payment data-shortcut="F9" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
                 <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}" data-confirm-message="{% trans 'Clear the whole cart?' %}">{% trans "Clear Cart" %}</button>
