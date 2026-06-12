@@ -1700,3 +1700,29 @@ input[type="checkbox"], input[type="radio"] {
     .pos-cart-scroll { max-height: 38vh; }
     .content-shell:has(.pos-layout) { padding: 12px 12px 96px; }
 }
+
+/* === V8.2: POS full-height register ======================================= */
+.pos-layout > .panel + .panel { margin-top: 0; }
+.pos-layout { align-items: start; }
+.pos-scan-panel { min-height: calc(100vh - 97px); }
+.pos-cart-panel {
+    top: 81px;
+    height: calc(100vh - 97px);
+    display: flex;
+    flex-direction: column;
+}
+.pos-cart-panel .cart-header,
+.pos-cart-panel .cart-total,
+.pos-cart-panel .cart-total-khr,
+.pos-cart-panel > .form-stack { flex: 0 0 auto; }
+.pos-cart-panel .pos-cart-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+}
+
+@media (max-width: 860px) {
+    .pos-scan-panel { min-height: 0; }
+    .pos-cart-panel { height: auto; }
+    .pos-cart-panel .pos-cart-scroll { max-height: 38vh; }
+}
