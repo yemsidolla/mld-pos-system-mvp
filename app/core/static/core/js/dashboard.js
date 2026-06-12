@@ -51,6 +51,15 @@
     });
 
     document.addEventListener("click", function (event) {
+        var toggle = event.target.closest("[data-sidebar-toggle]");
+        if (!toggle) return;
+        var collapsed = document.documentElement.classList.toggle("sidebar-collapsed");
+        try {
+            localStorage.setItem("melodu-sidebar", collapsed ? "collapsed" : "open");
+        } catch (e) { /* private mode */ }
+    });
+
+    document.addEventListener("click", function (event) {
         var button = event.target.closest("[data-quantity-step]");
         if (!button) return;
         var form = button.closest("form");

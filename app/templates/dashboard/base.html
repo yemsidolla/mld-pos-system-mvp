@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% trans "Dashboard" %}{% endblock %} | Melodu POS</title>
     <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+    <script>if (localStorage.getItem("melodu-sidebar") === "collapsed") document.documentElement.classList.add("sidebar-collapsed");</script>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="melodu-app">
@@ -14,11 +15,12 @@
     <div class="sidebar-header">
         <a class="brand" href="{% url 'dashboard-home' %}">
             <span class="brand-mark">M</span>
-            <span>
+            <span class="brand-text">
                 <strong>Melodu</strong>
                 <small>{% trans "Pet Store POS" %}</small>
             </span>
         </a>
+        <button class="sidebar-toggle" type="button" data-sidebar-toggle aria-label="{% trans 'Expand or collapse sidebar' %}">{% icon "sidebar" 17 %}</button>
     </div>
     <div class="sidebar-body">
         <nav class="nav-groups">
@@ -27,7 +29,7 @@
                     <p class="nav-group-title">{{ group.label }}</p>
                     <div class="nav-list">
                         {% for item in group.items %}
-                            <a class="nav-item {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}">
+                            <a class="nav-item {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}" title="{{ item.label }}">
                                 {% if item.icon %}{% icon item.icon 17 "nav-ic" %}{% endif %}
                                 <span>{{ item.label }}</span>
                             </a>

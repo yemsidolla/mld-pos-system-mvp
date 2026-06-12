@@ -42,6 +42,7 @@ ICONS = {
     "x": '<path d="M6 6l12 12M18 6L6 18"/>',
     "plus": '<path d="M12 5v14M5 12h14"/>',
     "category": '<rect x="4" y="4" width="6.5" height="6.5" rx="1"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"/><circle cx="16.8" cy="16.8" r="3.2"/>',
+    "sidebar": '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9.5 4v16"/>',
     "trend-up": '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
 }
 
