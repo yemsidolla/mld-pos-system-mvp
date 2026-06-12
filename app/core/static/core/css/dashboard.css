@@ -1726,3 +1726,35 @@ input[type="checkbox"], input[type="radio"] {
     .pos-cart-panel { height: auto; }
     .pos-cart-panel .pos-cart-scroll { max-height: 38vh; }
 }
+
+/* === V8.3: POS locked viewport (no page scroll) ============================ */
+@media (min-width: 861px) {
+    body:has(.pos-layout) { overflow: hidden; }
+    .content-shell:has(.pos-layout) {
+        height: calc(100vh - 65px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 14px 20px 14px;
+    }
+    .content-shell:has(.pos-layout) .message-stack,
+    .content-shell:has(.pos-layout) .pos-tabs { flex: 0 0 auto; }
+    .pos-layout {
+        flex: 1 1 auto;
+        min-height: 0;
+        align-items: stretch;
+    }
+    .pos-scan-panel {
+        min-height: 0;
+        height: auto;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    .pos-cart-panel {
+        position: static;
+        top: auto;
+        height: auto;
+        min-height: 0;
+        align-self: stretch;
+    }
+}
