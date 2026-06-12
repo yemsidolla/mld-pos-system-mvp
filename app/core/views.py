@@ -132,6 +132,7 @@ def _store_setting_snapshot(setting):
         "receipt_font_size_px": setting.receipt_font_size_px,
         "show_logo_on_receipt": setting.show_logo_on_receipt,
         "currency_symbol": setting.currency_symbol,
+        "cost_visible_roles": setting.cost_visible_roles,
     }
 
 

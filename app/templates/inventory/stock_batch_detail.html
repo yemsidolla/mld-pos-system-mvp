@@ -32,8 +32,13 @@
         <div><strong>{% trans "Expiry" %}</strong><br>{{ stock_batch.expiry_date }}</div>
         <div><strong>{% trans "Received" %}</strong><br>{{ stock_batch.quantity_received }}</div>
         <div><strong>{% trans "Selling Price" %}</strong><br>{{ stock_batch.selling_price }}</div>
+        {% if dashboard_can_view_costs %}
         <div><strong>{% trans "Actual Unit Cost" %}</strong><br>{{ stock_batch.actual_unit_cost }}</div>
         <div><strong>{% trans "Landed Unit Cost" %}</strong><br>{% if stock_batch.landed_unit_cost is not None %}{{ stock_batch.landed_unit_cost }}{% else %}<span class="muted">{% trans "Not set" %}</span>{% endif %}</div>
+        {% else %}
+        <div><strong>{% trans "Actual Unit Cost" %}</strong><br><span class="muted cost-hidden">{% trans "Hidden" %}</span></div>
+        <div><strong>{% trans "Landed Unit Cost" %}</strong><br><span class="muted cost-hidden">{% trans "Hidden" %}</span></div>
+        {% endif %}
         <div><strong>{% trans "Custom Code" %}</strong><br>{{ stock_batch.custom_code }}</div>
     </div>
 </section>

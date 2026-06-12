@@ -1,9 +1,25 @@
 from django import forms
 
 from .models import StoreSetting
+from .permissions import ROLE_CASHIER, ROLE_INVENTORY, ROLE_MANAGER, ROLE_VIEWER
+
+COST_VISIBILITY_CHOICES = (
+    (ROLE_MANAGER, "Manager"),
+    (ROLE_INVENTORY, "Inventory staff"),
+    (ROLE_CASHIER, "Cashier"),
+    (ROLE_VIEWER, "Viewer / Auditor"),
+)
 
 
 class StoreSettingForm(forms.ModelForm):
+    cost_visible_roles = forms.MultipleChoiceField(
+        label="Roles that can view cost & profit data",
+        choices=COST_VISIBILITY_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        help_text="Owner always sees cost data. Unchecked roles get costs hidden everywhere.",
+    )
+
     class Meta:
         model = StoreSetting
         fields = (
@@ -17,6 +33,7 @@ class StoreSettingForm(forms.ModelForm):
             "receipt_font_size_px",
             "show_logo_on_receipt",
             "currency_symbol",
+            "cost_visible_roles",
         )
 
     def clean_receipt_paper_width_mm(self):

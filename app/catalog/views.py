@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from core.pagination import paginate
-from core.permissions import admin_required, can_manage_catalog
+from core.permissions import admin_required, can_manage_catalog, costs_required
 
 from .forms import (
     BrandForm,
@@ -494,6 +494,7 @@ def supplier_edit_view(request, supplier_id):
 
 
 @admin_required
+@costs_required
 def supplier_product_cost_list_view(request):
     query = request.GET.get("q", "").strip()
     costs = SupplierProductCost.objects.select_related("product", "supplier").order_by("product__name", "supplier__name")
@@ -544,11 +545,13 @@ def _supplier_product_cost_form_view(request, *, instance, mode):
 
 
 @admin_required
+@costs_required
 def supplier_product_cost_create_view(request):
     return _supplier_product_cost_form_view(request, instance=None, mode="create")
 
 
 @admin_required
+@costs_required
 def supplier_product_cost_edit_view(request, cost_id):
     cost = get_object_or_404(SupplierProductCost, pk=cost_id)
     return _supplier_product_cost_form_view(request, instance=cost, mode="edit")

@@ -27,6 +27,7 @@ pre-V4 accounts ("map and keep").
 | Batch upload | ✅ | ✅ | — | — | — | `@admin_required` |
 | Quick-create (JSON API) | ✅ | ✅ | — | — | — | `can_manage_catalog` |
 | Reports (view + CSV export) | ✅ | ✅ | — | — | ✅ | `@reports_required` |
+| View cost & profit data | ✅ always | ⚙️ | ⚙️ | ⚙️ | ⚙️ | `can_view_costs` / `@costs_required` |
 | User management | ✅ | ✅* | — | — | — | `@users_required` |
 | Assign/edit Owner role | ✅ | — | — | — | — | view logic |
 | Store settings | ✅ | ✅ | — | — | — | `@settings_required` |
@@ -53,6 +54,19 @@ deactivated or demoted.
 If a user is in multiple `melodu-*` groups, the highest role wins
 (Owner > Manager > Inventory > Cashier > Viewer). Local superusers are never
 modified by sync.
+
+## Cost visibility (⚙️ configurable)
+
+Owners always see cost/profit data. For every other role it is a Store
+Settings option (`StoreSetting.cost_visible_roles`, default
+Manager + Inventory + Viewer = pre-V6 behavior). When a role is unchecked:
+
+- batch costs on stock-batch detail show "Hidden";
+- the Cost Basis column disappears from sale detail;
+- Reference Costs pages return the friendly 403 and leave the nav/home shortcuts;
+- stock-in still accepts cost *input* (data entry does not reveal stored costs).
+
+Changes are audited via the existing `SETTING_CHANGE` snapshot.
 
 ## Design rules
 

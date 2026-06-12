@@ -9,6 +9,7 @@ from .permissions import (
     can_manage_settings,
     can_manage_users,
     can_view_audit,
+    can_view_costs,
     can_view_reports,
     can_view_sales_history,
     can_view_system,
@@ -41,6 +42,8 @@ def dashboard_context(request):
     if sales_items:
         nav_groups.append({"label": "Sales", "items": sales_items})
 
+    user_sees_costs = bool(user and can_view_costs(user))
+
     catalog_items = []
     if user and can_manage_catalog(user):
         catalog_items.extend(
@@ -49,9 +52,12 @@ def dashboard_context(request):
                 {"label": "Categories", "url_name": "category-list", "href": "/dashboard/categories/"},
                 {"label": "Brands", "url_name": "brand-list", "href": "/dashboard/brands/"},
                 {"label": "Suppliers", "url_name": "supplier-list", "href": "/dashboard/suppliers/"},
-                {"label": "Reference Costs", "url_name": "supplier-product-cost-list", "href": "/dashboard/reference-costs/"},
             ]
         )
+        if user_sees_costs:
+            catalog_items.append(
+                {"label": "Reference Costs", "url_name": "supplier-product-cost-list", "href": "/dashboard/reference-costs/"}
+            )
     if user and can_manage_promotions(user):
         catalog_items.append({"label": "Promotions", "url_name": "promotion-list", "href": "/dashboard/promotions/"})
     if user and can_manage_catalog(user):
@@ -126,6 +132,7 @@ def dashboard_context(request):
         "dashboard_is_cashier": is_cashier,
         "dashboard_role": role,
         "dashboard_role_label": role_label(role) if role else "",
+        "dashboard_can_view_costs": user_sees_costs,
         "store_setting": store_setting,
         "supported_languages": settings.LANGUAGES,
     }

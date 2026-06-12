@@ -1,6 +1,12 @@
 from django.db import models
 
 
+def default_cost_visible_roles():
+    # Matches pre-V6 behavior: every role that could already reach a
+    # cost-bearing page keeps seeing costs until an Owner narrows the list.
+    return ["MANAGER", "INVENTORY", "VIEWER"]
+
+
 class StoreSetting(models.Model):
     """Singleton store identity and receipt/printer configuration.
 
@@ -18,6 +24,9 @@ class StoreSetting(models.Model):
     receipt_font_size_px = models.PositiveIntegerField(default=12)
     show_logo_on_receipt = models.BooleanField(default=False)
     currency_symbol = models.CharField(max_length=8, default="$")
+    # Roles (besides Owner, who always sees costs) allowed to view cost and
+    # profit data. List of StaffProfile.Role values, e.g. ["MANAGER"].
+    cost_visible_roles = models.JSONField(default=default_cost_visible_roles, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -150,6 +150,26 @@ def can_reset_data(user):
     return has_role(user, ROLE_OWNER)
 
 
+def can_view_costs(user):
+    """Cost/profit visibility, configurable per role in Store Settings.
+
+    Owners always see costs (cannot be locked out). Other roles see them only
+    while listed in ``StoreSetting.cost_visible_roles``.
+    """
+    role = get_user_role(user)
+    if role is None:
+        return False
+    if role == ROLE_OWNER:
+        return True
+    from .models import StoreSetting  # local import: avoid app-loading cycle
+
+    try:
+        visible = StoreSetting.load().cost_visible_roles or []
+    except Exception:  # pragma: no cover - defensive (e.g. before migrations)
+        visible = []
+    return role in visible
+
+
 # --- Access-denied rendering & decorators ----------------------------------
 def _log_permission_denied(request):
     # Imported lazily so core.permissions stays importable before apps load.
@@ -270,3 +290,7 @@ def audit_required(view_func):
 
 def settings_required(view_func):
     return dashboard_role_required(can_manage_settings)(view_func)
+
+
+def costs_required(view_func):
+    return dashboard_role_required(can_view_costs)(view_func)

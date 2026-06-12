@@ -44,7 +44,7 @@
             <th>{% trans "Batch" %}</th>
             <th>{% trans "Qty" %}</th>
             <th>{% trans "Final Unit" %}</th>
-            <th>{% trans "Cost Basis" %}</th>
+            {% if dashboard_can_view_costs %}<th>{% trans "Cost Basis" %}</th>{% endif %}
             <th>{% trans "Promotion" %}</th>
             <th>{% trans "Override" %}</th>
             <th>{% trans "Subtotal" %}</th>
@@ -57,7 +57,7 @@
                 <td>{{ item.stock_batch.batch_no }}</td>
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.final_unit_price }}</td>
-                <td>{{ item.cost_basis_at_sale }}</td>
+                {% if dashboard_can_view_costs %}<td>{{ item.cost_basis_at_sale }}</td>{% endif %}
                 <td>{% if item.promotion_name_at_sale %}<span class="badge badge-success">{{ item.promotion_name_at_sale }}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
                 <td>{% if item.override_by %}{{ item.override_by.username }}<br><span class="muted">{{ item.override_reason }}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
                 <td>{{ item.subtotal }}</td>
