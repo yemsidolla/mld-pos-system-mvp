@@ -12,7 +12,12 @@ from core.pagination import paginate
 from core.permissions import admin_required, pos_required, sales_history_required
 
 from .forms import CancelSaleForm, ConfirmSaleForm, PromotionForm, SaleFilterForm, ScanForm
-from .models import Promotion, Sale
+from datetime import timedelta
+
+from django.db.models import Sum
+from django.utils import timezone
+
+from .models import Promotion, Sale, SaleItem
 from .pricing import choose_best_promotion, get_cost_snapshot, money
 from .services import cancel_sale, confirm_sale, scan_code, validate_sellable_batch
 
@@ -50,6 +55,59 @@ def _active_cart(state):
             return cart
     state["active"] = state["carts"][0]["id"]
     return state["carts"][0]
+
+
+QUICK_KEY_LIMIT = 12
+
+
+def get_quick_keys():
+    """Hand-picked quick-key products, else last-30-days top sellers."""
+    picked = list(
+        StoreSetting.load().quick_key_products.filter(is_active=True)[:QUICK_KEY_LIMIT]
+    )
+    if picked:
+        return picked
+    since = timezone.now() - timedelta(days=30)
+    top = (
+        SaleItem.objects.filter(
+            sale__status=Sale.Status.COMPLETED,
+            sale__created_at__gte=since,
+            product__is_active=True,
+        )
+        .values("product")
+        .annotate(total_quantity=Sum("quantity"))
+        .order_by("-total_quantity")[:8]
+    )
+    from catalog.models import Product
+
+    products = {p.pk: p for p in Product.objects.filter(pk__in=[row["product"] for row in top])}
+    return [products[row["product"]] for row in top if row["product"] in products]
+
+
+def get_promo_keys():
+    """Active product-level promotions valid today, as POS tap keys."""
+    today = timezone.localdate()
+    promotions = (
+        Promotion.objects.select_related("product")
+        .filter(
+            is_active=True,
+            product__isnull=False,
+            product__is_active=True,
+            start_date__lte=today,
+            end_date__gte=today,
+        )
+        .order_by("end_date")[:QUICK_KEY_LIMIT]
+    )
+    keys = []
+    for promotion in promotions:
+        if promotion.discount_type == Promotion.DiscountType.PERCENTAGE:
+            tag = f"-{promotion.value.normalize():f}%"
+        elif promotion.discount_type == Promotion.DiscountType.FIXED_AMOUNT:
+            tag = f"-{promotion.value}"
+        else:
+            tag = f"= {promotion.value}"
+        keys.append({"product": promotion.product, "promotion": promotion, "tag": tag})
+    return keys
 
 
 def get_cart(request):
@@ -274,6 +332,8 @@ def pos_sale_view(request):
         "pos/pos_sale.html",
         {
             "carts_summary": carts_summary(request),
+            "quick_keys": get_quick_keys(),
+            "promo_keys": get_promo_keys(),
             "scan_form": scan_form,
             "confirm_form": confirm_form,
             "scanned_product": scanned_product,

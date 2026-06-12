@@ -34,7 +34,17 @@ class StoreSettingForm(forms.ModelForm):
             "show_logo_on_receipt",
             "currency_symbol",
             "cost_visible_roles",
+            "quick_key_products",
         )
+        widgets = {
+            "quick_key_products": forms.SelectMultiple(attrs={"size": 10}),
+        }
+        help_texts = {
+            "quick_key_products": (
+                "POS quick keys (Cmd/Ctrl-click to select several). "
+                "Leave empty to show the last 30 days' top sellers automatically."
+            ),
+        }
 
     def clean_receipt_paper_width_mm(self):
         width = self.cleaned_data["receipt_paper_width_mm"]

@@ -1452,3 +1452,47 @@ input[type="checkbox"], input[type="radio"] {
 }
 .pos-tab:hover:not(.active) { border-color: var(--accent); color: var(--text); }
 .pos-tab-new { border-style: dashed; }
+
+/* === V8: POS quick keys ==================================================== */
+.quick-keys { margin-top: 14px; }
+.quick-keys-title {
+    margin: 12px 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.quick-key-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 6px;
+}
+.quick-key-grid form { margin: 0; display: contents; }
+.quick-key {
+    display: grid;
+    gap: 2px;
+    text-align: center;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-subtle);
+    color: var(--text);
+    cursor: pointer;
+    min-height: 56px;
+}
+.quick-key strong {
+    font-size: 12px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.quick-key .mono { font-size: 11.5px; color: var(--text-soft); }
+.quick-key:hover { border-color: var(--accent); background: #f0fafc; }
+.quick-key-promo { border-color: #f0c9a4; background: #fffaf2; }
+.quick-key-promo:hover { border-color: #ba7517; }
+.promo-tag { font-style: normal; color: #ba7517; font-weight: 700; }

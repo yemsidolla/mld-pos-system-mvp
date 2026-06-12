@@ -705,3 +705,51 @@ class HeldSalesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(active_cart_items(self.client.session)[0]["quantity"], 2)
         self.assertNotIn("pos_cart", self.client.session)
+
+
+class QuickKeyTests(TestCase):
+    def setUp(self):
+        self.cashier = get_user_model().objects.create_user(username="qk-cashier", password="Admin123")
+        self.cashier.groups.add(Group.objects.get(name=CASHIER_GROUP))
+        self.supplier = Supplier.objects.create(name="Pet Wholesale")
+        self.product = Product.objects.create(
+            product_code="P910",
+            original_barcode="8851111111119",
+            name="Quick Cat Food",
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+        self.client.force_login(self.cashier)
+
+    def test_hand_picked_quick_keys_render(self):
+        from core.models import StoreSetting
+
+        StoreSetting.load().quick_key_products.add(self.product)
+
+        response = self.client.get(reverse("pos-sale"))
+
+        self.assertContains(response, "Quick Keys")
+        self.assertContains(response, "Quick Cat Food")
+
+    def test_no_quick_keys_section_when_nothing_configured_or_sold(self):
+        response = self.client.get(reverse("pos-sale"))
+        self.assertNotContains(response, "Quick Keys")
+
+    def test_active_product_promotion_renders_as_promo_key(self):
+        from django.utils import timezone
+
+        Promotion.objects.create(
+            name="Cat food deal",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("10.00"),
+            start_date=timezone.localdate(),
+            end_date=timezone.localdate(),
+            is_active=True,
+            product=self.product,
+            created_by=self.cashier,
+        )
+
+        response = self.client.get(reverse("pos-sale"))
+
+        self.assertContains(response, "Promotions")
+        self.assertContains(response, "-10%")

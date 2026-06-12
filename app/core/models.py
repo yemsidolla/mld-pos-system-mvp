@@ -27,6 +27,14 @@ class StoreSetting(models.Model):
     # Roles (besides Owner, who always sees costs) allowed to view cost and
     # profit data. List of StaffProfile.Role values, e.g. ["MANAGER"].
     cost_visible_roles = models.JSONField(default=default_cost_visible_roles, blank=True)
+    # Hand-picked POS quick keys; when empty the POS falls back to the
+    # best-selling products of the last 30 days.
+    quick_key_products = models.ManyToManyField(
+        "catalog.Product",
+        blank=True,
+        related_name="+",
+        limit_choices_to={"is_active": True},
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

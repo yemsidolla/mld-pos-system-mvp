@@ -49,6 +49,43 @@
                 <button class="btn btn-primary" type="submit">{% trans "Lookup" %}</button>
             </div>
         </form>
+        {% if quick_keys or promo_keys %}
+        <div class="quick-keys">
+            {% if promo_keys %}
+                <p class="quick-keys-title">{% icon "percent" 13 %} {% trans "Promotions" %}</p>
+                <div class="quick-key-grid">
+                    {% for key in promo_keys %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="scan">
+                            <input type="hidden" name="scan_value" value="{{ key.product.product_code }}">
+                            <button class="quick-key quick-key-promo" type="submit">
+                                <strong>{{ key.product.name }}</strong>
+                                <span class="mono">{{ key.product.default_selling_price }} <em class="promo-tag">{{ key.tag }}</em></span>
+                            </button>
+                        </form>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if quick_keys %}
+                <p class="quick-keys-title">{% icon "cart" 13 %} {% trans "Quick Keys" %}</p>
+                <div class="quick-key-grid">
+                    {% for product in quick_keys %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="scan">
+                            <input type="hidden" name="scan_value" value="{{ product.product_code }}">
+                            <button class="quick-key" type="submit">
+                                <strong>{{ product.name }}</strong>
+                                <span class="mono">{{ product.default_selling_price }}</span>
+                            </button>
+                        </form>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <div class="pos-status" aria-live="polite">
             {% if scanned_product %}
                 {% trans "Product found. Choose the stock batch and quantity to add." %}
