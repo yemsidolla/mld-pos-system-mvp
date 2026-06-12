@@ -54,10 +54,31 @@
         <div class="topbar-actions">
             {% block header_actions %}{% endblock %}
             {% if request.user.is_authenticated %}
-                <form class="logout-form" action="{% url 'dashboard-logout' %}" method="post">
-                    {% csrf_token %}
-                    <button class="btn" type="submit">{% trans "Log Out" %}</button>
-                </form>
+                <details class="profile-menu">
+                    <summary aria-label="{% trans 'Account menu' %}">
+                        <span class="profile-avatar">{{ request.user.get_full_name|default:request.user.username|first|upper }}</span>
+                        <span class="profile-summary-text">
+                            <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                            {% if dashboard_role_label %}<small>{{ dashboard_role_label }}</small>{% endif %}
+                        </span>
+                        <span class="profile-caret" aria-hidden="true">▾</span>
+                    </summary>
+                    <div class="profile-dropdown">
+                        <p class="profile-name">{{ request.user.get_full_name|default:request.user.username }}</p>
+                        <p class="profile-username">@{{ request.user.username }}</p>
+                        {% if dashboard_role_label %}
+                            <span class="role-badge role-{{ dashboard_role|lower }}">{{ dashboard_role_label }}</span>
+                        {% endif %}
+                        <div class="profile-divider"></div>
+                        {% if dashboard_is_admin %}
+                            <a class="profile-link" href="{% url 'admin:index' %}">{% trans "Django Admin" %}</a>
+                        {% endif %}
+                        <form class="logout-form" action="{% url 'dashboard-logout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="btn full-width" type="submit">{% trans "Log Out" %}</button>
+                        </form>
+                    </div>
+                </details>
             {% endif %}
             <form class="language-form" action="{% url 'set_language' %}" method="post">
                 {% csrf_token %}

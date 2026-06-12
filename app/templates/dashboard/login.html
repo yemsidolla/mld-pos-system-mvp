@@ -8,12 +8,17 @@
     <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
 </head>
 <body class="auth-page">
+<div class="auth-backdrop" aria-hidden="true"></div>
 <main class="auth-shell">
     <section class="auth-panel">
+        <p class="terminal-line" aria-hidden="true">
+            <span class="terminal-dot"></span>MELODU-POS // {% trans "STAFF ACCESS TERMINAL" %}
+        </p>
+
         <div class="auth-brand">
-            <span class="brand-mark">M</span>
+            <span class="brand-mark glow">M</span>
             <div>
-                <p class="eyebrow">{% trans "Melodu POS" %}</p>
+                <p class="eyebrow">{% trans "Melodu Pet Store" %}</p>
                 <h1>{% trans "Dashboard Login" %}</h1>
             </div>
         </div>
@@ -30,7 +35,11 @@
 
         {% if oidc_enabled %}
             <div class="sso-block">
-                <a class="btn btn-primary full-width" href="{{ oidc_login_url }}">
+                <a class="btn btn-primary btn-sso full-width" href="{{ oidc_login_url }}">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
                     {% trans "Continue with Melodu Staff Login" %}
                 </a>
                 <p class="sso-hint">{% trans "You will be redirected to the Melodu staff identity service." %}</p>
@@ -61,6 +70,12 @@
                 <button class="btn btn-primary full-width" type="submit">{% trans "Log In" %}</button>
             </form>
         {% endif %}
+
+        <p class="auth-meta" aria-hidden="true">
+            <span>SECURE&nbsp;CHANNEL</span><span class="meta-sep">·</span>
+            <span>AUDIT&nbsp;ENABLED</span><span class="meta-sep">·</span>
+            <span>v{{ app_version }}</span>
+        </p>
     </section>
 </main>
 </body>
