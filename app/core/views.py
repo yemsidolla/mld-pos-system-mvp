@@ -13,6 +13,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from urllib.parse import quote
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
@@ -62,23 +63,61 @@ def dashboard_login_view(request):
         return redirect(settings.LOGIN_REDIRECT_URL)
 
     safe_next = _safe_next_url(request)
+    oidc_enabled = settings.OIDC_ENABLED
+    # In OIDC mode the local form is an emergency path: hidden behind ?local=1
+    # and only honoured while LOCAL_LOGIN_ENABLED is true.
+    local_requested = request.GET.get("local") == "1" or request.POST.get("local_login") == "1"
+    show_local_form = settings.LOCAL_LOGIN_ENABLED and (not oidc_enabled or local_requested)
+
+    if request.GET.get("oidc_error"):
+        messages.error(
+            request,
+            "Staff login could not be completed. Try again, or contact an administrator.",
+        )
+
     form = AuthenticationForm(request, data=request.POST or None)
 
-    if request.method == "POST":
+    if request.method == "POST" and show_local_form:
         if form.is_valid():
             auth_login(request, form.get_user())
             return redirect(safe_next or settings.LOGIN_REDIRECT_URL)
         messages.error(request, "Check your username and password, then try again.")
 
-    return render(request, "dashboard/login.html", {"form": form, "next": safe_next})
+    oidc_login_url = ""
+    if oidc_enabled:
+        oidc_login_url = reverse("oidc_authentication_init")
+        if safe_next:
+            oidc_login_url = f"{oidc_login_url}?next={quote(safe_next)}"
+
+    return render(
+        request,
+        "dashboard/login.html",
+        {
+            "form": form,
+            "next": safe_next,
+            "oidc_enabled": oidc_enabled,
+            "oidc_login_url": oidc_login_url,
+            "show_local_form": show_local_form,
+        },
+    )
 
 
 @never_cache
 @require_POST
 def dashboard_logout_view(request):
     if request.user.is_authenticated:
+        create_audit_log(
+            action=AuditLog.Action.LOGOUT,
+            module="accounts",
+            request=request,
+            object_type="User",
+            object_id=request.user.pk,
+            object_display=request.user.get_username(),
+        )
         auth_logout(request)
     messages.success(request, "You have logged out successfully.")
+    if settings.OIDC_ENABLED and settings.OIDC_OP_LOGOUT_ENDPOINT:
+        return redirect(settings.OIDC_OP_LOGOUT_ENDPOINT)
     return redirect(settings.LOGOUT_REDIRECT_URL)
 
 

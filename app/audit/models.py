@@ -29,6 +29,10 @@ class AuditLog(models.Model):
         ROLE_CHANGE = "ROLE_CHANGE", "Role change"
         SETTING_CHANGE = "SETTING_CHANGE", "Setting change"
         DATA_RESET = "DATA_RESET", "Data reset"
+        LOGOUT = "LOGOUT", "Logout"
+        USER_AUTOCREATED = "USER_AUTOCREATED", "User auto-created (OIDC)"
+        GROUP_SYNC = "GROUP_SYNC", "Group sync (OIDC)"
+        PERMISSION_DENIED = "PERMISSION_DENIED", "Permission denied"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

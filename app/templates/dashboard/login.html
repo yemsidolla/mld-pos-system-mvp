@@ -28,24 +28,39 @@
             </section>
         {% endif %}
 
-        <form class="form-stack" method="post" novalidate>
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next }}">
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% if oidc_enabled %}
+            <div class="sso-block">
+                <a class="btn btn-primary full-width" href="{{ oidc_login_url }}">
+                    {% trans "Continue with Melodu Staff Login" %}
+                </a>
+                <p class="sso-hint">{% trans "You will be redirected to the Melodu staff identity service." %}</p>
+            </div>
+        {% endif %}
+
+        {% if show_local_form %}
+            {% if oidc_enabled %}
+                <div class="divider"><span>{% trans "Emergency local login" %}</span></div>
             {% endif %}
-            <div>
-                {{ form.username.label_tag }}
-                {{ form.username }}
-                {{ form.username.errors }}
-            </div>
-            <div>
-                {{ form.password.label_tag }}
-                {{ form.password }}
-                {{ form.password.errors }}
-            </div>
-            <button class="btn btn-primary full-width" type="submit">{% trans "Log In" %}</button>
-        </form>
+            <form class="form-stack" method="post" novalidate>
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ next }}">
+                {% if oidc_enabled %}<input type="hidden" name="local_login" value="1">{% endif %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div>
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {{ form.username.errors }}
+                </div>
+                <div>
+                    {{ form.password.label_tag }}
+                    {{ form.password }}
+                    {{ form.password.errors }}
+                </div>
+                <button class="btn btn-primary full-width" type="submit">{% trans "Log In" %}</button>
+            </form>
+        {% endif %}
     </section>
 </main>
 </body>

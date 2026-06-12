@@ -79,6 +79,36 @@ LOGIN_URL = "/dashboard/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/dashboard/login/"
 
+
+# --- Authentication mode (V6) ------------------------------------------------
+# AUTH_MODE=local  → username/password against the local Django user table.
+# AUTH_MODE=oidc   → staff log in through Authentik (OIDC); the local form stays
+#                    reachable as an emergency path while LOCAL_LOGIN_ENABLED.
+AUTH_MODE = os.environ.get("AUTH_MODE", "local").strip().lower()
+OIDC_ENABLED = AUTH_MODE == "oidc"
+LOCAL_LOGIN_ENABLED = env_bool("LOCAL_LOGIN_ENABLED", True)
+
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+if OIDC_ENABLED:
+    INSTALLED_APPS.append("mozilla_django_oidc")
+    AUTHENTICATION_BACKENDS.insert(0, "accounts.oidc.MeloduOIDCBackend")
+
+OIDC_RP_CLIENT_ID = os.environ.get("OIDC_RP_CLIENT_ID", "")
+OIDC_RP_CLIENT_SECRET = os.environ.get("OIDC_RP_CLIENT_SECRET", "")
+OIDC_RP_SIGN_ALGO = os.environ.get("OIDC_RP_SIGN_ALGO", "RS256")
+OIDC_RP_SCOPES = os.environ.get("OIDC_SCOPES", "openid email profile")
+OIDC_OP_AUTHORIZATION_ENDPOINT = os.environ.get("OIDC_OP_AUTHORIZATION_ENDPOINT", "")
+OIDC_OP_TOKEN_ENDPOINT = os.environ.get("OIDC_OP_TOKEN_ENDPOINT", "")
+OIDC_OP_USER_ENDPOINT = os.environ.get("OIDC_OP_USER_ENDPOINT", "")
+OIDC_OP_JWKS_ENDPOINT = os.environ.get("OIDC_OP_JWKS_ENDPOINT", "")
+# Authentik "end session" URL. Optional: when set, dashboard logout also ends
+# the Authentik SSO session so the next visit asks for credentials again.
+OIDC_OP_LOGOUT_ENDPOINT = os.environ.get("OIDC_OP_LOGOUT_ENDPOINT", "")
+OIDC_GROUPS_CLAIM = os.environ.get("OIDC_GROUPS_CLAIM", "groups")
+OIDC_CREATE_USER = env_bool("OIDC_AUTO_CREATE_USER", True)
+OIDC_SYNC_GROUPS = env_bool("OIDC_SYNC_GROUPS", True)
+LOGIN_REDIRECT_URL_FAILURE = "/dashboard/login/?oidc_error=1"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
