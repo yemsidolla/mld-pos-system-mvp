@@ -33,6 +33,7 @@ from catalog.views import (
     supplier_list_view,
 )
 from core.views import (
+    auth_settings_view,
     dashboard_home_view,
     dashboard_login_view,
     dashboard_logout_view,
@@ -137,6 +138,7 @@ urlpatterns = [
     path("dashboard/roles/new/", role_create_view, name="role-create"),
     path("dashboard/roles/<slug:slug>/edit/", role_edit_view, name="role-edit"),
     path("dashboard/roles/<slug:slug>/delete/", role_delete_view, name="role-delete"),
+    path("dashboard/auth-settings/", auth_settings_view, name="auth-settings"),
     path("dashboard/promotions/", promotion_list_view, name="promotion-list"),
     path("dashboard/promotions/new/", promotion_create_view, name="promotion-create"),
     path("dashboard/promotions/<int:promotion_id>/edit/", promotion_edit_view, name="promotion-edit"),

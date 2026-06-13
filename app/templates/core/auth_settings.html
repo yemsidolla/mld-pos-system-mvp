@@ -1,0 +1,60 @@
+{% extends "dashboard/base.html" %}
+{% load i18n melodu_icons %}
+
+{% block title %}{% trans "Login & Auth" %}{% endblock %}
+{% block page_eyebrow %}{% trans "Access Control" %}{% endblock %}
+{% block page_title %}{% trans "Login & Authentication" %}{% endblock %}
+{% block page_subtitle %}{% trans "How staff sign in to Melodu." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Authentication mode" %}</h2>
+            <p>{% trans "Set in the server environment; changing it needs a restart." %}</p>
+        </div>
+    </header>
+    <div class="form-grid">
+        <div>
+            <label>{% trans "Current mode" %}</label>
+            <p>
+                {% if oidc_enabled %}
+                    <span class="pill pill-info">{% trans "Authentik / OIDC" %}</span>
+                {% else %}
+                    <span class="pill pill-neutral">{% trans "Local username & password" %}</span>
+                {% endif %}
+            </p>
+            <small class="muted">{% trans "Controlled by AUTH_MODE in the .env file." %}</small>
+        </div>
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Login options" %}</h2>
+            <p>{% trans "Runtime settings you can change here." %}</p>
+        </div>
+    </header>
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    {% if not oidc_enabled %}
+        <p class="alert alert-warning">{% icon "alert" 15 %} {% trans "Authentik is off, so local login stays on no matter what — it is the only way in." %}</p>
+    {% endif %}
+    <form class="form-stack" method="post">
+        {% csrf_token %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% trans "Save Settings" %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

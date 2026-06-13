@@ -715,3 +715,42 @@ class RoleMatrixTests(TestCase):
         owner_role = Role.objects.get(slug="OWNER")
         self.assertTrue(owner_role.is_owner)
         self.assertTrue(can_reset_data(self.owner))
+
+
+class AuthSettingsTests(TestCase):
+    """Authz Phase 5: Owner-only login & auth settings."""
+
+    def setUp(self):
+        self.owner = get_user_model().objects.create_superuser("as-owner", "o@x.com", "Admin123")
+        self.manager = get_user_model().objects.create_user("as-manager", password="x")
+        StaffProfile.objects.create(user=self.manager, role="MANAGER")
+
+    def test_owner_only_access(self):
+        self.client.force_login(self.manager)
+        self.assertEqual(self.client.get(reverse("auth-settings")).status_code, 403)
+        self.client.force_login(self.owner)
+        self.assertEqual(self.client.get(reverse("auth-settings")).status_code, 200)
+
+    def test_owner_updates_settings_and_audits(self):
+        from core.models import AuthSetting
+
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("auth-settings"),
+            {"session_timeout_minutes": "120"},  # local_login_enabled unticked
+        )
+        self.assertEqual(response.status_code, 302)
+        setting = AuthSetting.load()
+        self.assertEqual(setting.session_timeout_minutes, 120)
+        self.assertFalse(setting.local_login_enabled)
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.SETTING_CHANGE, object_display="Authentication settings").exists())
+
+    def test_local_login_stays_available_without_oidc(self):
+        # With OIDC off, disabling local login must NOT hide the form (no lockout).
+        from core.models import AuthSetting
+
+        s = AuthSetting.load()
+        s.local_login_enabled = False
+        s.save()
+        response = self.client.get(reverse("dashboard-login"))
+        self.assertContains(response, 'name="password"')

@@ -1,10 +1,23 @@
 from django.contrib.auth.models import Group
+from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 
 from core.permissions import ADMIN_GROUP, CASHIER_GROUP
 
 from .models import Role
+
+
+@receiver(user_logged_in)
+def apply_session_timeout(sender, request, user, **kwargs):
+    """Honour the Owner-configured session lifetime for every login (Authz P5)."""
+    if request is None:
+        return
+    from core.models import AuthSetting
+
+    minutes = AuthSetting.load().session_timeout_minutes
+    if minutes:
+        request.session.set_expiry(minutes * 60)
 
 
 @receiver(post_migrate)

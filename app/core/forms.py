@@ -1,7 +1,21 @@
 from django import forms
 
-from .models import StoreSetting
+from .models import AuthSetting, StoreSetting
 from .permissions import ROLE_CASHIER, ROLE_INVENTORY, ROLE_MANAGER, ROLE_VIEWER
+
+
+class AuthSettingForm(forms.ModelForm):
+    class Meta:
+        model = AuthSetting
+        fields = ("local_login_enabled", "session_timeout_minutes")
+        help_texts = {
+            "local_login_enabled": (
+                "Offer the local username/password form. Ignored (always on) when "
+                "Authentik/OIDC is off, so the store can never lock itself out."
+            ),
+            "session_timeout_minutes": "How long a login lasts, in minutes. 0 = system default.",
+        }
+
 
 COST_VISIBILITY_CHOICES = (
     (ROLE_MANAGER, "Manager"),

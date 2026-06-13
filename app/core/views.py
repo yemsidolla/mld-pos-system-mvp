@@ -27,8 +27,8 @@ from pos.services import parse_custom_code
 from audit.models import AuditLog
 from audit.services import create_audit_log
 
-from .forms import StoreSettingForm
-from .models import StoreSetting
+from .forms import AuthSettingForm, StoreSettingForm
+from .models import AuthSetting, StoreSetting
 from .permissions import (
     admin_required,
     clear_role_capability_cache,
@@ -68,10 +68,15 @@ def dashboard_login_view(request):
 
     safe_next = _safe_next_url(request)
     oidc_enabled = settings.OIDC_ENABLED
-    # In OIDC mode the local form is an emergency path: hidden behind ?local=1
-    # and only honoured while LOCAL_LOGIN_ENABLED is true.
+    # In OIDC mode the local form is an emergency path: hidden behind ?local=1.
+    # Effective local-login = env master switch AND the Owner's dashboard toggle,
+    # but forced on when there is no OIDC alternative so the store can never lock
+    # itself out.
+    local_login_enabled = settings.LOCAL_LOGIN_ENABLED and AuthSetting.load().local_login_enabled
+    if not oidc_enabled:
+        local_login_enabled = True
     local_requested = request.GET.get("local") == "1" or request.POST.get("local_login") == "1"
-    show_local_form = settings.LOCAL_LOGIN_ENABLED and (not oidc_enabled or local_requested)
+    show_local_form = local_login_enabled and (not oidc_enabled or local_requested)
 
     if request.GET.get("oidc_error"):
         messages.error(
@@ -281,6 +286,44 @@ def role_delete_view(request, slug):
     role.delete()
     messages.success(request, f"Role '{name}' was deleted.")
     return redirect("role-matrix")
+
+
+@owner_required
+def auth_settings_view(request):
+    """Owner-only login & authentication settings (Authz Phase 5)."""
+    setting = AuthSetting.load()
+    old_value = {
+        "local_login_enabled": setting.local_login_enabled,
+        "session_timeout_minutes": setting.session_timeout_minutes,
+    }
+    form = AuthSettingForm(request.POST or None, instance=setting)
+    if request.method == "POST" and form.is_valid():
+        setting = form.save()
+        create_audit_log(
+            action=AuditLog.Action.SETTING_CHANGE,
+            module="accounts",
+            request=request,
+            object_type="AuthSetting",
+            object_id=setting.pk,
+            object_display="Authentication settings",
+            old_value=old_value,
+            new_value={
+                "local_login_enabled": setting.local_login_enabled,
+                "session_timeout_minutes": setting.session_timeout_minutes,
+            },
+        )
+        messages.success(request, "Authentication settings were updated.")
+        return redirect("auth-settings")
+
+    return render(
+        request,
+        "core/auth_settings.html",
+        {
+            "form": form,
+            "auth_mode": "oidc" if settings.OIDC_ENABLED else "local",
+            "oidc_enabled": settings.OIDC_ENABLED,
+        },
+    )
 
 
 @admin_required

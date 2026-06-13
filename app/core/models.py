@@ -57,3 +57,36 @@ class StoreSetting(models.Model):
     def load(cls):
         obj, _created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class AuthSetting(models.Model):
+    """Singleton login/authentication settings editable by an Owner (Authz Phase 5).
+
+    The authentication *mode* (local vs Authentik/OIDC) stays env-driven because
+    it wires up apps and backends at startup; only the safe runtime toggles live
+    here.
+    """
+
+    # Whether the local username/password form is offered. Honoured only when
+    # OIDC is enabled — with no OIDC alternative the login view forces it on so
+    # the store can never lock itself out.
+    local_login_enabled = models.BooleanField(default=True)
+    # Session lifetime in minutes; 0 means use the Django default.
+    session_timeout_minutes = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Authentication setting"
+        verbose_name_plural = "Authentication settings"
+
+    def __str__(self):
+        return "Authentication settings"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def load(cls):
+        obj, _created = cls.objects.get_or_create(pk=1)
+        return obj

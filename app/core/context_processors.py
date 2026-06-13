@@ -101,6 +101,7 @@ def dashboard_context(request):
         admin_items.append({"label": "Live Logs", "icon": "logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
     if user and is_owner(user):
         admin_items.append({"label": "Role Permissions", "icon": "shield", "url_name": "role-matrix", "href": "/dashboard/roles/"})
+        admin_items.append({"label": "Login & Auth", "icon": "logout", "url_name": "auth-settings", "href": "/dashboard/auth-settings/"})
     if is_admin:
         admin_items.append({"label": "Styleguide", "icon": "category", "url_name": "styleguide", "href": "/dashboard/styleguide/"})
     if admin_items:
