@@ -30,6 +30,7 @@ from audit.services import create_audit_log
 from .forms import StoreSettingForm
 from .models import StoreSetting
 from .permissions import (
+    admin_required,
     can_access_dashboard,
     can_access_pos,
     can_manage_catalog,
@@ -135,6 +136,18 @@ def _store_setting_snapshot(setting):
         "currency_symbol": setting.currency_symbol,
         "cost_visible_roles": setting.cost_visible_roles,
     }
+
+
+@admin_required
+def styleguide_view(request):
+    """Living styleguide: renders every token and component from the real CSS.
+
+    The visual counterpart to docs/DESIGN_SYSTEM.md. Owner/Manager only — it is
+    a reference surface, not customer-facing.
+    """
+    from core.templatetags.melodu_icons import ICONS
+
+    return render(request, "core/styleguide.html", {"icon_names": sorted(ICONS)})
 
 
 @settings_required

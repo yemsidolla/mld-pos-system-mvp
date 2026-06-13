@@ -1,0 +1,400 @@
+# Melodu Design System
+
+**Status:** authoritative. This document is the single source of truth for how
+the Melodu dashboard looks and behaves. The live counterpart is the styleguide
+page at `/dashboard/styleguide/` (owner/manager only) — it renders every token
+and component below from the real CSS, so if the styleguide and a screen
+disagree, the screen is wrong.
+
+---
+
+## 0. How to use this document
+
+### For everyone (human and AI)
+
+1. **Before building or changing any screen, read the relevant section here.**
+   Reuse an existing token, component, and page archetype. Do not invent a new
+   one when one already fits.
+2. **The styleguide page is the proof.** New or changed components must appear
+   there. "Make it match the styleguide" is a valid, complete instruction.
+3. **Everything ships against the Definition of Done (§9).** A screen is not
+   finished until it passes that checklist.
+
+### Change policy (important)
+
+> **This document changes only through a dedicated task** whose explicit purpose
+> is to optimize or change the design system — never as a side effect of feature
+> work. If feature work needs a rule that doesn't exist yet, stop, raise a
+> design-system task, change the doc + styleguide + tokens together, then resume.
+
+This keeps the contract stable: a developer or AI reading this file can trust it
+matches the code, because the only way it drifts is a deliberate, reviewed task.
+When you do change it, update three things in the same commit: this doc, the
+styleguide page, and the CSS — and add a line to §11.
+
+### The layered model
+
+```
+Screens & flows   ← what users touch   (POS, inventory, reports)
+Patterns          ← page archetypes    (list, form, detail, workflow)
+Components         ← reusable pieces    (buttons, pills, cards, tables)
+Tokens             ← raw design values  (color, spacing, type, radius)
+Principles         ← the why            (speed, clarity, safety, role-fit)
+```
+
+Lower layers are defined once; upper layers inherit them. You change a screen by
+composing patterns, not by writing new tokens.
+
+---
+
+## 1. Principles
+
+These settle disagreements. When a UI decision is unclear, the higher-numbered
+principle yields to the lower.
+
+1. **Speed at the counter beats everything.** The POS sale is performed hundreds
+   of times a day. Save clicks, keep focus on the scan field, never make a
+   cashier wait for a full page reload mid-sale.
+2. **Clarity over density.** Staff are not power users. Prefer obvious labels,
+   generous spacing, and one clear action over a dense control panel.
+3. **Prevent the costly mistake.** Below-cost sales, wrong batch, wrong change,
+   data resets — these get confirmation, a written reason where money or stock
+   is at risk, and an audit trail.
+4. **Show only what the role needs.** A cashier never sees cost, profit, or
+   admin tools. Visibility follows `core.permissions`, never guesswork.
+5. **One system, two surfaces.** A light working surface for daytime data entry;
+   a dark "ink" console surface for identity, the cart, and focus moments. They
+   are deliberately different and must not blur into each other.
+
+---
+
+## 2. Tokens — the contract
+
+All values live in `:root` in `app/core/static/core/css/dashboard.css`.
+**Use the variable, never the raw value.** Raw hex in a template or new CSS rule
+is a defect (see the Debt register, §10, for existing violations being retired).
+
+### 2.1 Light working surface
+
+| Token | Value | Use |
+|---|---|---|
+| `--bg` | `#f6f8fa` | page background |
+| `--surface` | `#ffffff` | panels, cards |
+| `--surface-subtle` | `#f8fafb` | hover rows, insets, secondary buttons |
+| `--text` | `#1a2330` | primary text |
+| `--text-soft` | `#5f6b76` | labels, hints, captions |
+| `--border` | `#d8dee4` | default 1px borders |
+| `--border-strong` | `#aeb8c2` | input/button borders |
+
+### 2.2 Ink console surface (sidebar, POS cart, payment, auth)
+
+| Token | Value | Use |
+|---|---|---|
+| `--ink` | `#0b1220` | console background |
+| `--ink-soft` | `#13314a` | raised elements on ink |
+| `--ink-border` | `#1e3a5f` | borders on ink |
+| `--ink-text` | `#c9d7e6` | text on ink |
+| `--ink-text-dim` | `#5c7f9f` | muted text on ink |
+| `--accent` | `#0e7490` | primary accent (teal) on ink |
+| `--accent-bright` | `#7dd3fc` | active/hover accent on ink |
+
+### 2.3 Semantic (actions & feedback)
+
+| Token | Value | Use |
+|---|---|---|
+| `--primary` / `--primary-hover` | `#2563eb` / `#1d4ed8` | primary action buttons, links |
+| `--success` | `#127454` | success, confirm, sell-OK |
+| `--danger` | `#b42318` | destructive, below-cost, errors |
+| `--warning` | `#b7791f` | low stock, caution |
+| `--focus` | `#0ea5e9` | focus accents |
+
+### 2.4 Status ramp (pills & badges)
+
+Status uses a fixed pastel-background / dark-text pairing. **Do not** use the
+semantic action colors for status pills — they are a separate scale.
+
+| Meaning | Background | Text | Class |
+|---|---|---|---|
+| neutral / sold out | `#f1efe8` | `#444441` | `.pill` / `.pill-neutral` |
+| success / active / paid | `#e1f5ee` | `#085041` | `.pill-success` |
+| warning / low stock | `#faeeda` | `#633806` | `.pill-warning` |
+| danger / expired / below-cost | `#fcebeb` | `#791f1f` | `.pill-danger` |
+| info / promo / status | `#e6f1fb` | `#0c447c` | `.pill-info` |
+
+### 2.5 Typography
+
+- **Sans:** `--font-sans` = Inter → Noto Sans Khmer → system. All UI text.
+  Khmer is self-hosted (`@font-face`, `app/core/static/core/fonts/noto-sans-khmer.woff2`),
+  so it renders identically on every till.
+- **Mono:** `--font-mono`. **Every machine value** — codes, barcodes, batch
+  numbers, prices, quantities, timestamps, IDs, IP addresses. Never for prose.
+  Apply with the `.mono` class.
+- **Scale (current):** body 14px / line-height 1.45. Panel `h2` 16px. Topbar
+  `h1` 19px. KPI value 26px mono. Pills 11.5px. Use these; don't introduce
+  arbitrary sizes.
+- **Weights:** 600 for emphasis/labels in V7+ components. (Legacy buttons use
+  750 — see Debt §10.)
+
+### 2.6 Spacing, radius, motion
+
+- **Spacing:** multiples of 4 (4, 6, 8, 10, 12, 14, 16, 20, 24). Component-internal
+  gaps in px; vertical page rhythm in the same scale.
+- **Radius:** `--radius` (10px) for panels, cards, pills-rectangles, quick keys.
+  999px for pills/badges/avatars. (Legacy buttons/inputs use 6px — Debt §10.)
+- **Shadow:** `--shadow` only. No other drop shadows. No gradients, blur, or glow
+  on the light surface. (The ink/auth surface may use the defined glow accents.)
+- **Motion:** 0.15–0.16s ease for layout transitions (sidebar, frame loading).
+  Toasts auto-fade after 4s (success only). No decorative animation.
+
+---
+
+## 3. Iconography
+
+Inline SVG via the `{% icon %}` tag — `app/core/templatetags/melodu_icons.py`.
+**No icon webfont, no external dependency.** 24×24 stroke icons, Tabler outline
+style, `stroke-width 1.8`, `currentColor`.
+
+```django
+{% load melodu_icons %}
+{% icon "cart" %}              {# 18px default #}
+{% icon "alert" 15 %}         {# custom size #}
+{% icon "home" 17 "nav-ic" %} {# size + extra class #}
+```
+
+- Add an icon by adding one entry to the `ICONS` dict; never hand-draw paths in a
+  template, never pull a second icon set.
+- Icons inherit color and are `aria-hidden` (decorative). Icon-only buttons need
+  an `aria-label`.
+- Current set (32, alphabetical): activity, alert, barcode, camera, cart, cash,
+  category, chart, check, clock, dollar, hold, home, logout, logs, package,
+  percent, plus, printer, receipt, scan, search, settings, shield, sidebar, tag,
+  trend-up, truck, upload, user, users, x. (The live styleguide is the source of
+  truth for this list.)
+
+---
+
+## 4. Components
+
+Each component: what it is, the markup, variants, and rules. All are rendered
+live on the styleguide page.
+
+### 4.1 Buttons — `.btn`
+Base `.btn` (or any `<button>`). Variants: `.btn-primary` (blue, the main
+action), `.btn-success` (green, complete/confirm), `.btn-danger` (destructive),
+`.btn-secondary` (subtle). `.full-width` to stretch. Icon + label allowed.
+**One primary action per view.** Destructive actions pair with
+`data-confirm-message`.
+
+```django
+<button class="btn btn-primary">{% icon "plus" 16 %} {% trans "New product" %}</button>
+<button class="btn btn-danger" data-confirm-message="{% trans 'Delete?' %}">{% trans "Delete" %}</button>
+```
+
+### 4.2 Status pill — `.pill`
+Inline status label. Variants in §2.4. Use for any enum/state in a table or
+header. Prefer over plain text for status columns.
+
+```django
+<span class="pill pill-success">{% trans "Active" %}</span>
+<span class="pill pill-danger">{% trans "Expired" %}</span>
+```
+
+### 4.3 Role badge — `.role-badge`
+A pill keyed to staff role. Classes `.role-owner`, `.role-manager`,
+`.role-inventory`, `.role-cashier`, `.role-viewer` (each its own color). Render
+with `role-{{ role|lower }}`. Used in the user list and profile dropdown only.
+
+### 4.4 Panel — `.panel`
+The base container: white surface, 1px border, `--radius`. Optional
+`.panel-header` with `<h2>` + `<p>` subtitle. The unit every page is built from.
+
+```django
+<section class="panel">
+  <header class="panel-header"><div><h2>{% trans "Title" %}</h2><p>{% trans "Subtitle" %}</p></div></header>
+  …
+</section>
+```
+
+### 4.5 KPI card — `.kpi-card`
+A headline metric: `.kpi-label` (icon + caption), `.kpi-value` (mono number),
+`.kpi-hint` (context). Accent variants `.kpi-warning` / `.kpi-danger` recolor
+the whole card. Lay out in `.kpi-grid` (auto-fit, min 160px). Home dashboard
+only.
+
+### 4.6 Action card — `.action-card`
+A large tappable shortcut: leading `.action-ic`, `<strong>` title, `<span>`
+description. Lay out in `.action-grid`. Used for quick actions and report menus.
+
+### 4.7 Data table — `.data-table`
+Standard table: uppercase 11px headers, row hover, centered `.empty-cell` for
+empty state. Wrap in `.table-scroll` when it can overflow. Code/amount columns
+get `.mono`. Status columns get a pill.
+
+### 4.8 Forms — `.form-stack` / `.form-grid`
+`.form-stack` = vertical fields; `.form-grid` = responsive two-column (collapses
+to one on mobile). `.input-row` groups an input with an adjacent button (scan,
+quick-add). `.quantity-stepper` for −/+ number controls. Errors render via
+`.errorlist`. Filter forms reuse `dashboard/_list_filter.html`.
+
+### 4.9 Quick key — `.quick-key`
+POS tap button: `<strong>` name, `<span class="mono">` price. `.quick-key-promo`
+variant (amber) for promotions, with `.promo-tag`. Grid: `.quick-key-grid`.
+
+### 4.10 Alert / toast — `.alert`
+Inline message: `.alert-success` / `.alert-warning` / `.alert-danger`, left
+accent bar. Stack in `.message-stack`. Success alerts auto-fade after 4s;
+warnings and errors persist.
+
+### 4.11 Pagination — `dashboard/_pagination.html`
+Shared include. Centered, mono "Page X of Y". Always use this; never hand-roll.
+
+### 4.12 Empty state — `.empty-state` / `.empty-cell`
+Friendly centered message with an icon when a list or region has no data. Every
+list and table must define one.
+
+### 4.13 Modal / overlay
+Patterns: scanner modal, quick-create modal, quick-find (`Ctrl/Cmd+K`), payment
+dialog. All toggle a `hidden` attribute, close on `Esc` and backdrop click, and
+are bound via event delegation (survive partial navigation).
+
+---
+
+## 5. Page archetypes
+
+Every screen is one of these. Build new pages by copying the archetype, not from
+scratch. (Archetype base templates are a planned consolidation — see §10.)
+
+### 5.1 List page
+Filter bar (`_list_filter.html`) → `.panel` with `.data-table` → `_pagination.html`.
+Examples: products, sales history, users, audit logs. Rules: every column that
+is a code/amount is `.mono`; every status is a pill; define the empty state;
+primary "New …" action in `header_actions`.
+
+### 5.2 Form page
+`.panel` → `.form-grid`/`.form-stack` grouped into logical sections →
+`.form-actions` with one `.btn-primary` save. Examples: product form, settings,
+user form. Rules: group related fields; one primary action; inline field errors;
+destructive options confirm.
+
+### 5.3 Detail page
+`.panel-header` with title + status pill → fact grid (`.form-grid` of read-only
+pairs) → related lists in nested panels. Examples: sale detail, stock batch
+detail. Rules: status as a pill in the header; money/codes in mono; respect cost
+visibility.
+
+### 5.4 Workflow page (POS)
+The full-viewport locked register: two panes inside `.pos-layout`, page does not
+scroll on desktop (only inner regions do), light scan/quick-key pane left, ink
+cart pane right with totals + charge pinned at the bottom. This archetype is
+unique to POS — do not reuse its locking elsewhere.
+
+### 5.5 Auth / status page
+Centered ink console card on the grid backdrop. Login, access-denied, no-role,
+404/500. Terminal-line header, brand mark, one primary action. Friendly, never a
+raw stack trace.
+
+---
+
+## 6. Interaction & motion
+
+- **Partial navigation (`nav.js`):** sidebar/mobile-nav clicks swap only the
+  `.app-frame`; the sidebar never reloads. Opt a link out with `data-full-nav`
+  (receipts, print, downloads, Django admin). After a swap, `meloduPageInit()`
+  re-runs page-load effects.
+- **No-reload POS (`pos.js`):** scan/add/update/remove/clear post via fetch and
+  swap `#main-content`. The checkout form opts out with `data-full-submit`.
+- **Event delegation everywhere.** All JS binds on `document`, not on elements,
+  so bindings survive DOM swaps. New interactive markup must follow this — never
+  bind in a one-shot `querySelectorAll` loop at load.
+- **Focus discipline:** the POS scan field auto-focuses on load and after every
+  cart change. Modals focus their first input and restore focus on close.
+- **Keyboard:** `F9` = complete sale, `Esc` = clear scan / close modal,
+  `Ctrl/Cmd+K` = quick-find. Document any new shortcut here.
+- **Loading:** swapped regions get `.frame-loading` (60% opacity). No spinners.
+
+---
+
+## 7. Content & language
+
+- **Bilingual (EN + KH).** Every user-facing string is wrapped in `{% trans %}`
+  / `{% blocktrans %}`. Khmer is a first-class language, not an afterthought.
+- **Voice:** plain, calm, imperative for actions ("Receive stock", "Complete
+  sale"). Sentence case for labels and buttons — never Title Case or ALL CAPS in
+  content (uppercase is a CSS treatment for table headers/eyebrows only).
+- **Empty states** explain what to do next, not just "no data".
+- **Errors** say what happened and how to recover; never expose internals.
+- **Numbers:** money and quantities always mono; show ≈KHR alongside USD where a
+  total is displayed, using the store exchange rate.
+
+---
+
+## 8. Accessibility & device matrix
+
+**Target widths (must all work):**
+
+| Class | Width | Behaviour |
+|---|---|---|
+| Wide | ≥1500px | full-bleed POS, larger quick keys, taller cart |
+| PC | 900–1500px | sidebar + content, cart 330–480px |
+| Tablet | 640–900px | sidebar hides → mobile bottom nav; POS stacks |
+| Phone | <640px | single column, ≥42px touch targets, stepper enlarged |
+
+- **Touch targets** ≥42px on phone; quantity steppers enlarged there.
+- **Contrast:** all status text uses the dark stop of its own ramp (§2.4) — never
+  black on a colored fill.
+- **Focus rings** visible on every input (accent ring). Never remove outlines
+  without a replacement.
+- **Scanner = keyboard.** USB barcode scanners type + Enter; the scan field must
+  stay focused and submit on Enter without a mouse.
+- **`sr-only`** labels on icon-only controls; skip-link first in the DOM.
+
+---
+
+## 9. Definition of Done (UI)
+
+A screen is finished only when **all** are true:
+
+- [ ] Uses tokens only — no raw hex / arbitrary px in the change
+- [ ] Built from an existing component + page archetype (§4, §5)
+- [ ] New/changed components are rendered on the styleguide page
+- [ ] Works at all four widths (§8)
+- [ ] Keyboard + scanner flow works; focus handled
+- [ ] Empty, loading, and error states exist
+- [ ] All strings `{% trans %}`'d (EN + KH)
+- [ ] Cost/role visibility respected (§ principle 4)
+- [ ] Destructive/below-cost actions confirm + audit
+- [ ] JS uses event delegation (survives partial nav)
+- [ ] Print views (receipt/label) left untouched unless the task is about them
+- [ ] Tests pass; `collectstatic` clean; **web restarted** so new assets serve
+
+---
+
+## 10. Debt register
+
+Known divergences from this contract, each to be retired by a **dedicated
+design-system task** (never silently inside feature work). Listed so the doc
+stays honest about reality:
+
+1. **Buttons/inputs use `radius 6px` and `font-weight 750`** while V7+ components
+   use `--radius` (10px) and weight 600. Unify on a `--radius-sm` token + weight
+   600.
+2. **Raw hex in components:** pills (§2.4), role badges (§4.3), and KPI accent
+   colors use literal hex instead of tokens. Promote the status ramp and role
+   colors to named tokens.
+3. **CSS is append-only.** `dashboard.css` (~1760 lines) is organized as stacked
+   `/* V7 */ /* V8.1 */ …` sections with later overrides. Split into
+   `tokens.css` / `components.css` / `pages/*.css` (or clearly delimited,
+   deduplicated sections).
+4. **No archetype base templates yet.** §5 archetypes are conventions, not
+   enforced bases. Extract `base_list.html` / `base_form.html` / `base_detail.html`.
+5. **`:has()` reliance.** The POS viewport lock uses `body:has(.pos-layout)`
+   (Chrome 105+/Safari 15.4+). If older till browsers appear, switch to a body
+   class set by the view.
+
+---
+
+## 11. Change log
+
+Append one line per design-system task (the only thing that may edit this file).
+
+- 2026-06-13 — Initial system extracted from V6–V8.3 code; styleguide page added.

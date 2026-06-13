@@ -620,3 +620,23 @@ class ResetBusinessDataCommandTests(TestCase):
         self.assertEqual(Supplier.objects.count(), 0)
         self.assertTrue(get_user_model().objects.filter(username="reset-owner").exists())
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.DATA_RESET).exists())
+
+
+class StyleguideAccessTests(TestCase):
+    def setUp(self):
+        self.owner = get_user_model().objects.create_superuser("sg-owner", "o@x.com", "Admin123")
+        self.cashier = get_user_model().objects.create_user("sg-cashier", password="Admin123")
+        StaffProfile.objects.create(user=self.cashier, role="CASHIER")
+
+    def test_owner_can_open_styleguide_and_it_renders_components(self):
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("styleguide"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Living Styleguide")
+        self.assertContains(response, "role-badge")
+        self.assertContains(response, "kpi-card")
+
+    def test_cashier_cannot_open_styleguide(self):
+        self.client.force_login(self.cashier)
+        response = self.client.get(reverse("styleguide"))
+        self.assertEqual(response.status_code, 403)

@@ -39,6 +39,7 @@ from core.views import (
     health_check,
     scan_resolve_view,
     store_settings_view,
+    styleguide_view,
 )
 from inventory.views import barcode_print_view, inventory_summary_view, stock_batch_detail_view, stock_in_view
 from labels.views import (
@@ -127,6 +128,7 @@ urlpatterns = [
     path("dashboard/pos/receipt/<int:sale_id>/", sale_receipt_view, name="sale-receipt"),
     path("dashboard/sales/<int:sale_id>/reprint/", sale_reprint_view, name="sale-reprint"),
     path("dashboard/settings/", store_settings_view, name="store-settings"),
+    path("dashboard/styleguide/", styleguide_view, name="styleguide"),
     path("dashboard/promotions/", promotion_list_view, name="promotion-list"),
     path("dashboard/promotions/new/", promotion_create_view, name="promotion-create"),
     path("dashboard/promotions/<int:promotion_id>/edit/", promotion_edit_view, name="promotion-edit"),

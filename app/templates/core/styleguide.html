@@ -1,0 +1,151 @@
+{% extends "dashboard/base.html" %}
+{% load i18n melodu_icons %}
+
+{% block title %}{% trans "Styleguide" %}{% endblock %}
+{% block page_eyebrow %}{% trans "Design System" %}{% endblock %}
+{% block page_title %}{% trans "Living Styleguide" %}{% endblock %}
+{% block page_subtitle %}{% trans "Every token and component, rendered from the real CSS. The visual half of docs/DESIGN_SYSTEM.md." %}{% endblock %}
+
+{% block content %}
+<nav class="panel sg-toc">
+    <a href="#tokens">{% trans "Tokens" %}</a>
+    <a href="#type">{% trans "Typography" %}</a>
+    <a href="#icons">{% trans "Icons" %}</a>
+    <a href="#buttons">{% trans "Buttons" %}</a>
+    <a href="#pills">{% trans "Pills & badges" %}</a>
+    <a href="#cards">{% trans "Cards" %}</a>
+    <a href="#table">{% trans "Table" %}</a>
+    <a href="#forms">{% trans "Forms" %}</a>
+    <a href="#feedback">{% trans "Alerts" %}</a>
+</nav>
+
+<section class="panel" id="tokens">
+    <header class="panel-header"><div><h2>{% trans "Color tokens" %}</h2><p>{% trans "Use the variable, never the raw value (DESIGN_SYSTEM §2)." %}</p></div></header>
+    <p class="section-label">{% trans "Light working surface" %}</p>
+    <div class="sg-swatches">
+        <div class="sg-swatch"><span style="background:var(--bg)"></span><code>--bg</code></div>
+        <div class="sg-swatch"><span style="background:var(--surface);border:1px solid var(--border)"></span><code>--surface</code></div>
+        <div class="sg-swatch"><span style="background:var(--surface-subtle);border:1px solid var(--border)"></span><code>--surface-subtle</code></div>
+        <div class="sg-swatch"><span style="background:var(--text)"></span><code>--text</code></div>
+        <div class="sg-swatch"><span style="background:var(--text-soft)"></span><code>--text-soft</code></div>
+        <div class="sg-swatch"><span style="background:var(--border)"></span><code>--border</code></div>
+        <div class="sg-swatch"><span style="background:var(--border-strong)"></span><code>--border-strong</code></div>
+    </div>
+    <p class="section-label">{% trans "Ink console surface" %}</p>
+    <div class="sg-swatches">
+        <div class="sg-swatch"><span style="background:var(--ink)"></span><code>--ink</code></div>
+        <div class="sg-swatch"><span style="background:var(--ink-soft)"></span><code>--ink-soft</code></div>
+        <div class="sg-swatch"><span style="background:var(--ink-border)"></span><code>--ink-border</code></div>
+        <div class="sg-swatch"><span style="background:var(--ink-text)"></span><code>--ink-text</code></div>
+        <div class="sg-swatch"><span style="background:var(--ink-text-dim)"></span><code>--ink-text-dim</code></div>
+        <div class="sg-swatch"><span style="background:var(--accent)"></span><code>--accent</code></div>
+        <div class="sg-swatch"><span style="background:var(--accent-bright)"></span><code>--accent-bright</code></div>
+    </div>
+    <p class="section-label">{% trans "Semantic" %}</p>
+    <div class="sg-swatches">
+        <div class="sg-swatch"><span style="background:var(--primary)"></span><code>--primary</code></div>
+        <div class="sg-swatch"><span style="background:var(--success)"></span><code>--success</code></div>
+        <div class="sg-swatch"><span style="background:var(--danger)"></span><code>--danger</code></div>
+        <div class="sg-swatch"><span style="background:var(--warning)"></span><code>--warning</code></div>
+        <div class="sg-swatch"><span style="background:var(--focus)"></span><code>--focus</code></div>
+    </div>
+</section>
+
+<section class="panel" id="type">
+    <header class="panel-header"><div><h2>{% trans "Typography" %}</h2><p>{% trans "Inter + Noto Sans Khmer; mono for every machine value." %}</p></div></header>
+    <h1>{% trans "Heading 1 — 19px" %} · ភាសាខ្មែរ</h1>
+    <h2>{% trans "Heading 2 — 16px" %} · ភាសាខ្មែរ</h2>
+    <p>{% trans "Body text — 14px / 1.45. The quick brown dog. ឆ្កែ និង ឆ្មា។" %}</p>
+    <p class="muted">{% trans "Muted caption — --text-soft." %}</p>
+    <p class="mono">MONO 8851234567890 · B0421 · $9.99 · ៛ 40,959 · 2027-03-01</p>
+</section>
+
+<section class="panel" id="icons">
+    <header class="panel-header"><div><h2>{% trans "Icons" %}</h2><p>{% trans "Inline SVG via the icon tag — no webfont." %}</p></div></header>
+    <div class="sg-icons">
+        {% for name in icon_names %}
+            <div class="sg-icon">{% icon name 22 %}<code>{{ name }}</code></div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel" id="buttons">
+    <header class="panel-header"><div><h2>{% trans "Buttons" %}</h2><p>{% trans "One primary action per view." %}</p></div></header>
+    <div class="sg-row">
+        <button class="btn btn-primary">{% icon "plus" 16 %} {% trans "Primary" %}</button>
+        <button class="btn btn-success">{% icon "check" 16 %} {% trans "Success" %}</button>
+        <button class="btn btn-danger">{% trans "Danger" %}</button>
+        <button class="btn">{% trans "Default" %}</button>
+        <button class="btn btn-secondary">{% trans "Secondary" %}</button>
+        <button class="btn" disabled>{% trans "Disabled" %}</button>
+    </div>
+</section>
+
+<section class="panel" id="pills">
+    <header class="panel-header"><div><h2>{% trans "Status pills & role badges" %}</h2><p>{% trans "Status ramp is separate from action colors." %}</p></div></header>
+    <div class="sg-row">
+        <span class="pill pill-neutral">{% trans "Sold out" %}</span>
+        <span class="pill pill-success">{% trans "Active" %}</span>
+        <span class="pill pill-warning">{% trans "Low stock" %}</span>
+        <span class="pill pill-danger">{% trans "Expired" %}</span>
+        <span class="pill pill-info">{% trans "Promo" %}</span>
+    </div>
+    <div class="sg-row">
+        <span class="role-badge role-owner">{% trans "Owner" %}</span>
+        <span class="role-badge role-manager">{% trans "Manager" %}</span>
+        <span class="role-badge role-inventory">{% trans "Inventory" %}</span>
+        <span class="role-badge role-cashier">{% trans "Cashier" %}</span>
+        <span class="role-badge role-viewer">{% trans "Viewer" %}</span>
+    </div>
+</section>
+
+<section class="panel" id="cards">
+    <header class="panel-header"><div><h2>{% trans "KPI & action cards" %}</h2></div></header>
+    <div class="kpi-grid">
+        <article class="kpi-card"><span class="kpi-label">{% icon "cash" 15 %}{% trans "Sales Today" %}</span><strong class="kpi-value">42</strong><span class="kpi-hint">{% trans "store-wide" %}</span></article>
+        <article class="kpi-card kpi-warning"><span class="kpi-label">{% icon "alert" 15 %}{% trans "Low Stock" %}</span><strong class="kpi-value">7</strong><span class="kpi-hint">{% trans "at or below minimum" %}</span></article>
+        <article class="kpi-card kpi-danger"><span class="kpi-label">{% icon "clock" 15 %}{% trans "Expiring" %}</span><strong class="kpi-value">3</strong><span class="kpi-hint">{% trans "≤30 days" %}</span></article>
+    </div>
+    <div class="action-grid" style="margin-top:12px;">
+        <a class="action-card" href="#cards">{% icon "cart" 20 "action-ic" %}<strong>{% trans "Action Card" %}</strong><span>{% trans "A large tappable shortcut." %}</span></a>
+        <a class="action-card" href="#cards">{% icon "package" 20 "action-ic" %}<strong>{% trans "Stock Overview" %}</strong><span>{% trans "Batches, expiry, levels." %}</span></a>
+    </div>
+</section>
+
+<section class="panel" id="table">
+    <header class="panel-header"><div><h2>{% trans "Data table" %}</h2><p>{% trans "Mono codes/amounts, pill statuses, hover rows." %}</p></div></header>
+    <table class="data-table">
+        <thead><tr><th>{% trans "Code" %}</th><th>{% trans "Product" %}</th><th>{% trans "Price" %}</th><th>{% trans "Status" %}</th></tr></thead>
+        <tbody>
+            <tr><td class="mono">B0421</td><td>{% trans "Cat Food 2kg" %}</td><td class="mono">$9.99</td><td><span class="pill pill-success">{% trans "Active" %}</span></td></tr>
+            <tr><td class="mono">B0398</td><td>{% trans "Puppy Treats" %}</td><td class="mono">$2.25</td><td><span class="pill pill-warning">{% trans "Low stock" %}</span></td></tr>
+        </tbody>
+    </table>
+</section>
+
+<section class="panel" id="forms">
+    <header class="panel-header"><div><h2>{% trans "Form fields" %}</h2></div></header>
+    <div class="form-grid">
+        <div><label for="sg-text">{% trans "Text input" %}</label><input id="sg-text" type="text" placeholder="{% trans 'Type here' %}"></div>
+        <div><label for="sg-select">{% trans "Select" %}</label><select id="sg-select"><option>{% trans "Option A" %}</option><option>{% trans "Option B" %}</option></select></div>
+        <div><label>{% trans "Quantity stepper" %}</label>
+            <div class="input-row compact-row">
+                <button class="quantity-stepper" type="button">-</button>
+                <input class="quantity-input" type="number" value="1">
+                <button class="quantity-stepper" type="button">+</button>
+            </div>
+        </div>
+        <div><label for="sg-check"><input id="sg-check" type="checkbox" checked> {% trans "Checkbox" %}</label></div>
+    </div>
+</section>
+
+<section class="panel" id="feedback">
+    <header class="panel-header"><div><h2>{% trans "Alerts & empty state" %}</h2></div></header>
+    <div class="message-stack">
+        <div class="alert alert-success">{% trans "Success — saved." %}</div>
+        <div class="alert alert-warning">{% trans "Warning — check this." %}</div>
+        <div class="alert alert-danger">{% trans "Error — could not complete." %}</div>
+    </div>
+    <p class="empty-state">{% icon "check" 16 %} {% trans "All clear — nothing here yet." %}</p>
+</section>
+{% endblock %}
