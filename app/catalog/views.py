@@ -5,10 +5,12 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
+from core.filters import querystring_without
 from core.pagination import paginate
 from core.permissions import admin_required, can_manage_catalog, costs_required
 
@@ -35,9 +37,11 @@ QUICK_CREATE_FORMS = {
 
 
 def _apply_status_filter(queryset, status):
-    if status == "active":
+    # Accepts a single value (legacy callers) or a list (column filter).
+    selected = {status} if isinstance(status, str) else set(status or [])
+    if selected == {"active"}:
         return queryset.filter(is_active=True)
-    if status == "inactive":
+    if selected == {"inactive"}:
         return queryset.filter(is_active=False)
     return queryset
 
@@ -215,14 +219,15 @@ def product_list_view(request):
         .order_by("name", "product_code")
     )
 
+    active_filters = []
     if form.is_valid():
         query = form.cleaned_data.get("q")
-        category = form.cleaned_data.get("category")
-        brand = form.cleaned_data.get("brand")
-        animal_type = form.cleaned_data.get("animal_type")
-        life_stage = form.cleaned_data.get("life_stage")
-        tag = form.cleaned_data.get("tag")
-        status = form.cleaned_data.get("status")
+        categories = form.cleaned_data.get("category")
+        brands = form.cleaned_data.get("brand")
+        animal_types = form.cleaned_data.get("animal_type")
+        life_stages = form.cleaned_data.get("life_stage")
+        tags = form.cleaned_data.get("tag")
+        statuses = form.cleaned_data.get("status")
 
         if query:
             products = products.filter(
@@ -231,17 +236,42 @@ def product_list_view(request):
                 | Q(original_barcode__icontains=query)
                 | Q(tags__name__icontains=query)
             ).distinct()
-        if category:
-            products = products.filter(category=category)
-        if brand:
-            products = products.filter(brand=brand)
-        if animal_type:
-            products = products.filter(animal_type=animal_type)
-        if life_stage:
-            products = products.filter(life_stage=life_stage)
-        if tag:
-            products = products.filter(tags=tag)
-        products = _apply_status_filter(products, status)
+        if categories:
+            products = products.filter(category__in=categories)
+        if brands:
+            products = products.filter(brand__in=brands)
+        if animal_types:
+            products = products.filter(animal_type__in=animal_types)
+        if life_stages:
+            products = products.filter(life_stage__in=life_stages)
+        if tags:
+            products = products.filter(tags__in=tags).distinct()
+        products = _apply_status_filter(products, statuses)
+
+        # Active-filter summary bar (DESIGN_SYSTEM §4.15). One chip per column;
+        # its remove link drops that column's filter while keeping the rest.
+        animal_labels = dict(Product.AnimalType.choices)
+        stage_labels = dict(Product.LifeStage.choices)
+        status_labels = {"active": _("Active"), "inactive": _("Inactive")}
+
+        def chip(param, label, values):
+            if values:
+                active_filters.append(
+                    {
+                        "label": label,
+                        "values": list(values),
+                        "remove_url": querystring_without(request, param),
+                    }
+                )
+
+        if query:
+            chip("q", _("Search"), [query])
+        chip("category", _("Category"), [c.name for c in categories])
+        chip("brand", _("Brand"), [b.name for b in brands])
+        chip("animal_type", _("Animal"), [animal_labels.get(a, a) for a in animal_types])
+        chip("life_stage", _("Stage"), [stage_labels.get(s, s) for s in life_stages])
+        chip("tag", _("Tag"), [t.name for t in tags])
+        chip("status", _("Status"), [status_labels.get(s, s) for s in statuses])
 
     product_count = products.count()
     page_obj, querystring = paginate(request, products)
@@ -255,6 +285,8 @@ def product_list_view(request):
             "page_obj": page_obj,
             "querystring": querystring,
             "product_count": product_count,
+            "active_filters": active_filters,
+            "clear_url": request.path,
         },
     )
 

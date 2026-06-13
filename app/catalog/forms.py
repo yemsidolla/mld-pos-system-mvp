@@ -13,21 +13,30 @@ class CatalogFilterForm(forms.Form):
 
 
 class ProductFilterForm(forms.Form):
+    """Column-header filters (DESIGN_SYSTEM §4.14). Every facet is multi-select,
+    so values combine as OR within a column and AND across columns; ``q`` stays a
+    free-text "contains" search on the Product column."""
+
     q = forms.CharField(label="Search", required=False)
-    category = forms.ModelChoiceField(queryset=Category.objects.none(), required=False)
-    brand = forms.ModelChoiceField(queryset=Brand.objects.none(), required=False)
-    animal_type = forms.ChoiceField(
-        choices=[("", "All animals")] + list(Product.AnimalType.choices),
-        required=False,
+    category = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.none(), required=False, widget=forms.CheckboxSelectMultiple
     )
-    life_stage = forms.ChoiceField(
-        choices=[("", "All stages")] + list(Product.LifeStage.choices),
-        required=False,
+    brand = forms.ModelMultipleChoiceField(
+        queryset=Brand.objects.none(), required=False, widget=forms.CheckboxSelectMultiple
     )
-    tag = forms.ModelChoiceField(queryset=ProductTag.objects.none(), required=False)
-    status = forms.ChoiceField(
-        choices=(("", "All"), ("active", "Active"), ("inactive", "Inactive")),
+    animal_type = forms.MultipleChoiceField(
+        choices=Product.AnimalType.choices, required=False, widget=forms.CheckboxSelectMultiple
+    )
+    life_stage = forms.MultipleChoiceField(
+        choices=Product.LifeStage.choices, required=False, widget=forms.CheckboxSelectMultiple
+    )
+    tag = forms.ModelMultipleChoiceField(
+        queryset=ProductTag.objects.none(), required=False, widget=forms.CheckboxSelectMultiple
+    )
+    status = forms.MultipleChoiceField(
+        choices=(("active", "Active"), ("inactive", "Inactive")),
         required=False,
+        widget=forms.CheckboxSelectMultiple,
     )
 
     def __init__(self, *args, **kwargs):

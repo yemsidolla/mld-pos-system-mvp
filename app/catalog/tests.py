@@ -494,3 +494,49 @@ class ProductClassificationTests(TestCase):
         self.assertContains(response, 'name="animal_type"')
         self.assertContains(response, 'name="life_stage"')
         self.assertContains(response, 'name="tags"')
+
+
+class ProductColumnFilterTests(TestCase):
+    def setUp(self):
+        self.admin = get_user_model().objects.create_superuser("pcf-admin", "a@x.com", "Admin123")
+        self.cat_food = Product.objects.create(
+            product_code="C1", name="Cat Food", animal_type=Product.AnimalType.CAT
+        )
+        self.dog_food = Product.objects.create(
+            product_code="D1", name="Dog Food", animal_type=Product.AnimalType.DOG
+        )
+        self.bird_food = Product.objects.create(product_code="B1", name="Bird Seed")
+        self.client.force_login(self.admin)
+
+    def test_multi_select_status_or_within_column(self):
+        # active OR inactive selected = show all (no narrowing)
+        self.dog_food.is_active = False
+        self.dog_food.save()
+        response = self.client.get(reverse("product-list"), {"status": ["active", "inactive"]})
+        self.assertContains(response, "Cat Food")
+        self.assertContains(response, "Dog Food")
+
+    def test_multi_select_animal_or_within_column(self):
+        response = self.client.get(reverse("product-list"), {"animal_type": ["CAT", "DOG"]})
+        self.assertContains(response, "Cat Food")
+        self.assertContains(response, "Dog Food")
+        self.assertNotContains(response, "Bird Seed")
+
+    def test_filters_combine_as_and_across_columns(self):
+        response = self.client.get(
+            reverse("product-list"), {"animal_type": ["CAT", "DOG"], "q": "Cat"}
+        )
+        self.assertContains(response, "Cat Food")
+        self.assertNotContains(response, "Dog Food")
+
+    def test_active_filter_bar_renders_chip_with_remove_link(self):
+        response = self.client.get(reverse("product-list"), {"animal_type": ["CAT"]})
+        self.assertContains(response, "filter-bar")
+        self.assertContains(response, "Animal")
+        chips = response.context["active_filters"]
+        self.assertEqual(len(chips), 1)
+        self.assertNotIn("animal_type", chips[0]["remove_url"])
+
+    def test_no_filter_bar_when_nothing_selected(self):
+        response = self.client.get(reverse("product-list"))
+        self.assertEqual(response.context["active_filters"], [])

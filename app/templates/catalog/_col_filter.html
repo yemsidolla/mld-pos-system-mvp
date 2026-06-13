@@ -1,0 +1,22 @@
+{% load i18n melodu_icons %}
+{% comment %}
+Reusable column-filter funnel (DESIGN_SYSTEM §4.14) for a multi-select checkbox
+field. Expects:
+  field — a bound CheckboxSelectMultiple form field
+  title — popover heading text
+  clear_url — href that drops all filters (from the view context)
+Must sit inside the list page's GET <form> so Apply submits the whole filter set.
+{% endcomment %}
+<details class="col-filter {% if field.value %}is-active{% endif %}">
+    <summary aria-label="{{ title }}">{% icon "search" 14 %}</summary>
+    <div class="col-filter-pop">
+        <p class="col-filter-title">{{ title }}</p>
+        <div class="col-filter-options">
+            {% for choice in field %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+        </div>
+        <div class="col-filter-actions">
+            <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
+            <a class="btn" href="{{ clear_url }}">{% trans "Clear" %}</a>
+        </div>
+    </div>
+</details>

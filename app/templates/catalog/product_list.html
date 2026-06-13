@@ -1,101 +1,117 @@
 {% extends "dashboard/base.html" %}
-{% load i18n %}
+{% load i18n melodu_icons %}
 
 {% block title %}{% trans "Products" %}{% endblock %}
 {% block page_title %}{% trans "Products" %}{% endblock %}
 {% block page_subtitle %}{% trans "Create, search, and maintain product master data for daily store operations." %}{% endblock %}
 {% block header_actions %}
-    <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% trans "Scan Search" %}</button>
+    <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan Search" %}</button>
     <a class="btn" href="{% url 'category-list' %}">{% trans "Categories" %}</a>
     <a class="btn" href="{% url 'brand-list' %}">{% trans "Brands" %}</a>
     <a class="btn" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
-    <a class="btn btn-primary" href="{% url 'product-create' %}">{% trans "New Product" %}</a>
+    <a class="btn btn-primary" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
 {% endblock %}
 
 {% block content %}
 <section class="panel">
     <header class="panel-header">
         <div>
-            <h2>{% trans "Find Products" %}</h2>
+            <h2>{% trans "Product Catalog" %}</h2>
             <p>{% blocktrans count count=product_count %}{{ count }} product found.{% plural %}{{ count }} products found.{% endblocktrans %}</p>
         </div>
     </header>
-    <form class="form-stack" method="get">
-        <div class="form-grid">
-            {% for field in form %}
-                <div>
-                    {{ field.label_tag }}
-                    {% if field.name == "q" %}
-                        <div class="input-row">
-                            {{ field }}
-                            <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% trans "Scan" %}</button>
-                        </div>
-                    {% else %}
-                        {{ field }}
-                    {% endif %}
-                    {{ field.errors }}
-                </div>
-            {% endfor %}
-        </div>
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
-            <a class="btn" href="{% url 'product-list' %}">{% trans "Reset" %}</a>
-        </div>
-    </form>
-</section>
 
-<section class="panel">
-    <header class="panel-header">
-        <div>
-            <h2>{% trans "Product Catalog" %}</h2>
-            <p>{% trans "Products are master data. Sellable quantity is managed by stock batches." %}</p>
-        </div>
-    </header>
-    <div class="table-scroll">
+    {% if active_filters %}
+    <div class="filter-bar">
+        <span class="filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
+        {% for f in active_filters %}
+            {% if not forloop.first %}<span class="filter-bar-join">{% trans "and" %}</span>{% endif %}
+            <span class="filter-chip">{{ f.label }}: {{ f.values|join:", " }}
+                <a href="{{ f.remove_url }}" aria-label="{% trans 'Remove filter' %}">{% icon "x" 13 %}</a></span>
+        {% endfor %}
+        <a class="filter-bar-clear" href="{{ clear_url }}">{% trans "Clear all" %}</a>
+    </div>
+    {% endif %}
+
+    <form method="get">
         <table class="data-table">
             <thead>
                 <tr>
                     <th>{% trans "Code" %}</th>
-                    <th>{% trans "Product" %}</th>
+                    <th class="has-filter">{% trans "Product" %}
+                        <details class="col-filter {% if form.q.value %}is-active{% endif %}">
+                            <summary aria-label="{% trans 'Search products' %}">{% icon "search" 14 %}</summary>
+                            <div class="col-filter-pop">
+                                <p class="col-filter-title">{% trans "Search name, code, or barcode" %}</p>
+                                <input class="col-filter-search" id="id_q" type="text" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Contains…' %}">
+                                <div class="col-filter-actions">
+                                    <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
+                                    <a class="btn" href="{{ clear_url }}">{% trans "Clear" %}</a>
+                                </div>
+                            </div>
+                        </details>
+                    </th>
                     <th>{% trans "Barcode" %}</th>
-                    <th>{% trans "Category" %}</th>
-                    <th>{% trans "Brand" %}</th>
-                    <th>{% trans "Classification" %}</th>
+                    <th class="has-filter">{% trans "Category" %}{% include "catalog/_col_filter.html" with field=form.category title=_("Filter: Category") %}</th>
+                    <th class="has-filter">{% trans "Brand" %}{% include "catalog/_col_filter.html" with field=form.brand title=_("Filter: Brand") %}</th>
+                    <th class="has-filter">{% trans "Classification" %}
+                        <details class="col-filter {% if form.animal_type.value or form.life_stage.value or form.tag.value %}is-active{% endif %}">
+                            <summary aria-label="{% trans 'Filter classification' %}">{% icon "search" 14 %}</summary>
+                            <div class="col-filter-pop">
+                                <p class="col-filter-title">{% trans "Animal" %}</p>
+                                <div class="col-filter-options">
+                                    {% for choice in form.animal_type %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+                                </div>
+                                <p class="col-filter-title" style="margin-top:8px;">{% trans "Life stage" %}</p>
+                                <div class="col-filter-options">
+                                    {% for choice in form.life_stage %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+                                </div>
+                                <p class="col-filter-title" style="margin-top:8px;">{% trans "Tag" %}</p>
+                                <div class="col-filter-options">
+                                    {% for choice in form.tag %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+                                </div>
+                                <div class="col-filter-actions">
+                                    <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
+                                    <a class="btn" href="{{ clear_url }}">{% trans "Clear" %}</a>
+                                </div>
+                            </div>
+                        </details>
+                    </th>
                     <th>{% trans "Price" %}</th>
-                    <th>{% trans "Status" %}</th>
+                    <th class="has-filter">{% trans "Status" %}{% include "catalog/_col_filter.html" with field=form.status title=_("Filter: Status") %}</th>
                     <th>{% trans "Action" %}</th>
                 </tr>
             </thead>
             <tbody>
             {% for product in products %}
                 <tr>
-                    <td>{{ product.product_code }}</td>
+                    <td class="mono">{{ product.product_code }}</td>
                     <td><strong>{{ product.name }}</strong><br><span class="muted">{{ product.unit }}</span></td>
-                    <td>{{ product.original_barcode|default:"-" }}</td>
+                    <td class="mono">{{ product.original_barcode|default:"-" }}</td>
                     <td>{{ product.category|default:"-" }}</td>
                     <td>{{ product.brand|default:"-" }}</td>
                     <td>
-                        {% if product.animal_type %}<span class="badge">{{ product.get_animal_type_display }}</span>{% endif %}
-                        {% if product.life_stage %}<span class="badge">{{ product.get_life_stage_display }}</span>{% endif %}
-                        {% for tag in product.tags.all %}<span class="badge badge-success">{{ tag.name }}</span>{% endfor %}
+                        {% if product.animal_type %}<span class="pill pill-info">{{ product.get_animal_type_display }}</span>{% endif %}
+                        {% if product.life_stage %}<span class="pill pill-info">{{ product.get_life_stage_display }}</span>{% endif %}
+                        {% for tag in product.tags.all %}<span class="pill pill-success">{{ tag.name }}</span>{% endfor %}
                         {% if not product.animal_type and not product.life_stage and not product.tags.all %}-{% endif %}
                     </td>
-                    <td>{{ product.default_selling_price }}</td>
+                    <td class="mono">{{ product.default_selling_price }}</td>
                     <td>
                         {% if product.is_active %}
-                            <span class="badge badge-success">{% trans "Active" %}</span>
+                            <span class="pill pill-success">{% trans "Active" %}</span>
                         {% else %}
-                            <span class="badge badge-danger">{% trans "Inactive" %}</span>
+                            <span class="pill pill-danger">{% trans "Inactive" %}</span>
                         {% endif %}
                     </td>
                     <td><a class="btn" href="{% url 'product-edit' product.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="9" class="empty-cell">{% trans "No products found." %}</td></tr>
+                <tr><td colspan="9" class="empty-cell">{% trans "No products match these filters." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
-    </div>
+    </form>
     {% include "dashboard/_pagination.html" %}
 </section>
 {% endblock %}
