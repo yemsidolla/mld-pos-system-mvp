@@ -294,3 +294,60 @@ class UserManagementTests(TestCase):
 
         # self.owner (active superuser) + po (active profile owner) = 2; disabled superuser excluded.
         self.assertEqual(_active_owner_count(), 2)
+
+
+class CapabilityFoundationTests(TestCase):
+    """Authz Phase 1: capabilities are data-driven but reproduce the old matrix."""
+
+    def _user(self, role_slug):
+        from accounts.models import StaffProfile
+
+        user = get_user_model().objects.create_user(username=f"cap-{role_slug.lower()}", password="x")
+        StaffProfile.objects.create(user=user, role=role_slug)
+        return user
+
+    def test_builtin_roles_are_seeded(self):
+        from accounts.models import Role
+
+        self.assertEqual(Role.objects.filter(is_builtin=True).count(), 5)
+        owner = Role.objects.get(slug="OWNER")
+        self.assertTrue(owner.is_owner)
+        manager = Role.objects.get(slug="MANAGER")
+        self.assertIn("reports.view", manager.capabilities)
+        self.assertNotIn("system.reset_data", manager.capabilities)
+
+    def test_has_capability_matches_seeded_matrix(self):
+        from core.permissions import has_capability
+
+        manager = self._user(ROLE_MANAGER)
+        cashier = self._user(ROLE_CASHIER)
+        self.assertTrue(has_capability(manager, "reports.view"))
+        self.assertFalse(has_capability(cashier, "reports.view"))
+        self.assertTrue(has_capability(cashier, "pos.access"))
+
+    def test_owner_role_holds_every_capability_including_unknown(self):
+        from core.permissions import has_capability
+
+        owner = get_user_model().objects.create_superuser("cap-owner", "o@x.com", "x")
+        self.assertTrue(has_capability(owner, "system.reset_data"))
+        self.assertTrue(has_capability(owner, "some.future.capability"))
+
+    def test_can_functions_follow_role_capability_edits(self):
+        from accounts.models import Role
+        from core.permissions import can_view_reports
+
+        manager = self._user(ROLE_MANAGER)
+        self.assertTrue(can_view_reports(manager))
+
+        role = Role.objects.get(slug="MANAGER")
+        role.capabilities = [c for c in role.capabilities if c != "reports.view"]
+        role.save()
+
+        manager = get_user_model().objects.get(pk=manager.pk)  # fresh object → fresh cache
+        self.assertFalse(can_view_reports(manager))
+
+    def test_user_with_no_role_has_no_capabilities(self):
+        from core.permissions import has_capability
+
+        nobody = get_user_model().objects.create_user(username="cap-nobody", password="x")
+        self.assertFalse(has_capability(nobody, "pos.access"))

@@ -67,6 +67,53 @@ def role_label(role):
     return ROLE_LABELS.get(role, "")
 
 
+# --- Data-driven capabilities (Authz Phase 1) ------------------------------
+# Roles grant capabilities as data (accounts.Role). The {slug: (is_owner, caps)}
+# map is loaded once and cached on the request's user object, so each request
+# does a single query and always sees current data — correct across multiple
+# gunicorn workers, unlike a module-level cache.
+def _roles_map(user=None):
+    cached = getattr(user, "_melodu_roles_map", None)
+    if cached is not None:
+        return cached
+    from accounts.models import Role  # lazy: avoid app-loading cycle
+
+    try:
+        data = {r.slug: (r.is_owner, set(r.capabilities or [])) for r in Role.objects.all()}
+    except Exception:  # pragma: no cover - defensive (e.g. before migrations)
+        return {}
+    if user is not None:
+        try:
+            user._melodu_roles_map = data
+        except (AttributeError, TypeError):  # pragma: no cover - e.g. None/immutable
+            pass
+    return data
+
+
+def clear_role_capability_cache(user=None):
+    """Drop the per-request role cache. Call after editing roles within a request
+    so a subsequent capability check in the same request sees the change."""
+    if user is not None and hasattr(user, "_melodu_roles_map"):
+        del user._melodu_roles_map
+
+
+def has_capability(user, capability):
+    """True if ``user``'s effective role grants ``capability``.
+
+    Owner-tier roles implicitly hold every capability. Resolution flows through
+    ``get_user_role`` so superusers (always Owner) and the legacy group mapping
+    keep working unchanged.
+    """
+    role = get_user_role(user)
+    if role is None:
+        return False
+    info = _roles_map(user).get(role)
+    if info is None:
+        return False
+    is_owner_role, capabilities = info
+    return is_owner_role or capability in capabilities
+
+
 # --- Role predicates -------------------------------------------------------
 def is_owner(user):
     return has_role(user, ROLE_OWNER)
@@ -95,7 +142,7 @@ def is_cashier_user(user):
 
 
 def can_access_pos(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER, ROLE_CASHIER)
+    return has_capability(user, "pos.access")
 
 
 def can_access_dashboard(user):
@@ -103,51 +150,51 @@ def can_access_dashboard(user):
     return get_user_role(user) is not None
 
 
-# --- Capability checks (V4 permission matrix) ------------------------------
+# --- Capability checks (now data-driven; see accounts.Role) -----------------
 def can_manage_users(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+    return has_capability(user, "system.manage_users")
 
 
 def can_manage_catalog(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+    return has_capability(user, "catalog.manage")
 
 
 def can_manage_inventory(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER, ROLE_INVENTORY)
+    return has_capability(user, "inventory.manage")
 
 
 def can_manage_promotions(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+    return has_capability(user, "promotions.manage")
 
 
 def can_view_sales_history(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER, ROLE_VIEWER)
+    return has_capability(user, "sales.view_history")
 
 
 def can_cancel_sale(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+    return has_capability(user, "sales.cancel")
 
 
 def can_view_reports(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER, ROLE_VIEWER)
+    return has_capability(user, "reports.view")
 
 
 def can_view_system(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+    return has_capability(user, "system.view_logs")
 
 
 def can_view_audit(user):
-    """Read-only access to the audit trail. Owner/Manager (V5 Phase 2)."""
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+    """Read-only access to the audit trail."""
+    return has_capability(user, "system.view_audit")
 
 
 def can_manage_settings(user):
-    return has_role(user, ROLE_OWNER, ROLE_MANAGER)
+    return has_capability(user, "system.manage_settings")
 
 
 def can_reset_data(user):
-    """Owner-only. Used by the Phase 6 data-reset tooling."""
-    return has_role(user, ROLE_OWNER)
+    """Owner-only by default. Used by the data-reset tooling."""
+    return has_capability(user, "system.reset_data")
 
 
 def can_view_costs(user):

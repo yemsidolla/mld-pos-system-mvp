@@ -2,6 +2,33 @@ from django.conf import settings
 from django.db import models
 
 
+class Role(models.Model):
+    """A named set of capabilities (Authz Phase 1).
+
+    The five built-in roles are seeded to reproduce the original hardcoded
+    matrix; custom roles can be added later. ``slug`` matches the value stored
+    in ``StaffProfile.role`` and the ``ROLE_*`` constants in ``core.permissions``.
+    Capabilities are stored as a list of capability keys
+    (see ``core.capabilities``); an ``is_owner`` role implicitly holds all of
+    them and can never be locked out.
+    """
+
+    slug = models.CharField(max_length=40, unique=True)
+    name = models.CharField(max_length=80)
+    is_builtin = models.BooleanField(default=False)
+    is_owner = models.BooleanField(default=False)
+    capabilities = models.JSONField(default=list, blank=True)
+    rank = models.PositiveIntegerField(default=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["rank", "name"]
+
+    def __str__(self):
+        return self.name
+
+
 class StaffProfile(models.Model):
     """V4 role assignment for a dashboard user.
 
