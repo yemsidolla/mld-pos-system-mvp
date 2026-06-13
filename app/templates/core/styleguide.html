@@ -15,6 +15,7 @@
     <a href="#pills">{% trans "Pills & badges" %}</a>
     <a href="#cards">{% trans "Cards" %}</a>
     <a href="#table">{% trans "Table" %}</a>
+    <a href="#filters">{% trans "Column filters" %}</a>
     <a href="#forms">{% trans "Forms" %}</a>
     <a href="#feedback">{% trans "Alerts" %}</a>
 </nav>
@@ -121,6 +122,69 @@
             <tr><td class="mono">B0398</td><td>{% trans "Puppy Treats" %}</td><td class="mono">$2.25</td><td><span class="pill pill-warning">{% trans "Low stock" %}</span></td></tr>
         </tbody>
     </table>
+</section>
+
+<section class="panel" id="filters">
+    <header class="panel-header"><div><h2>{% trans "Column filters & active-filter bar" %}</h2><p>{% trans "Funnel per column → popover; rule summarised on top. Server-side, combines as AND (DESIGN_SYSTEM §4.14–4.15)." %}</p></div></header>
+
+    <div class="filter-bar">
+        <span class="filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
+        <span class="filter-chip">{% trans "Status" %}: {% trans "Active, Low" %} <a href="#filters" aria-label="{% trans 'Remove' %}">{% icon "x" 13 %}</a></span>
+        <span class="filter-bar-join">{% trans "and" %}</span>
+        <span class="filter-chip">{% trans "Category" %}: {% trans "Food" %} <a href="#filters" aria-label="{% trans 'Remove' %}">{% icon "x" 13 %}</a></span>
+        <a class="filter-bar-clear" href="#filters">{% trans "Clear all" %}</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>{% trans "Code" %}</th>
+            <th>{% trans "Product" %}</th>
+            <th class="has-filter">{% trans "Category" %}
+                <details class="col-filter is-active">
+                    <summary aria-label="{% trans 'Filter category' %}">{% icon "search" 14 %}</summary>
+                    <div class="col-filter-pop">
+                        <p class="col-filter-title">{% trans "Filter: Category" %}</p>
+                        <div class="col-filter-options">
+                            <label><input type="checkbox" checked> {% trans "Food" %}</label>
+                            <label><input type="checkbox"> {% trans "Toys" %}</label>
+                            <label><input type="checkbox"> {% trans "Grooming" %}</label>
+                        </div>
+                        <div class="col-filter-actions">
+                            <button class="btn btn-primary" type="button">{% trans "Apply" %}</button>
+                            <button class="btn" type="button">{% trans "Clear" %}</button>
+                        </div>
+                    </div>
+                </details>
+            </th>
+            <th>{% trans "Price" %}</th>
+            <th class="has-filter">{% trans "Status" %}
+                <details class="col-filter is-active" open>
+                    <summary aria-label="{% trans 'Filter status' %}">{% icon "search" 14 %}</summary>
+                    <div class="col-filter-pop">
+                        <p class="col-filter-title">{% trans "Filter: Status" %}</p>
+                        <input class="col-filter-search" type="text" placeholder="{% trans 'Search values…' %}">
+                        <div class="col-filter-options">
+                            <label><input type="checkbox" checked> {% trans "Active" %}</label>
+                            <label><input type="checkbox" checked> {% trans "Low stock" %}</label>
+                            <label><input type="checkbox"> {% trans "Sold out" %}</label>
+                            <label><input type="checkbox"> {% trans "Expired" %}</label>
+                        </div>
+                        <div class="col-filter-actions">
+                            <button class="btn btn-primary" type="button">{% trans "Apply" %}</button>
+                            <button class="btn" type="button">{% trans "Clear" %}</button>
+                        </div>
+                    </div>
+                </details>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+            <tr><td class="mono">P001</td><td>{% trans "Cat Food 2kg" %}</td><td>{% trans "Food" %}</td><td class="mono">$9.99</td><td><span class="pill pill-success">{% trans "Active" %}</span></td></tr>
+            <tr><td class="mono">P010</td><td>{% trans "Puppy Treats" %}</td><td>{% trans "Food" %}</td><td class="mono">$2.25</td><td><span class="pill pill-warning">{% trans "Low stock" %}</span></td></tr>
+        </tbody>
+    </table>
+    <p class="muted" style="margin-top:8px;">{% trans "Demo only — the Status popover is shown open. Live wiring to real list pages is a separate feature task." %}</p>
 </section>
 
 <section class="panel" id="forms">

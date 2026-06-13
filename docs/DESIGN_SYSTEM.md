@@ -257,6 +257,69 @@ Patterns: scanner modal, quick-create modal, quick-find (`Ctrl/Cmd+K`), payment
 dialog. All toggle a `hidden` attribute, close on `Esc` and backdrop click, and
 are bound via event delegation (survive partial navigation).
 
+### 4.14 Column filter — `.col-filter`
+A funnel control embedded in a `.data-table` header that opens a popover to
+filter that column. Built on `<details>` (like the profile menu) so it needs no
+custom open/close JS. The host `<th>` carries `.has-filter`. The funnel shows
+`.is-active` (teal) when that column has a selection.
+
+The popover (`.col-filter-pop`) **adapts to the column type**:
+- **enum** (status, category): `.col-filter-search` to narrow long lists +
+  `.col-filter-options` checkbox list. Multi-select = OR within the column.
+- **text** (name, code): a single "contains…" input.
+- **date** (sale date): a from/to range.
+
+It ends in `.col-filter-actions` with **Apply** (submits the enclosing GET filter
+form → server-side, correct across all pages) and **Clear**. Multiple column
+filters combine as AND.
+
+```django
+<th class="has-filter">{% trans "Status" %}
+  <details class="col-filter {% if status_selected %}is-active{% endif %}">
+    <summary aria-label="{% trans 'Filter status' %}">{% icon "search" 14 %}</summary>
+    <div class="col-filter-pop">
+      <p class="col-filter-title">{% trans "Filter: Status" %}</p>
+      <div class="col-filter-options">
+        {% for value, label in status_choices %}
+          <label><input type="checkbox" name="status" value="{{ value }}"
+            {% if value in status_selected %}checked{% endif %}> {{ label }}</label>
+        {% endfor %}
+      </div>
+      <div class="col-filter-actions">
+        <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
+        <button class="btn" type="reset">{% trans "Clear" %}</button>
+      </div>
+    </div>
+  </details>
+</th>
+```
+
+Implementation notes: the table must **not** sit in an `overflow:auto` wrapper
+when funnels are present, or the popover clips — render filtered tables without
+`.table-scroll`, or solve clipping in the feature task. Outside-click-to-close
+is not native to `<details>`; add a small delegated handler if needed (same gap
+as the profile menu — acceptable).
+
+### 4.15 Active-filter bar — `.filter-bar`
+A summary line above the table that states the current filter rule in plain
+words, rendered **server-side from the applied filters** so it always matches the
+data. Each `.filter-chip` is removable (an `x` link that drops that value);
+`.filter-bar-clear` resets all. Only rendered when at least one filter is active.
+
+```django
+{% if active_filters %}
+<div class="filter-bar">
+  <span class="filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
+  {% for f in active_filters %}
+    {% if not forloop.first %}<span class="filter-bar-join">{% trans "and" %}</span>{% endif %}
+    <span class="filter-chip">{{ f.label }}: {{ f.values|join:", " }}
+      <a href="{{ f.remove_url }}" aria-label="{% trans 'Remove' %}">{% icon "x" 13 %}</a></span>
+  {% endfor %}
+  <a class="filter-bar-clear" href="{{ request.path }}">{% trans "Clear all" %}</a>
+</div>
+{% endif %}
+```
+
 ---
 
 ## 5. Page archetypes
@@ -265,10 +328,15 @@ Every screen is one of these. Build new pages by copying the archetype, not from
 scratch. (Archetype base templates are a planned consolidation — see §10.)
 
 ### 5.1 List page
-Filter bar (`_list_filter.html`) → `.panel` with `.data-table` → `_pagination.html`.
+`.panel` (title + primary "New …" action in the header) → optional
+**active-filter bar** (§4.15) → `.data-table` whose filterable headers carry a
+**column filter** (§4.14) → `_pagination.html`. Filtering is server-side via a
+single GET form wrapping the table; multiple column filters combine as AND.
 Examples: products, sales history, users, audit logs. Rules: every column that
-is a code/amount is `.mono`; every status is a pill; define the empty state;
-primary "New …" action in `header_actions`.
+is a code/amount is `.mono`; every status is a pill; define the empty state.
+
+The legacy separate filter card (`dashboard/_list_filter.html`) is **superseded**
+by this pattern and is being retired page by page (see Debt §10).
 
 ### 5.2 Form page
 `.panel` → `.form-grid`/`.form-stack` grouped into logical sections →
@@ -390,6 +458,11 @@ stays honest about reality:
 5. **`:has()` reliance.** The POS viewport lock uses `body:has(.pos-layout)`
    (Chrome 105+/Safari 15.4+). If older till browsers appear, switch to a body
    class set by the view.
+6. **Legacy filter card.** `dashboard/_list_filter.html` (separate filter card)
+   is superseded by the column-filter + active-filter-bar pattern (§4.14–4.15).
+   Migrate each list page (products → sales → users → audit → inventory) to the
+   new pattern, then remove the include. Tracked as a feature rollout, page by
+   page.
 
 ---
 
@@ -398,3 +471,8 @@ stays honest about reality:
 Append one line per design-system task (the only thing that may edit this file).
 
 - 2026-06-13 — Initial system extracted from V6–V8.3 code; styleguide page added.
+- 2026-06-13 — Added column-filter (§4.14) and active-filter-bar (§4.15)
+  components; updated list-page archetype (§5.1) to the column-header filter
+  pattern; legacy `_list_filter.html` marked superseded (Debt §10.6). Components
+  and CSS defined and demoed on the styleguide; list-page wiring is a separate
+  feature task.

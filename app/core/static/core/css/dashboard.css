@@ -1813,3 +1813,97 @@ input[type="checkbox"], input[type="radio"] {
     gap: 10px;
     margin-bottom: 10px;
 }
+
+/* === Column filter + active-filter bar (DESIGN_SYSTEM §4.14–4.15) ========== */
+/* Active-filter summary bar: plain-words rule above the table. */
+.filter-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 7px 10px;
+    margin-bottom: 10px;
+    background: #f0fafc;
+    border: 1px solid #bae3ec;
+    border-radius: 8px;
+    font-size: 12px;
+}
+.filter-bar-label { color: #0e5566; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+.filter-bar-join { color: var(--ink-text-dim); }
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid #bae3ec;
+    border-radius: 999px;
+    padding: 2px 8px;
+    color: #0c4a56;
+}
+.filter-chip a, .filter-chip button {
+    display: inline-flex;
+    min-height: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-soft);
+    cursor: pointer;
+}
+.filter-chip a:hover, .filter-chip button:hover { color: var(--danger); }
+.filter-bar-clear { margin-left: auto; color: var(--text-soft); text-decoration: underline; font-size: 11.5px; }
+
+/* Per-column funnel + popover. Built on <details> like the profile menu. */
+.col-filter { display: inline-block; position: relative; }
+.col-filter > summary {
+    list-style: none;
+    display: inline-flex;
+    cursor: pointer;
+    color: var(--text-soft);
+    padding: 1px 3px;
+    border-radius: 4px;
+    vertical-align: -2px;
+}
+.col-filter > summary::-webkit-details-marker { display: none; }
+.col-filter > summary:hover { color: var(--accent); background: var(--surface-subtle); }
+.col-filter.is-active > summary { color: var(--accent); }
+.col-filter[open] > summary { color: var(--accent); background: var(--surface-subtle); }
+.col-filter-pop {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    width: 210px;
+    z-index: 30;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 10px;
+    text-align: left;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+}
+.col-filter-title { font-size: 11px; color: var(--text-soft); margin: 0 0 6px; }
+.col-filter-search { width: 100%; margin-bottom: 8px; }
+.col-filter-options { display: grid; gap: 2px; max-height: 200px; overflow-y: auto; }
+.col-filter-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 400;
+    color: var(--text);
+    padding: 3px 2px;
+    cursor: pointer;
+}
+.col-filter-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 9px;
+    border-top: 1px solid var(--border);
+    padding-top: 9px;
+}
+.col-filter-actions .btn { flex: 1; min-height: 32px; padding: 6px 10px; font-size: 12px; }
+/* The header cell hosting a funnel must not clip the popover. */
+.data-table th.has-filter { position: relative; }
+.data-table th .col-filter { margin-left: 4px; }
