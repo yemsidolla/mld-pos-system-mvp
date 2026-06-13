@@ -17,6 +17,7 @@
     var currentSubmit = false;
     var scanner = null;
     var running = false;
+    var nativeDetector = null;
 
     function setStatus(message, tone) {
         status.textContent = message;
@@ -59,6 +60,24 @@
             });
         }
         return scanner;
+    }
+
+    function nativeBarcodeFormats() {
+        return ["qr_code", "ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf"];
+    }
+
+    function getNativeDetector() {
+        if (!("BarcodeDetector" in window)) return null;
+        if (nativeDetector === false) return null;
+        if (!nativeDetector) {
+            try {
+                nativeDetector = new window.BarcodeDetector({ formats: nativeBarcodeFormats() });
+            } catch (error) {
+                nativeDetector = false;
+                return null;
+            }
+        }
+        return nativeDetector;
     }
 
     function isLocalhost() {
@@ -140,44 +159,117 @@
         stopCamera().then(function () {
             setStatus("Opening camera. Allow camera permission when asked.");
             activeScanner.start(
-                { facingMode: "environment" },
+                { facingMode: { ideal: "environment" } },
                 {
-                    fps: 15,
-                    aspectRatio: 1.777778,
+                    fps: 12,
                     disableFlip: false,
                     qrbox: function (viewfinderWidth, viewfinderHeight) {
                         return {
-                            width: Math.min(420, Math.floor(viewfinderWidth * 0.92)),
-                            height: Math.min(180, Math.floor(viewfinderHeight * 0.42)),
+                            width: Math.min(520, Math.floor(viewfinderWidth * 0.94)),
+                            height: Math.min(360, Math.floor(viewfinderHeight * 0.72)),
                         };
-                    },
-                    videoConstraints: {
-                        facingMode: { ideal: "environment" },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
                     },
                 },
                 onDecoded,
                 function () {}
             ).then(function () {
                 running = true;
-                setStatus("Camera is ready. Keep the code flat, bright, and inside the wide scan box.");
+                setStatus("Camera is ready. Keep the code flat, bright, and fully inside the scan box.");
             }).catch(function (error) {
                 setStatus("Camera could not start: " + (error && error.message ? error.message : error), "alert-danger");
             });
         });
     }
 
+    function scanFileWithHtml5(activeScanner, file) {
+        var scanPromise = activeScanner.scanFileV2 ? activeScanner.scanFileV2(file, true) : activeScanner.scanFile(file, true);
+        return scanPromise.then(function (decoded) {
+            return decoded.decodedText || decoded;
+        });
+    }
+
+    function scanFileWithNativeDetector(file) {
+        var detector = getNativeDetector();
+        if (!detector || !window.createImageBitmap) return Promise.reject(new Error("Native barcode detector unavailable."));
+        return window.createImageBitmap(file).then(function (bitmap) {
+            return detector.detect(bitmap).then(function (codes) {
+                if (bitmap.close) bitmap.close();
+                if (!codes || !codes.length || !codes[0].rawValue) {
+                    throw new Error("Native barcode detector found no code.");
+                }
+                return codes[0].rawValue;
+            }).catch(function (error) {
+                if (bitmap.close) bitmap.close();
+                throw error;
+            });
+        });
+    }
+
+    function normalizeImageFile(file, maxDimension) {
+        return new Promise(function (resolve, reject) {
+            var reader = new FileReader();
+            reader.onload = function () {
+                var image = new Image();
+                image.onload = function () {
+                    var scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+                    var width = Math.max(1, Math.round(image.width * scale));
+                    var height = Math.max(1, Math.round(image.height * scale));
+                    var canvas = document.createElement("canvas");
+                    var context = canvas.getContext("2d");
+                    canvas.width = width;
+                    canvas.height = height;
+                    context.fillStyle = "#ffffff";
+                    context.fillRect(0, 0, width, height);
+                    context.drawImage(image, 0, 0, width, height);
+                    canvas.toBlob(function (blob) {
+                        if (!blob) {
+                            reject(new Error("Could not prepare image for scanning."));
+                            return;
+                        }
+                        try {
+                            resolve(new File([blob], "melodu-scan.jpg", { type: "image/jpeg" }));
+                        } catch (error) {
+                            blob.name = "melodu-scan.jpg";
+                            resolve(blob);
+                        }
+                    }, "image/jpeg", 0.95);
+                };
+                image.onerror = function () { reject(new Error("Could not read that image.")); };
+                image.src = reader.result;
+            };
+            reader.onerror = function () { reject(new Error("Could not read that image.")); };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function firstSuccessfulScan(scanFns) {
+        return scanFns.reduce(function (promise, scanFn) {
+            return promise.catch(scanFn);
+        }, Promise.reject(new Error("No scan attempted.")));
+    }
+
     function scanFile(file) {
         var activeScanner = getScanner();
         if (!activeScanner || !file) return;
         stopCamera().then(function () {
-            setStatus("Reading image...");
-            var scanPromise = activeScanner.scanFileV2 ? activeScanner.scanFileV2(file, true) : activeScanner.scanFile(file, true);
-            scanPromise.then(function (decoded) {
-                onDecoded(decoded.decodedText || decoded);
+            setStatus("Reading image. Large phone photos may take a few seconds...");
+            firstSuccessfulScan([
+                function () { return scanFileWithNativeDetector(file); },
+                function () { return scanFileWithHtml5(activeScanner, file); },
+                function () {
+                    return normalizeImageFile(file, 1800).then(function (normalizedFile) {
+                        return scanFileWithHtml5(activeScanner, normalizedFile);
+                    });
+                },
+                function () {
+                    return normalizeImageFile(file, 2600).then(function (normalizedFile) {
+                        return scanFileWithHtml5(activeScanner, normalizedFile);
+                    });
+                },
+            ]).then(function (decodedText) {
+                onDecoded(decodedText);
             }).catch(function () {
-                setStatus("No barcode or QR code was found. Try a sharper, brighter, uncropped image with the code straight.", "alert-warning");
+                setStatus("No barcode or QR code was found. On phone, use a close, bright photo where the full code is straight and fills most of the image.", "alert-warning");
             }).finally(function () {
                 fileInput.value = "";
             });

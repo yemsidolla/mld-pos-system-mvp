@@ -427,7 +427,9 @@ class ScannerPlacementTests(TestCase):
         self.assertIn("F.EAN_13", source)
         self.assertIn("F.CODE_128", source)
         self.assertIn("qrbox: function", source)
-        self.assertIn("width: { ideal: 1280 }", source)
+        self.assertIn("BarcodeDetector", source)
+        self.assertIn("normalizeImageFile", source)
+        self.assertIn("Math.floor(viewfinderHeight * 0.72)", source)
 
 
 class StoreSettingTests(TestCase):
