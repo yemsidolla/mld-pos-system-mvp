@@ -23,13 +23,40 @@
         status.className = "scanner-status" + (tone ? " " + tone : "");
     }
 
+    function supportedFormats() {
+        // Restrict to the codes Melodu actually uses (retail 1D + QR). Fewer
+        // formats decode faster and more reliably. Falls back to "all" if the
+        // enum isn't exposed.
+        var F = window.Html5QrcodeSupportedFormats;
+        if (!F) return undefined;
+        return [
+            F.QR_CODE,
+            F.EAN_13,
+            F.EAN_8,
+            F.UPC_A,
+            F.UPC_E,
+            F.CODE_128,
+            F.CODE_39,
+            F.ITF,
+        ];
+    }
+
     function getScanner() {
         if (!window.Html5Qrcode) {
             setStatus("Scanner library is not loaded. Use manual entry.", "alert-danger");
             return null;
         }
         if (!scanner) {
-            scanner = new window.Html5Qrcode(readerId);
+            // useBarCodeDetectorIfSupported routes decoding through the device's
+            // native BarcodeDetector (Android Chrome), which is much better at
+            // 1D barcodes than the bundled ZXing fallback, and falls back where
+            // it's unavailable (e.g. iOS Safari).
+            scanner = new window.Html5Qrcode(readerId, {
+                formatsToSupport: supportedFormats(),
+                useBarCodeDetectorIfSupported: true,
+                experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                verbose: false,
+            });
         }
         return scanner;
     }
@@ -114,12 +141,27 @@
             setStatus("Opening camera. Allow camera permission when asked.");
             activeScanner.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 260, height: 180 } },
+                {
+                    fps: 15,
+                    aspectRatio: 1.777778,
+                    disableFlip: false,
+                    qrbox: function (viewfinderWidth, viewfinderHeight) {
+                        return {
+                            width: Math.min(420, Math.floor(viewfinderWidth * 0.92)),
+                            height: Math.min(180, Math.floor(viewfinderHeight * 0.42)),
+                        };
+                    },
+                    videoConstraints: {
+                        facingMode: { ideal: "environment" },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                    },
+                },
                 onDecoded,
                 function () {}
             ).then(function () {
                 running = true;
-                setStatus("Camera is ready. Aim at a barcode or QR code.");
+                setStatus("Camera is ready. Keep the code flat, bright, and inside the wide scan box.");
             }).catch(function (error) {
                 setStatus("Camera could not start: " + (error && error.message ? error.message : error), "alert-danger");
             });
@@ -135,7 +177,9 @@
             scanPromise.then(function (decoded) {
                 onDecoded(decoded.decodedText || decoded);
             }).catch(function () {
-                setStatus("No barcode or QR code was found in that image.", "alert-warning");
+                setStatus("No barcode or QR code was found. Try a sharper, brighter, uncropped image with the code straight.", "alert-warning");
+            }).finally(function () {
+                fileInput.value = "";
             });
         });
     }

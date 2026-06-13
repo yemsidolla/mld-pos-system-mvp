@@ -42,4 +42,4 @@ After major UI changes, verify these pages in a browser at desktop and mobile si
 - `/dashboard/inventory/`
 - `/dashboard/batch-upload/`
 
-Also open the scanner modal from POS and confirm camera, upload image, and manual fallback controls are visible. Production camera testing requires HTTPS.
+Also open the scanner modal from POS and confirm camera, upload image, and manual fallback controls are visible. Production camera testing requires HTTPS. On a phone, test a real EAN-13 barcode, a generated Code128 Melodu label, and a QR label; for upload decode, use a sharp, bright, uncropped image.

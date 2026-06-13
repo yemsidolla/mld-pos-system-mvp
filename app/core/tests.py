@@ -418,6 +418,17 @@ class ScannerPlacementTests(TestCase):
         self.assertContains(response, 'data-scan-context="batch_upload"')
         self.assertContains(response, 'row-')
 
+    def test_scanner_asset_enables_mobile_barcode_decode_options(self):
+        scanner_js = settings.BASE_DIR / "core" / "static" / "core" / "js" / "scanner.js"
+        source = scanner_js.read_text()
+
+        self.assertIn("Html5QrcodeSupportedFormats", source)
+        self.assertIn("useBarCodeDetectorIfSupported: true", source)
+        self.assertIn("F.EAN_13", source)
+        self.assertIn("F.CODE_128", source)
+        self.assertIn("qrbox: function", source)
+        self.assertIn("width: { ideal: 1280 }", source)
+
 
 class StoreSettingTests(TestCase):
     def setUp(self):
