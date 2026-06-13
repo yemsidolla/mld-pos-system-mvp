@@ -9,7 +9,7 @@ from django.utils import timezone
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from catalog.models import Product
-from core.permissions import is_admin_user
+from core.permissions import can_override_below_cost
 from inventory.models import InventoryMovement, StockBatch
 
 from .models import Sale, SaleItem
@@ -224,7 +224,7 @@ def confirm_sale(
     override_reason = (override_reason or "").strip()
     override_user = None
     if below_cost_items:
-        if not is_admin_user(cashier):
+        if not can_override_below_cost(cashier):
             raise ValidationError("Manager approval required for this price.")
         if not override_reason:
             raise ValidationError("Override reason is required for below-cost sale.")

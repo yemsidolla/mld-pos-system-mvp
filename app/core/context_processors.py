@@ -15,6 +15,7 @@ from .permissions import (
     can_view_system,
     get_user_role,
     is_admin_user,
+    is_owner,
     is_cashier_user,
     role_label,
 )
@@ -98,6 +99,8 @@ def dashboard_context(request):
     if user and can_view_system(user):
         admin_items.append({"label": "System Health", "icon": "activity", "url_name": "system-health", "href": "/dashboard/system-health/"})
         admin_items.append({"label": "Live Logs", "icon": "logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
+    if user and is_owner(user):
+        admin_items.append({"label": "Role Permissions", "icon": "shield", "url_name": "role-matrix", "href": "/dashboard/roles/"})
     if is_admin:
         admin_items.append({"label": "Styleguide", "icon": "category", "url_name": "styleguide", "href": "/dashboard/styleguide/"})
     if admin_items:

@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from core.permissions import admin_required
+from core.permissions import catalog_required
 
 from .forms import BatchUploadForm
 from .models import BatchUploadJob, BatchUploadRow
@@ -29,7 +29,7 @@ def get_row_status(row):
     return "Valid"
 
 
-@admin_required
+@catalog_required
 def batch_upload_index_view(request):
     form = BatchUploadForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
@@ -57,7 +57,7 @@ def batch_upload_index_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def batch_upload_detail_view(request, job_id):
     job = get_object_or_404(BatchUploadJob.objects.select_related("uploaded_by"), pk=job_id)
     fields = get_schema(job.target)["fields"]
@@ -81,7 +81,7 @@ def batch_upload_detail_view(request, job_id):
     )
 
 
-@admin_required
+@catalog_required
 def batch_upload_row_update_view(request, job_id, row_id):
     row = get_object_or_404(BatchUploadRow.objects.select_related("job"), pk=row_id, job_id=job_id)
     if request.method == "POST":
@@ -94,7 +94,7 @@ def batch_upload_row_update_view(request, job_id, row_id):
     return redirect("batch-upload-detail", job_id=job_id)
 
 
-@admin_required
+@catalog_required
 def batch_upload_row_delete_view(request, job_id, row_id):
     row = get_object_or_404(BatchUploadRow.objects.select_related("job"), pk=row_id, job_id=job_id)
     if request.method == "POST":
@@ -107,7 +107,7 @@ def batch_upload_row_delete_view(request, job_id, row_id):
     return redirect("batch-upload-detail", job_id=job_id)
 
 
-@admin_required
+@catalog_required
 def batch_upload_commit_view(request, job_id):
     job = get_object_or_404(BatchUploadJob, pk=job_id)
     if request.method == "POST":
@@ -120,7 +120,7 @@ def batch_upload_commit_view(request, job_id):
     return redirect("batch-upload-detail", job_id=job_id)
 
 
-@admin_required
+@catalog_required
 def batch_upload_template_view(request, target):
     try:
         csv_content = get_template_csv(target)

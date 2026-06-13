@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from catalog.models import Product
-from core.permissions import admin_required, inventory_required
+from core.permissions import catalog_required, inventory_required
 from inventory.models import StockBatch
 from pos.pricing import calculate_promotion_price
 
@@ -24,13 +24,13 @@ def products_for_promotion(promotion):
     return []
 
 
-@admin_required
+@catalog_required
 def label_template_list_view(request):
     templates = LabelTemplate.objects.all()
     return render(request, "labels/template_list.html", {"templates": templates})
 
 
-@admin_required
+@catalog_required
 def label_template_create_view(request):
     form = LabelTemplateForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -49,7 +49,7 @@ def label_template_create_view(request):
     return render(request, "labels/template_form.html", {"form": form, "mode": "create"})
 
 
-@admin_required
+@catalog_required
 def label_template_edit_view(request, template_id):
     template = get_object_or_404(LabelTemplate, pk=template_id)
     form = LabelTemplateForm(request.POST or None, instance=template)

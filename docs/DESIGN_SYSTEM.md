@@ -300,6 +300,36 @@ when funnels are present, or the popover clips — render filtered tables withou
 is not native to `<details>`; add a small delegated handler if needed (same gap
 as the profile menu — acceptable).
 
+### 4.16 Permission matrix — `.matrix-grid`
+A role × capability grid for the authorization editor. A `.data-table.matrix-grid`
+where rows are capabilities (grouped by area under a `.matrix-group` row) and
+columns are roles; each body cell is a centered checkbox. The Owner column is
+rendered all-checked and disabled — an Owner always holds every capability and
+can never be locked out. The whole grid is one GET/POST form; checkboxes are
+named `cap__{role_slug}__{capability_key}` so the view rebuilds each role's
+capability list from what's checked. Capability labels come from
+`core.capabilities`. Every save is audited.
+
+```django
+<table class="data-table matrix-grid">
+  <thead><tr><th>{% trans "Capability" %}</th>
+    {% for role in roles %}<th class="matrix-role">{{ role.name }}</th>{% endfor %}</tr></thead>
+  <tbody>
+    {% for group, items in capability_groups %}
+      <tr class="matrix-group"><td colspan="…">{{ group }}</td></tr>
+      {% for key, label in items %}
+        <tr><td>{{ label }}</td>
+          {% for role in roles %}<td class="matrix-cell">
+            <input type="checkbox" name="cap__{{ role.slug }}__{{ key }}"
+              {% if role.is_owner %}checked disabled{% elif key in role.capabilities %}checked{% endif %}>
+          </td>{% endfor %}
+        </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+```
+
 ### 4.15 Active-filter bar — `.filter-bar`
 A summary line above the table that states the current filter rule in plain
 words, rendered **server-side from the applied filters** so it always matches the
@@ -476,3 +506,5 @@ Append one line per design-system task (the only thing that may edit this file).
   pattern; legacy `_list_filter.html` marked superseded (Debt §10.6). Components
   and CSS defined and demoed on the styleguide; list-page wiring is a separate
   feature task.
+- 2026-06-13 — Added permission-matrix component (§4.16) for the authorization
+  editor; CSS + styleguide demo. Consumed by the Authz Phase 2 role-matrix page.

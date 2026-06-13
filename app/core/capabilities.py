@@ -15,8 +15,10 @@ CAPABILITY_GROUPS = [
         "POS & sales",
         [
             ("pos.access", "Use the POS screen and create sales"),
+            ("pos.override_below_cost", "Approve a below-cost sale"),
             ("sales.view_history", "View sales history"),
             ("sales.cancel", "Cancel a completed sale"),
+            ("sales.reprint", "Reprint a receipt"),
         ],
     ),
     (
@@ -61,8 +63,10 @@ BUILTIN_ROLES = [
         False,
         [
             "pos.access",
+            "pos.override_below_cost",
             "sales.view_history",
             "sales.cancel",
+            "sales.reprint",
             "catalog.manage",
             "promotions.manage",
             "inventory.manage",

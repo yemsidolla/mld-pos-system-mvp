@@ -1,0 +1,52 @@
+{% extends "dashboard/base.html" %}
+{% load i18n melodu_icons %}
+
+{% block title %}{% trans "Role Permissions" %}{% endblock %}
+{% block page_eyebrow %}{% trans "Access Control" %}{% endblock %}
+{% block page_title %}{% trans "Role Permissions" %}{% endblock %}
+{% block page_subtitle %}{% trans "Choose what each role can do. Changes apply on the next request and are audited." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Permission matrix" %}</h2>
+            <p>{% trans "Tick a capability to grant it to a role." %}</p>
+        </div>
+    </header>
+    <p class="matrix-owner-note">{% icon "shield" 14 %} {% trans "The Owner role always holds every capability and cannot be limited." %}</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="table-scroll">
+            <table class="data-table matrix-grid">
+                <thead>
+                    <tr>
+                        <th>{% trans "Capability" %}</th>
+                        {% for role in roles %}<th class="matrix-role">{{ role.name }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group, items in capability_groups %}
+                        <tr class="matrix-group"><td colspan="{{ roles|length|add:1 }}">{{ group }}</td></tr>
+                        {% for key, label in items %}
+                            <tr>
+                                <td>{{ label }}</td>
+                                {% for role in roles %}
+                                    <td class="matrix-cell">
+                                        <input type="checkbox" name="cap__{{ role.slug }}__{{ key }}"
+                                            aria-label="{{ label }} — {{ role.name }}"
+                                            {% if role.is_owner %}checked disabled{% elif key in role.capabilities %}checked{% endif %}>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% trans "Save Permissions" %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

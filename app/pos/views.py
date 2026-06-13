@@ -9,7 +9,13 @@ from audit.services import create_audit_log
 from inventory.models import StockBatch
 from core.models import StoreSetting
 from core.pagination import paginate
-from core.permissions import admin_required, pos_required, sales_history_required
+from core.permissions import (
+    pos_required,
+    promotions_required,
+    sales_cancel_required,
+    sales_history_required,
+    sales_reprint_required,
+)
 
 from .forms import CancelSaleForm, ConfirmSaleForm, PromotionForm, SaleFilterForm, ScanForm
 from datetime import timedelta
@@ -359,7 +365,7 @@ def sale_receipt_view(request, sale_id):
     )
 
 
-@admin_required
+@sales_reprint_required
 def sale_reprint_view(request, sale_id):
     sale = get_object_or_404(Sale, pk=sale_id)
     if request.method != "POST":
@@ -407,7 +413,7 @@ def sale_detail_view(request, sale_id):
     return render(request, "pos/sale_detail.html", {"sale": sale, "cancel_form": cancel_form})
 
 
-@admin_required
+@sales_cancel_required
 def sale_cancel_view(request, sale_id):
     sale = get_object_or_404(Sale, pk=sale_id)
     if request.method != "POST":
@@ -432,7 +438,7 @@ def sale_cancel_view(request, sale_id):
     return redirect("sale-detail", sale_id=sale.id)
 
 
-@admin_required
+@promotions_required
 def promotion_list_view(request):
     query = request.GET.get("q", "").strip()
     promotions = Promotion.objects.select_related("product", "category", "created_by").order_by("-is_active", "name")
@@ -478,12 +484,12 @@ def _promotion_form_view(request, *, instance, mode):
     return render(request, "pos/promotion_form.html", {"form": form, "mode": mode, "promotion": instance})
 
 
-@admin_required
+@promotions_required
 def promotion_create_view(request):
     return _promotion_form_view(request, instance=None, mode="create")
 
 
-@admin_required
+@promotions_required
 def promotion_edit_view(request, promotion_id):
     promotion = get_object_or_404(Promotion, pk=promotion_id)
     return _promotion_form_view(request, instance=promotion, mode="edit")

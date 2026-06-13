@@ -197,6 +197,19 @@ def can_reset_data(user):
     return has_capability(user, "system.reset_data")
 
 
+def can_reprint_sale(user):
+    return has_capability(user, "sales.reprint")
+
+
+def can_override_below_cost(user):
+    return has_capability(user, "pos.override_below_cost")
+
+
+def can_manage_roles(user):
+    """Edit the role permission matrix — Owner tier only."""
+    return is_owner(user)
+
+
 def can_view_costs(user):
     """Cost/profit visibility, configurable per role in Store Settings.
 
@@ -341,3 +354,23 @@ def settings_required(view_func):
 
 def costs_required(view_func):
     return dashboard_role_required(can_view_costs)(view_func)
+
+
+def catalog_required(view_func):
+    return dashboard_role_required(can_manage_catalog)(view_func)
+
+
+def promotions_required(view_func):
+    return dashboard_role_required(can_manage_promotions)(view_func)
+
+
+def sales_cancel_required(view_func):
+    return dashboard_role_required(can_cancel_sale)(view_func)
+
+
+def sales_reprint_required(view_func):
+    return dashboard_role_required(can_reprint_sale)(view_func)
+
+
+def owner_required(view_func):
+    return dashboard_role_required(can_manage_roles)(view_func)

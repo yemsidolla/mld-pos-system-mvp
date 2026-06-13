@@ -31,6 +31,8 @@ from .forms import StoreSettingForm
 from .models import StoreSetting
 from .permissions import (
     admin_required,
+    clear_role_capability_cache,
+    owner_required,
     can_access_dashboard,
     can_access_pos,
     can_manage_catalog,
@@ -136,6 +138,51 @@ def _store_setting_snapshot(setting):
         "currency_symbol": setting.currency_symbol,
         "cost_visible_roles": setting.cost_visible_roles,
     }
+
+
+@owner_required
+def role_matrix_view(request):
+    """Owner-only role × capability editor (Authz Phase 2)."""
+    from accounts.models import Role
+
+    from .capabilities import ALL_CAPABILITIES, CAPABILITY_GROUPS
+
+    roles = list(Role.objects.all())
+
+    if request.method == "POST":
+        valid = set(ALL_CAPABILITIES)
+        for role in roles:
+            if role.is_owner:
+                continue  # owner always holds everything; never editable
+            chosen = [
+                cap
+                for cap in valid
+                if request.POST.get(f"cap__{role.slug}__{cap}") == "on"
+            ]
+            new_caps = sorted(chosen)
+            if sorted(role.capabilities or []) != new_caps:
+                old_caps = list(role.capabilities or [])
+                role.capabilities = new_caps
+                role.save(update_fields=["capabilities", "updated_at"])
+                create_audit_log(
+                    action=AuditLog.Action.ROLE_CHANGE,
+                    module="core",
+                    request=request,
+                    object_type="Role",
+                    object_id=role.pk,
+                    object_display=role.name,
+                    old_value={"capabilities": old_caps},
+                    new_value={"capabilities": new_caps},
+                )
+        clear_role_capability_cache(request.user)
+        messages.success(request, "Role permissions were updated.")
+        return redirect("role-matrix")
+
+    return render(
+        request,
+        "core/role_matrix.html",
+        {"roles": roles, "capability_groups": CAPABILITY_GROUPS},
+    )
 
 
 @admin_required

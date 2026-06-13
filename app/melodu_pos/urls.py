@@ -38,6 +38,7 @@ from core.views import (
     dashboard_logout_view,
     health_check,
     scan_resolve_view,
+    role_matrix_view,
     store_settings_view,
     styleguide_view,
 )
@@ -129,6 +130,7 @@ urlpatterns = [
     path("dashboard/sales/<int:sale_id>/reprint/", sale_reprint_view, name="sale-reprint"),
     path("dashboard/settings/", store_settings_view, name="store-settings"),
     path("dashboard/styleguide/", styleguide_view, name="styleguide"),
+    path("dashboard/roles/", role_matrix_view, name="role-matrix"),
     path("dashboard/promotions/", promotion_list_view, name="promotion-list"),
     path("dashboard/promotions/new/", promotion_create_view, name="promotion-create"),
     path("dashboard/promotions/<int:promotion_id>/edit/", promotion_edit_view, name="promotion-edit"),

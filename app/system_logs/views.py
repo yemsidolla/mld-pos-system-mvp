@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import connections
 from django.shortcuts import render
 
-from core.permissions import admin_required
+from core.permissions import system_required
 from inventory.models import StockBatch
 from pos.models import Sale
 
@@ -59,7 +59,7 @@ def get_disk_usage_path():
     return Path("/")
 
 
-@admin_required
+@system_required
 def live_logs_view(request):
     app_log = settings.LOG_DIR / "app.log"
     error_log = settings.LOG_DIR / "error.log"
@@ -73,7 +73,7 @@ def live_logs_view(request):
     )
 
 
-@admin_required
+@system_required
 def system_health_view(request):
     disk = shutil.disk_usage(get_disk_usage_path())
     latest_sale = Sale.objects.order_by("-created_at").first()

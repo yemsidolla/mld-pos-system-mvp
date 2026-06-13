@@ -12,7 +12,7 @@ from audit.models import AuditLog
 from audit.services import create_audit_log
 from core.filters import querystring_without
 from core.pagination import paginate
-from core.permissions import admin_required, can_manage_catalog, costs_required
+from core.permissions import can_manage_catalog, catalog_required, costs_required
 
 from .forms import (
     BrandForm,
@@ -210,7 +210,7 @@ def _master_data_form_view(
     )
 
 
-@admin_required
+@catalog_required
 def product_list_view(request):
     form = ProductFilterForm(request.GET or None)
     products = (
@@ -291,7 +291,7 @@ def product_list_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def product_create_view(request):
     form = ProductForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
@@ -322,7 +322,7 @@ def product_create_view(request):
     return render(request, "catalog/product_form.html", {"form": form, "mode": "create"})
 
 
-@admin_required
+@catalog_required
 def product_edit_view(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     old_value = {
@@ -373,7 +373,7 @@ def product_edit_view(request, product_id):
     return render(request, "catalog/product_form.html", {"form": form, "mode": "edit", "product": product})
 
 
-@admin_required
+@catalog_required
 def category_list_view(request):
     return _master_data_list_view(
         request,
@@ -393,7 +393,7 @@ def category_list_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def category_create_view(request):
     return _master_data_form_view(
         request,
@@ -407,7 +407,7 @@ def category_create_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def category_edit_view(request, category_id):
     category = get_object_or_404(Category, pk=category_id)
     return _master_data_form_view(
@@ -422,7 +422,7 @@ def category_edit_view(request, category_id):
     )
 
 
-@admin_required
+@catalog_required
 def brand_list_view(request):
     return _master_data_list_view(
         request,
@@ -442,7 +442,7 @@ def brand_list_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def brand_create_view(request):
     return _master_data_form_view(
         request,
@@ -456,7 +456,7 @@ def brand_create_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def brand_edit_view(request, brand_id):
     brand = get_object_or_404(Brand, pk=brand_id)
     return _master_data_form_view(
@@ -471,7 +471,7 @@ def brand_edit_view(request, brand_id):
     )
 
 
-@admin_required
+@catalog_required
 def supplier_list_view(request):
     return _master_data_list_view(
         request,
@@ -496,7 +496,7 @@ def supplier_list_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def supplier_create_view(request):
     return _master_data_form_view(
         request,
@@ -510,7 +510,7 @@ def supplier_create_view(request):
     )
 
 
-@admin_required
+@catalog_required
 def supplier_edit_view(request, supplier_id):
     supplier = get_object_or_404(Supplier, pk=supplier_id)
     return _master_data_form_view(
@@ -525,7 +525,7 @@ def supplier_edit_view(request, supplier_id):
     )
 
 
-@admin_required
+@catalog_required
 @costs_required
 def supplier_product_cost_list_view(request):
     query = request.GET.get("q", "").strip()
@@ -576,13 +576,13 @@ def _supplier_product_cost_form_view(request, *, instance, mode):
     )
 
 
-@admin_required
+@catalog_required
 @costs_required
 def supplier_product_cost_create_view(request):
     return _supplier_product_cost_form_view(request, instance=None, mode="create")
 
 
-@admin_required
+@catalog_required
 @costs_required
 def supplier_product_cost_edit_view(request, cost_id):
     cost = get_object_or_404(SupplierProductCost, pk=cost_id)

@@ -640,3 +640,78 @@ class StyleguideAccessTests(TestCase):
         self.client.force_login(self.cashier)
         response = self.client.get(reverse("styleguide"))
         self.assertEqual(response.status_code, 403)
+
+
+class RoleMatrixTests(TestCase):
+    """Authz Phase 2: the Owner-only role permission editor."""
+
+    def setUp(self):
+        self.owner = get_user_model().objects.create_superuser("rm-owner", "o@x.com", "Admin123")
+        self.manager = get_user_model().objects.create_user("rm-manager", password="x")
+        StaffProfile.objects.create(user=self.manager, role="MANAGER")
+        self.cashier = get_user_model().objects.create_user("rm-cashier", password="x")
+        StaffProfile.objects.create(user=self.cashier, role="CASHIER")
+
+    def _post_data_from_current(self):
+        """Build a POST mirroring the rendered checkboxes (all currently-granted
+        capabilities checked) so we can tweak one and submit."""
+        from accounts.models import Role
+        from core.capabilities import ALL_CAPABILITIES
+
+        data = {}
+        for role in Role.objects.all():
+            if role.is_owner:
+                continue
+            for cap in ALL_CAPABILITIES:
+                if cap in (role.capabilities or []):
+                    data[f"cap__{role.slug}__{cap}"] = "on"
+        return data
+
+    def test_owner_can_open_matrix_manager_cannot(self):
+        self.client.force_login(self.manager)
+        self.assertEqual(self.client.get(reverse("role-matrix")).status_code, 403)
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse("role-matrix"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Permission matrix")
+
+    def test_granting_capability_changes_access_and_audits(self):
+        from core.permissions import can_cancel_sale
+
+        cashier = get_user_model().objects.get(pk=self.cashier.pk)
+        self.assertFalse(can_cancel_sale(cashier))
+
+        self.client.force_login(self.owner)
+        data = self._post_data_from_current()
+        data["cap__CASHIER__sales.cancel"] = "on"  # grant cancel to cashiers
+        response = self.client.post(reverse("role-matrix"), data)
+        self.assertEqual(response.status_code, 302)
+
+        cashier = get_user_model().objects.get(pk=self.cashier.pk)
+        self.assertTrue(can_cancel_sale(cashier))
+        self.assertTrue(
+            AuditLog.objects.filter(action=AuditLog.Action.ROLE_CHANGE, object_display="Cashier").exists()
+        )
+
+    def test_revoking_capability_removes_access(self):
+        from core.permissions import can_view_reports
+
+        self.client.force_login(self.owner)
+        data = self._post_data_from_current()
+        data.pop("cap__MANAGER__reports.view", None)  # untick reports for managers
+        self.client.post(reverse("role-matrix"), data)
+
+        manager = get_user_model().objects.get(pk=self.manager.pk)
+        self.assertFalse(can_view_reports(manager))
+
+    def test_owner_role_cannot_be_limited(self):
+        from accounts.models import Role
+        from core.permissions import can_reset_data
+
+        self.client.force_login(self.owner)
+        # Submit with no owner checkboxes at all.
+        self.client.post(reverse("role-matrix"), self._post_data_from_current())
+
+        owner_role = Role.objects.get(slug="OWNER")
+        self.assertTrue(owner_role.is_owner)
+        self.assertTrue(can_reset_data(self.owner))

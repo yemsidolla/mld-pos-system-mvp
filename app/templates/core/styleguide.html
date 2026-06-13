@@ -16,6 +16,7 @@
     <a href="#cards">{% trans "Cards" %}</a>
     <a href="#table">{% trans "Table" %}</a>
     <a href="#filters">{% trans "Column filters" %}</a>
+    <a href="#matrix">{% trans "Permission matrix" %}</a>
     <a href="#forms">{% trans "Forms" %}</a>
     <a href="#feedback">{% trans "Alerts" %}</a>
 </nav>
@@ -185,6 +186,20 @@
         </tbody>
     </table>
     <p class="muted" style="margin-top:8px;">{% trans "Demo only — the Status popover is shown open. Live wiring to real list pages is a separate feature task." %}</p>
+</section>
+
+<section class="panel" id="matrix">
+    <header class="panel-header"><div><h2>{% trans "Permission matrix" %}</h2><p>{% trans "Role × capability grid (DESIGN_SYSTEM §4.16). Owner column always all-on and disabled." %}</p></div></header>
+    <table class="data-table matrix-grid">
+        <thead><tr><th>{% trans "Capability" %}</th><th class="matrix-role">{% trans "Owner" %}</th><th class="matrix-role">{% trans "Manager" %}</th><th class="matrix-role">{% trans "Cashier" %}</th></tr></thead>
+        <tbody>
+            <tr class="matrix-group"><td colspan="4">{% trans "POS & sales" %}</td></tr>
+            <tr><td>{% trans "Use the POS screen" %}</td><td class="matrix-cell"><input type="checkbox" checked disabled></td><td class="matrix-cell"><input type="checkbox" checked></td><td class="matrix-cell"><input type="checkbox" checked></td></tr>
+            <tr><td>{% trans "Cancel a sale" %}</td><td class="matrix-cell"><input type="checkbox" checked disabled></td><td class="matrix-cell"><input type="checkbox" checked></td><td class="matrix-cell"><input type="checkbox"></td></tr>
+            <tr class="matrix-group"><td colspan="4">{% trans "System" %}</td></tr>
+            <tr><td>{% trans "Reset or clear data" %}</td><td class="matrix-cell"><input type="checkbox" checked disabled></td><td class="matrix-cell"><input type="checkbox"></td><td class="matrix-cell"><input type="checkbox"></td></tr>
+        </tbody>
+    </table>
 </section>
 
 <section class="panel" id="forms">
