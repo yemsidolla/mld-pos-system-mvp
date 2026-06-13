@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+{% load i18n melodu_icons %}
+
+{% block title %}{% if mode == "edit" %}{% trans "Edit Role" %}{% else %}{% trans "New Role" %}{% endif %}{% endblock %}
+{% block page_eyebrow %}{% trans "Access Control" %}{% endblock %}
+{% block page_title %}{% if mode == "edit" %}{% trans "Edit Role" %}{% else %}{% trans "New Role" %}{% endif %}{% endblock %}
+{% block page_subtitle %}{% trans "Name the role and choose what it can do." %}{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% if mode == "edit" %}{{ role.name }}{% else %}{% trans "Role details" %}{% endif %}</h2>
+            {% if role.is_owner %}<p>{% trans "The Owner role always holds every capability; only the name can change." %}</p>{% endif %}
+        </div>
+        <a class="btn" href="{% url 'role-matrix' %}">{% trans "Back" %}</a>
+    </header>
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="form-stack" method="post">
+        {% csrf_token %}
+        <div>
+            <label for="{{ form.name.id_for_label }}">{% trans "Role name" %}</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+        {% if not role.is_owner %}
+        <div>
+            <label>{% trans "Capabilities" %}</label>
+            <div class="cap-checklist">
+                {% for choice in form.capabilities %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% trans "Save Role" %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

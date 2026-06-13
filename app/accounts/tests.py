@@ -351,3 +351,71 @@ class CapabilityFoundationTests(TestCase):
 
         nobody = get_user_model().objects.create_user(username="cap-nobody", password="x")
         self.assertFalse(has_capability(nobody, "pos.access"))
+
+
+class CustomRoleTests(TestCase):
+    """Authz Phase 3: owner-managed custom roles."""
+
+    def setUp(self):
+        self.owner = get_user_model().objects.create_superuser("cr-owner", "o@x.com", "Admin123")
+        self.manager = get_user_model().objects.create_user("cr-manager", password="x")
+        StaffProfile.objects.create(user=self.manager, role="MANAGER")
+
+    def test_owner_creates_custom_role_with_capabilities(self):
+        from accounts.models import Role
+
+        self.client.force_login(self.owner)
+        response = self.client.post(
+            reverse("role-create"),
+            {"name": "Shift Lead", "capabilities": ["pos.access", "sales.cancel"]},
+        )
+        self.assertEqual(response.status_code, 302)
+        role = Role.objects.get(name="Shift Lead")
+        self.assertFalse(role.is_builtin)
+        self.assertEqual(sorted(role.capabilities), ["pos.access", "sales.cancel"])
+
+    def test_custom_role_grants_its_capabilities_to_assigned_user(self):
+        from accounts.models import Role
+        from core.permissions import can_cancel_sale, has_capability
+
+        role = Role.objects.create(slug="SHIFT_LEAD", name="Shift Lead", capabilities=["pos.access", "sales.cancel"])
+        user = get_user_model().objects.create_user("lead", password="x")
+        StaffProfile.objects.create(user=user, role=role.slug)
+
+        self.assertTrue(has_capability(user, "pos.access"))
+        self.assertTrue(can_cancel_sale(user))
+        self.assertFalse(has_capability(user, "reports.view"))
+
+    def test_manager_cannot_be_offered_custom_roles(self):
+        from accounts.models import Role
+
+        Role.objects.create(slug="SHIFT_LEAD", name="Shift Lead", capabilities=["pos.access"])
+        self.client.force_login(self.manager)
+        response = self.client.get(reverse("user-create"))
+        self.assertNotContains(response, "SHIFT_LEAD")
+
+    def test_builtin_role_cannot_be_deleted(self):
+        from accounts.models import Role
+
+        self.client.force_login(self.owner)
+        self.client.post(reverse("role-delete", args=["CASHIER"]))
+        self.assertTrue(Role.objects.filter(slug="CASHIER").exists())
+
+    def test_custom_role_in_use_cannot_be_deleted(self):
+        from accounts.models import Role
+
+        role = Role.objects.create(slug="SHIFT_LEAD", name="Shift Lead", capabilities=["pos.access"])
+        user = get_user_model().objects.create_user("lead2", password="x")
+        StaffProfile.objects.create(user=user, role=role.slug)
+
+        self.client.force_login(self.owner)
+        self.client.post(reverse("role-delete", args=[role.slug]))
+        self.assertTrue(Role.objects.filter(slug="SHIFT_LEAD").exists())
+
+    def test_unused_custom_role_is_deleted(self):
+        from accounts.models import Role
+
+        role = Role.objects.create(slug="TEMP_ROLE", name="Temp", capabilities=[])
+        self.client.force_login(self.owner)
+        self.client.post(reverse("role-delete", args=[role.slug]))
+        self.assertFalse(Role.objects.filter(slug="TEMP_ROLE").exists())

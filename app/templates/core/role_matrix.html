@@ -10,6 +10,31 @@
 <section class="panel">
     <header class="panel-header">
         <div>
+            <h2>{% trans "Roles" %}</h2>
+            <p>{% trans "Built-in roles can be retuned; add your own for special cases." %}</p>
+        </div>
+        <a class="btn btn-primary" href="{% url 'role-create' %}">{% icon "plus" 16 %} {% trans "New Role" %}</a>
+    </header>
+    <div class="role-chips">
+        {% for role in roles %}
+            <div class="role-chip">
+                <span class="role-chip-name">{{ role.name }}</span>
+                {% if role.is_builtin %}<span class="pill pill-neutral">{% trans "Built-in" %}</span>{% endif %}
+                <a class="role-chip-edit" href="{% url 'role-edit' role.slug %}" aria-label="{% trans 'Edit role' %}">{% icon "settings" 14 %}</a>
+                {% if not role.is_builtin %}
+                    <form method="post" action="{% url 'role-delete' role.slug %}" data-confirm-message="{% blocktrans with name=role.name %}Delete the {{ name }} role?{% endblocktrans %}">
+                        {% csrf_token %}
+                        <button class="role-chip-delete" type="submit" aria-label="{% trans 'Delete role' %}">{% icon "x" 14 %}</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
             <h2>{% trans "Permission matrix" %}</h2>
             <p>{% trans "Tick a capability to grant it to a role." %}</p>
         </div>

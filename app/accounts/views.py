@@ -15,7 +15,7 @@ from core.permissions import (
     users_required,
 )
 
-from .forms import StaffUserCreateForm, StaffUserEditForm
+from .forms import StaffUserCreateForm, StaffUserEditForm, assignable_role_choices
 from .services import set_role as _set_role, sync_legacy_group as _sync_legacy_group
 
 User = get_user_model()
@@ -53,7 +53,7 @@ def user_list_view(request):
 @users_required
 def user_create_view(request):
     request_is_owner = is_owner(request.user)
-    form = StaffUserCreateForm(request.POST or None)
+    form = StaffUserCreateForm(request.POST or None, allowed_roles=assignable_role_choices(request_is_owner))
 
     if request.method == "POST" and form.is_valid():
         role = form.cleaned_data["role"]
@@ -102,8 +102,15 @@ def user_edit_view(request, user_id):
     if target_is_owner and not request_is_owner:
         raise PermissionDenied
 
+    # Always include the target's current role so it shows even if the editor
+    # could not otherwise assign it.
+    allowed = assignable_role_choices(request_is_owner)
+    if target_role and target_role not in {slug for slug, _ in allowed}:
+        allowed = allowed + [(target_role, ROLE_LABELS.get(target_role, target_role))]
+
     form = StaffUserEditForm(
         request.POST or None,
+        allowed_roles=allowed,
         initial={
             "first_name": target.first_name,
             "email": target.email,

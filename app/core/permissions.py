@@ -64,7 +64,14 @@ def has_role(user, *roles):
 
 
 def role_label(role):
-    return ROLE_LABELS.get(role, "")
+    if role in ROLE_LABELS:
+        return ROLE_LABELS[role]
+    if not role:
+        return ""
+    from accounts.models import Role  # lazy: custom roles live in the DB
+
+    found = Role.objects.filter(slug=role).first()
+    return found.name if found else role
 
 
 # --- Data-driven capabilities (Authz Phase 1) ------------------------------

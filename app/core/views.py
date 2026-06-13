@@ -10,7 +10,7 @@ from django.db import connections
 from django.db.migrations.executor import MigrationExecutor
 from django.db.models import F, Sum
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -183,6 +183,104 @@ def role_matrix_view(request):
         "core/role_matrix.html",
         {"roles": roles, "capability_groups": CAPABILITY_GROUPS},
     )
+
+
+def _unique_role_slug(name):
+    from accounts.models import Role
+    from django.utils.text import slugify
+
+    base = (slugify(name).upper().replace("-", "_") or "ROLE")[:36]
+    slug = base
+    n = 2
+    while Role.objects.filter(slug=slug).exists():
+        slug = f"{base}_{n}"
+        n += 1
+    return slug
+
+
+@owner_required
+def role_create_view(request):
+    from accounts.forms import RoleForm
+    from accounts.models import Role
+
+    form = RoleForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        role = Role.objects.create(
+            slug=_unique_role_slug(form.cleaned_data["name"]),
+            name=form.cleaned_data["name"],
+            is_builtin=False,
+            is_owner=False,
+            capabilities=sorted(form.cleaned_data["capabilities"]),
+            rank=100,
+        )
+        create_audit_log(
+            action=AuditLog.Action.ROLE_CHANGE,
+            module="core",
+            request=request,
+            object_type="Role",
+            object_id=role.pk,
+            object_display=role.name,
+            new_value={"created": True, "capabilities": role.capabilities},
+        )
+        messages.success(request, f"Role '{role.name}' was created.")
+        return redirect("role-matrix")
+    return render(request, "core/role_form.html", {"form": form, "mode": "create"})
+
+
+@owner_required
+def role_edit_view(request, slug):
+    from accounts.forms import RoleForm
+    from accounts.models import Role
+
+    role = get_object_or_404(Role, slug=slug)
+    form = RoleForm(request.POST or None, instance=role)
+    if request.method == "POST" and form.is_valid():
+        old = {"name": role.name, "capabilities": list(role.capabilities or [])}
+        role.name = form.cleaned_data["name"]
+        if not role.is_owner:
+            role.capabilities = sorted(form.cleaned_data["capabilities"])
+        role.save(update_fields=["name", "capabilities", "updated_at"])
+        clear_role_capability_cache(request.user)
+        create_audit_log(
+            action=AuditLog.Action.ROLE_CHANGE,
+            module="core",
+            request=request,
+            object_type="Role",
+            object_id=role.pk,
+            object_display=role.name,
+            old_value=old,
+            new_value={"name": role.name, "capabilities": list(role.capabilities or [])},
+        )
+        messages.success(request, f"Role '{role.name}' was updated.")
+        return redirect("role-matrix")
+    return render(request, "core/role_form.html", {"form": form, "mode": "edit", "role": role})
+
+
+@owner_required
+@require_POST
+def role_delete_view(request, slug):
+    from accounts.models import Role, StaffProfile
+
+    role = get_object_or_404(Role, slug=slug)
+    if role.is_builtin:
+        messages.error(request, "Built-in roles cannot be deleted.")
+        return redirect("role-matrix")
+    if StaffProfile.objects.filter(role=role.slug).exists():
+        messages.error(request, "Reassign the users on this role before deleting it.")
+        return redirect("role-matrix")
+    name = role.name
+    create_audit_log(
+        action=AuditLog.Action.ROLE_CHANGE,
+        module="core",
+        request=request,
+        object_type="Role",
+        object_id=role.pk,
+        object_display=name,
+        old_value={"deleted": True},
+    )
+    role.delete()
+    messages.success(request, f"Role '{name}' was deleted.")
+    return redirect("role-matrix")
 
 
 @admin_required
