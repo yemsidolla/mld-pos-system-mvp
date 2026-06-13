@@ -10,6 +10,7 @@
     var result = modal.querySelector("[data-scanner-result]");
     var manualInput = modal.querySelector("[data-scanner-manual]");
     var fileInput = modal.querySelector("[data-scanner-file]");
+    var captureButton = modal.querySelector("[data-scanner-capture]");
     var currentTarget = null;
     var currentSelectTarget = null;
     var currentSelectMatch = "product";
@@ -101,6 +102,13 @@
         currentSelectTarget.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
+    function getCookie(name) {
+        var value = "; " + document.cookie;
+        var parts = value.split("; " + name + "=");
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(";").shift());
+        return "";
+    }
+
     function fillTarget(value) {
         if (!currentTarget || !value) return;
         currentTarget.value = value;
@@ -188,6 +196,24 @@
         });
     }
 
+    function scanFileWithServer(file) {
+        var formData = new FormData();
+        formData.append("image", file, file.name || "scan-image.jpg");
+        return fetch("/dashboard/api/scan/decode-image/", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "X-CSRFToken": getCookie("csrftoken") },
+            body: formData,
+        }).then(function (response) {
+            return response.json().then(function (payload) {
+                if (!response.ok) {
+                    throw new Error(payload.error || "Server could not decode the image.");
+                }
+                return payload.code;
+            });
+        });
+    }
+
     function scanFileWithNativeDetector(file) {
         var detector = getNativeDetector();
         if (!detector || !window.createImageBitmap) return Promise.reject(new Error("Native barcode detector unavailable."));
@@ -256,15 +282,22 @@
             firstSuccessfulScan([
                 function () { return scanFileWithNativeDetector(file); },
                 function () { return scanFileWithHtml5(activeScanner, file); },
+                function () { return scanFileWithServer(file); },
                 function () {
                     return normalizeImageFile(file, 1800).then(function (normalizedFile) {
                         return scanFileWithHtml5(activeScanner, normalizedFile);
                     });
                 },
                 function () {
+                    return normalizeImageFile(file, 1800).then(scanFileWithServer);
+                },
+                function () {
                     return normalizeImageFile(file, 2600).then(function (normalizedFile) {
                         return scanFileWithHtml5(activeScanner, normalizedFile);
                     });
+                },
+                function () {
+                    return normalizeImageFile(file, 2600).then(scanFileWithServer);
                 },
             ]).then(function (decodedText) {
                 onDecoded(decodedText);
@@ -274,6 +307,39 @@
                 fileInput.value = "";
             });
         });
+    }
+
+    function captureCameraFrame() {
+        var video = reader ? reader.querySelector("video") : null;
+        if (!video || !video.videoWidth || !video.videoHeight) {
+            setStatus("Open the camera first, then capture the frame.", "alert-warning");
+            return;
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+        setStatus("Sending camera frame to server decoder...");
+        canvas.toBlob(function (blob) {
+            if (!blob) {
+                setStatus("Could not capture a camera frame. Try upload or manual entry.", "alert-warning");
+                return;
+            }
+            try {
+                blob.name = "camera-frame.jpg";
+            } catch (error) {}
+            firstSuccessfulScan([
+                function () { return scanFileWithNativeDetector(blob); },
+                function () { return scanFileWithServer(blob); },
+                function () {
+                    return normalizeImageFile(blob, 1800).then(scanFileWithServer);
+                },
+            ]).then(function (decodedText) {
+                onDecoded(decodedText);
+            }).catch(function () {
+                setStatus("The captured frame could not be decoded. Move closer, improve light, and keep the full code in view.", "alert-warning");
+            });
+        }, "image/jpeg", 0.95);
     }
 
     function resolveCode(value) {
@@ -308,6 +374,7 @@
     });
     modal.querySelector("[data-scanner-start]").addEventListener("click", startCamera);
     modal.querySelector("[data-scanner-stop]").addEventListener("click", stopCamera);
+    if (captureButton) captureButton.addEventListener("click", captureCameraFrame);
     modal.querySelector("[data-scanner-apply]").addEventListener("click", function () {
         fillTarget(manualInput.value.trim());
         closeModal();

@@ -17,6 +17,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import quote
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
+from PIL import Image, UnidentifiedImageError
 
 from batch_upload.models import BatchUploadJob
 from catalog.models import Product
@@ -656,3 +657,44 @@ def scan_resolve_view(request):
             "warnings": _resolve_warnings(product),
         }
     )
+
+
+def _decode_scan_image(uploaded_file):
+    try:
+        import zxingcpp
+    except ImportError as exc:
+        raise ValidationError("Server barcode decoder is not installed.") from exc
+
+    try:
+        image = Image.open(uploaded_file)
+        image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise ValidationError("Uploaded file is not a readable image.") from exc
+
+    if image.mode not in {"RGB", "RGBA", "L"}:
+        image = image.convert("RGB")
+
+    results = zxingcpp.read_barcodes(image)
+    for result in results:
+        text = getattr(result, "text", "") or getattr(result, "raw_value", "")
+        if text:
+            return text.strip()
+
+    raise ValidationError("No barcode or QR code was found in that image.")
+
+
+@require_POST
+@dashboard_required
+def scan_decode_image_view(request):
+    uploaded_file = request.FILES.get("image")
+    if uploaded_file is None:
+        return JsonResponse({"status": "error", "error": "Image file is required."}, status=400)
+    if uploaded_file.size > 8 * 1024 * 1024:
+        return JsonResponse({"status": "error", "error": "Image must be 8 MB or smaller."}, status=400)
+
+    try:
+        code = _decode_scan_image(uploaded_file)
+    except ValidationError as exc:
+        return JsonResponse({"status": "error", "error": "; ".join(exc.messages)}, status=400)
+
+    return JsonResponse({"status": "ok", "code": code})

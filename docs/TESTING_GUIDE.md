@@ -42,4 +42,4 @@ After major UI changes, verify these pages in a browser at desktop and mobile si
 - `/dashboard/inventory/`
 - `/dashboard/batch-upload/`
 
-Also open the scanner modal from POS and confirm camera, upload image, and manual fallback controls are visible. Production camera testing requires HTTPS. On a phone, test a real EAN-13 barcode, a generated Code128 Melodu label, and a QR label; for upload decode, use a close, sharp, bright image where the full code is straight and fills most of the image.
+Also open the scanner modal from POS and confirm camera, upload image, capture frame, and manual fallback controls are visible. Production camera testing requires HTTPS. On a phone, test a real EAN-13 barcode, a generated Code128 Melodu label, and a QR label; for upload decode, use a close, sharp, bright image where the full code is straight and fills most of the image. If live browser decode fails, use `Capture Frame` to send the current camera frame to the server-side ZXing decoder.

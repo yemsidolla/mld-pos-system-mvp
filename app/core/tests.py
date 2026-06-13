@@ -7,6 +7,7 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
@@ -368,6 +369,31 @@ class ScanResolveTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
+    @mock.patch("core.views._decode_scan_image", return_value="8851234567890")
+    def test_scan_decode_image_endpoint_returns_decoded_code(self, decode_image):
+        self.client.force_login(self.admin)
+        upload = SimpleUploadedFile("scan.jpg", b"fake-image", content_type="image/jpeg")
+
+        response = self.client.post(reverse("scan-decode-image"), {"image": upload})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["code"], "8851234567890")
+        decode_image.assert_called_once()
+
+    def test_scan_decode_image_endpoint_requires_login(self):
+        upload = SimpleUploadedFile("scan.jpg", b"fake-image", content_type="image/jpeg")
+
+        response = self.client.post(reverse("scan-decode-image"), {"image": upload})
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_scan_decode_image_endpoint_requires_file(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse("scan-decode-image"), {})
+
+        self.assertEqual(response.status_code, 400)
+
 
 class ScannerPlacementTests(TestCase):
     def setUp(self):
@@ -429,6 +455,8 @@ class ScannerPlacementTests(TestCase):
         self.assertIn("qrbox: function", source)
         self.assertIn("BarcodeDetector", source)
         self.assertIn("normalizeImageFile", source)
+        self.assertIn("scanFileWithServer", source)
+        self.assertIn("/dashboard/api/scan/decode-image/", source)
         self.assertIn("Math.floor(viewfinderHeight * 0.72)", source)
 
 

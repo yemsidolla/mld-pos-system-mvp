@@ -27,6 +27,7 @@ The scanner modal supports:
 
 - Camera scanning
 - Uploaded image decoding
+- Server-side decode fallback for uploaded images and captured camera frames
 - Manual code entry
 
 Scanner buttons appear on:

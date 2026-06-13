@@ -166,6 +166,7 @@ curl -I http://192.168.1.199:8000/health/
 - Use camera scanner on HTTPS production or localhost.
 - On production phone testing, scan a real EAN-13 product barcode, a generated Code128 Melodu label, and a QR label.
 - For phone upload testing, use a close, sharp, bright image where the full code is straight and fills most of the image.
+- If live camera decode fails on phone, use `Capture Frame`; it sends the current frame to the server-side ZXing decoder without saving the image.
 - Confirm scanner resolver handles product code, original barcode, batch number, and custom code.
 - Confirm resolver warnings appear for inactive, expired, unavailable, or zero-stock batches.
 
