@@ -1963,3 +1963,12 @@ input[type="checkbox"], input[type="radio"] {
     font-size: 13px;
     color: var(--text);
 }
+
+/* === Per-user permission overrides (Authz Phase 4) ======================== */
+.override-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin: 6px 0 4px;
+}
+.override-block legend { font-weight: 600; font-size: 13px; padding: 0 6px; }

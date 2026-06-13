@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
+from core.capabilities import ALL_CAPABILITIES, CAPABILITY_GROUPS
 from core.permissions import (
     ROLE_CASHIER,
     ROLE_LABELS,
@@ -16,6 +17,7 @@ from core.permissions import (
 )
 
 from .forms import StaffUserCreateForm, StaffUserEditForm, assignable_role_choices
+from .models import Role
 from .services import set_role as _set_role, sync_legacy_group as _sync_legacy_group
 
 User = get_user_model()
@@ -149,8 +151,47 @@ def user_edit_view(request, user_id):
                     target.set_password(form.cleaned_data["new_password"])
                     update_fields.append("password")
                 target.save(update_fields=update_fields)
-                _set_role(target, new_role)
+                profile = _set_role(target, new_role)
                 _sync_legacy_group(target, new_role)
+
+                # Per-user capability overrides (Authz Phase 4) — Owner only, and
+                # not for Owner targets (they always hold everything). Effective
+                # ticks become extra/revoked relative to the role's own grants.
+                new_role_obj = Role.objects.filter(slug=new_role).first()
+                if (
+                    request_is_owner
+                    and not target_is_owner
+                    and profile is not None
+                    and not (new_role_obj and new_role_obj.is_owner)
+                ):
+                    role_caps = set(new_role_obj.capabilities or []) if new_role_obj else set()
+                    submitted = {
+                        cap for cap in ALL_CAPABILITIES if request.POST.get(f"override__{cap}") == "on"
+                    }
+                    extra = sorted(submitted - role_caps)
+                    revoked = sorted(role_caps - submitted)
+                    if (profile.extra_capabilities or []) != extra or (
+                        profile.revoked_capabilities or []
+                    ) != revoked:
+                        old_ov = {
+                            "extra": list(profile.extra_capabilities or []),
+                            "revoked": list(profile.revoked_capabilities or []),
+                        }
+                        profile.extra_capabilities = extra
+                        profile.revoked_capabilities = revoked
+                        profile.save(
+                            update_fields=["extra_capabilities", "revoked_capabilities", "updated_at"]
+                        )
+                        create_audit_log(
+                            action=AuditLog.Action.ROLE_CHANGE,
+                            module=MODULE,
+                            request=request,
+                            object_type="User",
+                            object_id=target.pk,
+                            object_display=target.username,
+                            old_value=old_ov,
+                            new_value={"extra": extra, "revoked": revoked},
+                        )
 
                 create_audit_log(
                     action=AuditLog.Action.UPDATE,
@@ -185,6 +226,15 @@ def user_edit_view(request, user_id):
             messages.success(request, f"User '{target.username}' was updated.")
             return redirect("user-list")
 
+    # Override editor context (shown to Owners editing a non-Owner user).
+    role_obj = Role.objects.filter(slug=target_role).first()
+    role_caps = set(role_obj.capabilities or []) if role_obj else set()
+    profile = getattr(target, "staff_profile", None)
+    extra = set(getattr(profile, "extra_capabilities", None) or [])
+    revoked = set(getattr(profile, "revoked_capabilities", None) or [])
+    effective_caps = (role_caps | extra) - revoked
+    show_overrides = request_is_owner and not target_is_owner
+
     return render(
         request,
         "accounts/user_form.html",
@@ -196,5 +246,9 @@ def user_edit_view(request, user_id):
             "target_role_label": ROLE_LABELS.get(target_role, "—"),
             "request_is_owner": request_is_owner,
             "is_self": is_self,
+            "show_overrides": show_overrides,
+            "capability_groups": CAPABILITY_GROUPS,
+            "role_caps": role_caps,
+            "effective_caps": effective_caps,
         },
     )

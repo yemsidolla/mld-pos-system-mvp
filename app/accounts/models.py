@@ -50,6 +50,10 @@ class StaffProfile(models.Model):
         related_name="staff_profile",
     )
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.CASHIER)
+    # Per-user capability overrides (Authz Phase 4): granted beyond the role, or
+    # blocked even when the role grants them. Effective = role caps ∪ extra − revoked.
+    extra_capabilities = models.JSONField(default=list, blank=True)
+    revoked_capabilities = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

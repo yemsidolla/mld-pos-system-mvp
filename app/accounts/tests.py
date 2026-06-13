@@ -419,3 +419,71 @@ class CustomRoleTests(TestCase):
         self.client.force_login(self.owner)
         self.client.post(reverse("role-delete", args=[role.slug]))
         self.assertFalse(Role.objects.filter(slug="TEMP_ROLE").exists())
+
+
+class PerUserOverrideTests(TestCase):
+    """Authz Phase 4: grant or revoke a capability for one individual user."""
+
+    def setUp(self):
+        self.owner = get_user_model().objects.create_superuser("ov-owner", "o@x.com", "Admin123")
+
+    def _cashier(self, username="ov-cashier"):
+        user = get_user_model().objects.create_user(username, password="x")
+        StaffProfile.objects.create(user=user, role="CASHIER")
+        return user
+
+    def test_extra_capability_grants_beyond_role(self):
+        from core.permissions import can_view_reports, has_capability
+
+        user = self._cashier()
+        self.assertFalse(can_view_reports(user))
+        user.staff_profile.extra_capabilities = ["reports.view"]
+        user.staff_profile.save()
+
+        user = get_user_model().objects.get(pk=user.pk)
+        self.assertTrue(has_capability(user, "reports.view"))
+
+    def test_revoked_capability_blocks_role_grant(self):
+        from core.permissions import can_access_pos
+
+        user = self._cashier()
+        self.assertTrue(can_access_pos(user))
+        user.staff_profile.revoked_capabilities = ["pos.access"]
+        user.staff_profile.save()
+
+        user = get_user_model().objects.get(pk=user.pk)
+        self.assertFalse(can_access_pos(user))
+
+    def test_owner_is_not_affected_by_overrides(self):
+        from core.permissions import has_capability
+
+        # Owner tier holds everything regardless of any stored override.
+        self.assertTrue(has_capability(self.owner, "system.reset_data"))
+
+    def test_owner_can_set_overrides_via_user_edit(self):
+        user = self._cashier("ov-edit")
+        self.client.force_login(self.owner)
+        # Cashier role grants pos.access; tick reports.view extra, untick pos.access.
+        response = self.client.post(
+            reverse("user-edit", args=[user.pk]),
+            {
+                "first_name": "",
+                "email": "",
+                "role": "CASHIER",
+                "is_active": "on",
+                "new_password": "",
+                "override__reports.view": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        profile = StaffProfile.objects.get(user=user)
+        self.assertIn("reports.view", profile.extra_capabilities)
+        self.assertIn("pos.access", profile.revoked_capabilities)
+
+    def test_manager_edit_does_not_expose_overrides(self):
+        manager = get_user_model().objects.create_user("ov-mgr", password="x")
+        StaffProfile.objects.create(user=manager, role="MANAGER")
+        target = self._cashier("ov-target")
+        self.client.force_login(manager)
+        response = self.client.get(reverse("user-edit", args=[target.pk]))
+        self.assertNotContains(response, "Individual permissions")

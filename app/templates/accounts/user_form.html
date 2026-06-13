@@ -34,6 +34,23 @@
         {% if not request_is_owner %}
             <p class="muted">{% trans "Only an Owner can assign the Owner role or edit an Owner/superuser account." %}</p>
         {% endif %}
+        {% if show_overrides %}
+            <fieldset class="override-block">
+                <legend>{% trans "Individual permissions" %}</legend>
+                <p class="muted">{% trans "Tick what this person may do. Differences from their role are saved as personal overrides." %}</p>
+                {% for group, items in capability_groups %}
+                    <p class="section-label">{{ group }}</p>
+                    <div class="cap-checklist">
+                        {% for key, label in items %}
+                            <label>
+                                <input type="checkbox" name="override__{{ key }}" {% if key in effective_caps %}checked{% endif %}>
+                                {{ label }}{% if key in role_caps %} <span class="muted">({% trans "role default" %})</span>{% endif %}
+                            </label>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </fieldset>
+        {% endif %}
         <div class="form-actions">
             <button class="btn btn-primary" type="submit">
                 {% if mode == "create" %}{% trans "Create User" %}{% else %}{% trans "Save Changes" %}{% endif %}

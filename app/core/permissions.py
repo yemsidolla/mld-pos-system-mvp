@@ -118,7 +118,17 @@ def has_capability(user, capability):
     if info is None:
         return False
     is_owner_role, capabilities = info
-    return is_owner_role or capability in capabilities
+    if is_owner_role:
+        return True  # Owner tier holds everything; not overridable.
+    # Apply per-user overrides (Authz Phase 4): explicit deny wins, then the
+    # role grant, then an explicit extra grant.
+    profile = getattr(user, "staff_profile", None)
+    if profile is not None:
+        if capability in (profile.revoked_capabilities or []):
+            return False
+        if capability in (profile.extra_capabilities or []):
+            return True
+    return capability in capabilities
 
 
 # --- Role predicates -------------------------------------------------------
