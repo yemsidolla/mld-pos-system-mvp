@@ -188,8 +188,8 @@
         if (!activeScanner) return;
         stopCamera().then(function () {
             setStatus("Opening camera. Allow camera permission when asked.");
-            startScanner(activeScanner, { facingMode: "environment" }).catch(function () {
-                return startScanner(activeScanner, { facingMode: "user" });
+            startScanner(activeScanner, { facingMode: { exact: "environment" } }).catch(function () {
+                return startScanner(activeScanner, { facingMode: { exact: "user" } });
             }).then(function () {
                 running = true;
                 setStatus("Camera is ready. Keep the code flat, bright, and fully inside the scan box.");
