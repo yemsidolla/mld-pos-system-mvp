@@ -458,6 +458,9 @@ class ScannerPlacementTests(TestCase):
         self.assertIn("scanFileWithServer", source)
         self.assertIn("/dashboard/api/scan/decode-image/", source)
         self.assertIn("Math.floor(viewfinderHeight * 0.72)", source)
+        self.assertIn('facingMode: "environment"', source)
+        self.assertIn('facingMode: "user"', source)
+        self.assertNotIn("facingMode: { ideal:", source)
 
 
 class StoreSettingTests(TestCase):

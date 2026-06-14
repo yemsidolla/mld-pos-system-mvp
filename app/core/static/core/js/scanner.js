@@ -157,6 +157,28 @@
         closeModal();
     }
 
+    function scannerConfig() {
+        return {
+            fps: 12,
+            disableFlip: false,
+            qrbox: function (viewfinderWidth, viewfinderHeight) {
+                return {
+                    width: Math.min(520, Math.floor(viewfinderWidth * 0.94)),
+                    height: Math.min(360, Math.floor(viewfinderHeight * 0.72)),
+                };
+            },
+        };
+    }
+
+    function startScanner(activeScanner, cameraConfig) {
+        return activeScanner.start(
+            cameraConfig,
+            scannerConfig(),
+            onDecoded,
+            function () {}
+        );
+    }
+
     function startCamera() {
         if (!secureCameraAvailable()) {
             setStatus("Camera scanning requires HTTPS in production. Localhost is allowed for development.", "alert-warning");
@@ -166,21 +188,9 @@
         if (!activeScanner) return;
         stopCamera().then(function () {
             setStatus("Opening camera. Allow camera permission when asked.");
-            activeScanner.start(
-                { facingMode: { ideal: "environment" } },
-                {
-                    fps: 12,
-                    disableFlip: false,
-                    qrbox: function (viewfinderWidth, viewfinderHeight) {
-                        return {
-                            width: Math.min(520, Math.floor(viewfinderWidth * 0.94)),
-                            height: Math.min(360, Math.floor(viewfinderHeight * 0.72)),
-                        };
-                    },
-                },
-                onDecoded,
-                function () {}
-            ).then(function () {
+            startScanner(activeScanner, { facingMode: "environment" }).catch(function () {
+                return startScanner(activeScanner, { facingMode: "user" });
+            }).then(function () {
                 running = true;
                 setStatus("Camera is ready. Keep the code flat, bright, and fully inside the scan box.");
             }).catch(function (error) {
