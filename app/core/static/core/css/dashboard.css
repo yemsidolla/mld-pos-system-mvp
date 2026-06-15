@@ -431,6 +431,24 @@ button.btn-danger {
     text-transform: uppercase;
     letter-spacing: 0;
 }
+.thumb-col {
+    width: 58px;
+    min-width: 58px;
+}
+.product-thumb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-subtle);
+    object-fit: cover;
+}
+.product-thumb-empty {
+    color: var(--text-soft);
+}
 .table-scroll {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;

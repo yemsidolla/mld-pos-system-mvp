@@ -115,6 +115,8 @@ class ProductDashboardTests(TestCase):
         self.assertContains(response, "Product Catalog")
         self.assertContains(response, "Cat Food")
         self.assertContains(response, 'data-scan-target="#id_q"')
+        self.assertContains(response, "Photo")
+        self.assertContains(response, "product-thumb-empty")
 
     def test_product_list_filters_by_search(self):
         Product.objects.create(product_code="P002", name="Dog Toy")

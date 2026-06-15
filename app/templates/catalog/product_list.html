@@ -37,6 +37,7 @@
         <table class="data-table">
             <thead>
                 <tr>
+                    <th class="thumb-col">{% trans "Photo" %}</th>
                     <th>{% trans "Code" %}</th>
                     <th class="has-filter">{% trans "Product" %}
                         <details class="col-filter {% if form.q.value %}is-active{% endif %}">
@@ -85,6 +86,13 @@
             <tbody>
             {% for product in products %}
                 <tr>
+                    <td class="thumb-col">
+                        {% if product.image %}
+                            <img class="product-thumb" src="{{ product.image.url }}" alt="{{ product.name }}">
+                        {% else %}
+                            <span class="product-thumb product-thumb-empty" aria-label="{% trans 'No product image' %}">{% icon "package" 18 %}</span>
+                        {% endif %}
+                    </td>
                     <td class="mono">{{ product.product_code }}</td>
                     <td><strong>{{ product.name }}</strong><br><span class="muted">{{ product.unit }}</span></td>
                     <td class="mono">{{ product.original_barcode|default:"-" }}</td>
@@ -107,7 +115,7 @@
                     <td><a class="btn" href="{% url 'product-edit' product.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="9" class="empty-cell">{% trans "No products match these filters." %}</td></tr>
+                <tr><td colspan="10" class="empty-cell">{% trans "No products match these filters." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
