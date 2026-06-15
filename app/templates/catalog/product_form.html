@@ -1,12 +1,12 @@
 {% extends "dashboard/base.html" %}
-{% load i18n %}
+{% load i18n melodu_icons %}
 
 {% block title %}{% if mode == "create" %}{% trans "New Product" %}{% else %}{% trans "Edit Product" %}{% endif %}{% endblock %}
 {% block page_title %}{% if mode == "create" %}{% trans "New Product" %}{% else %}{% trans "Edit Product" %}{% endif %}{% endblock %}
 {% block page_subtitle %}{% trans "Maintain product master data. Stock quantity remains controlled by batches." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'product-list' %}">{% trans "Back to Products" %}</a>
-    <button class="btn btn-primary" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% trans "Scan Barcode" %}</button>
+    <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan barcode" %}</button>
+    <a class="btn" href="{% url 'product-list' %}">{% trans "Back to products" %}</a>
 {% endblock %}
 
 {% block content %}
@@ -22,43 +22,123 @@
     {% endif %}
     <form class="form-stack" method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <p class="section-label">{% trans "Identity" %}</p>
         <div class="form-grid">
-            {% for field in form %}
-                <div>
-                    {{ field.label_tag }}
-                    {% if field.name == "original_barcode" %}
-                        <div class="input-row">
-                            {{ field }}
-                            <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% trans "Scan" %}</button>
-                        </div>
-                    {% elif field.name == "category" %}
-                        <div class="input-row">
-                            {{ field }}
-                            <button class="btn" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% trans "New Category" %}</button>
-                        </div>
-                    {% elif field.name == "brand" %}
-                        <div class="input-row">
-                            {{ field }}
-                            <button class="btn" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% trans "New Brand" %}</button>
-                        </div>
-                    {% elif field.name == "image" %}
-                        {% if product.image %}
-                            <div class="media-preview">
-                                <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                                <span class="muted">{% trans "Current image" %}</span>
-                            </div>
-                        {% endif %}
-                        {{ field }}
-                    {% else %}
-                        {{ field }}
-                    {% endif %}
-                    {{ field.errors }}
-                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+            <div>
+                {{ form.product_code.label_tag }}
+                {{ form.product_code }}
+                {{ form.product_code.errors }}
+                {% if form.product_code.help_text %}<p class="muted">{{ form.product_code.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.original_barcode.label_tag }}
+                <div class="input-row">
+                    {{ form.original_barcode }}
+                    <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
                 </div>
-            {% endfor %}
+                {{ form.original_barcode.errors }}
+                {% if form.original_barcode.help_text %}<p class="muted">{{ form.original_barcode.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                {{ form.name.errors }}
+                {% if form.name.help_text %}<p class="muted">{{ form.name.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.image.label_tag }}
+                {% if product.image %}
+                    <div class="media-preview">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        <span class="muted">{% trans "Current image" %}</span>
+                    </div>
+                {% endif %}
+                {{ form.image }}
+                {{ form.image.errors }}
+                {% if form.image.help_text %}<p class="muted">{{ form.image.help_text }}</p>{% endif %}
+            </div>
+        </div>
+
+        <p class="section-label">{% trans "Classification" %}</p>
+        <div class="form-grid">
+            <div>
+                {{ form.category.label_tag }}
+                <div class="input-row">
+                    {{ form.category }}
+                    <button class="btn" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% icon "plus" 16 %} {% trans "New category" %}</button>
+                </div>
+                {{ form.category.errors }}
+                {% if form.category.help_text %}<p class="muted">{{ form.category.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.brand.label_tag }}
+                <div class="input-row">
+                    {{ form.brand }}
+                    <button class="btn" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% icon "plus" 16 %} {% trans "New brand" %}</button>
+                </div>
+                {{ form.brand.errors }}
+                {% if form.brand.help_text %}<p class="muted">{{ form.brand.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.animal_types.label_tag }}
+                {{ form.animal_types }}
+                {{ form.animal_types.errors }}
+                {% if form.animal_types.help_text %}<p class="muted">{{ form.animal_types.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.life_stage.label_tag }}
+                {{ form.life_stage }}
+                {{ form.life_stage.errors }}
+                {% if form.life_stage.help_text %}<p class="muted">{{ form.life_stage.help_text }}</p>{% endif %}
+            </div>
+            <div class="form-span-full">
+                {{ form.tags.label_tag }}
+                {{ form.tags }}
+                {{ form.tags.errors }}
+                {% if form.tags.help_text %}<p class="muted">{{ form.tags.help_text }}</p>{% endif %}
+            </div>
+        </div>
+
+        <p class="section-label">{% trans "Pricing and controls" %}</p>
+        <div class="form-grid">
+            <div>
+                {{ form.unit.label_tag }}
+                {{ form.unit }}
+                {{ form.unit.errors }}
+                {% if form.unit.help_text %}<p class="muted">{{ form.unit.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.default_cost_price.label_tag }}
+                {{ form.default_cost_price }}
+                {{ form.default_cost_price.errors }}
+                {% if form.default_cost_price.help_text %}<p class="muted">{{ form.default_cost_price.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.default_selling_price.label_tag }}
+                {{ form.default_selling_price }}
+                {{ form.default_selling_price.errors }}
+                {% if form.default_selling_price.help_text %}<p class="muted">{{ form.default_selling_price.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                {{ form.min_stock.label_tag }}
+                {{ form.min_stock }}
+                {{ form.min_stock.errors }}
+                {% if form.min_stock.help_text %}<p class="muted">{{ form.min_stock.help_text }}</p>{% endif %}
+            </div>
+            <div>
+                <label for="{{ form.is_active.id_for_label }}">{{ form.is_active }} {% trans "Active" %}</label>
+                {{ form.is_active.errors }}
+                {% if form.is_active.help_text %}<p class="muted">{{ form.is_active.help_text }}</p>{% endif %}
+            </div>
+            <div class="form-span-full">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                {{ form.description.errors }}
+                {% if form.description.help_text %}<p class="muted">{{ form.description.help_text }}</p>{% endif %}
+            </div>
         </div>
         <div class="form-actions">
-            <button class="btn btn-success" type="submit">{% if mode == "create" %}{% trans "Create Product" %}{% else %}{% trans "Save Product" %}{% endif %}</button>
+            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% if mode == "create" %}{% trans "Create product" %}{% else %}{% trans "Save product" %}{% endif %}</button>
             <a class="btn" href="{% url 'product-list' %}">{% trans "Cancel" %}</a>
         </div>
     </form>

@@ -364,6 +364,7 @@ button.btn-danger {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 14px;
 }
+.form-span-full { grid-column: 1 / -1; }
 .form-stack { display: grid; gap: 14px; }
 .media-preview {
     display: flex;
@@ -448,6 +449,10 @@ button.btn-danger {
 }
 .product-thumb-empty {
     color: var(--text-soft);
+}
+.product-thumb img,
+img.product-thumb {
+    max-width: none;
 }
 .table-scroll {
     overflow-x: auto;
