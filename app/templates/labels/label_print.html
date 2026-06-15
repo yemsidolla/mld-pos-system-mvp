@@ -73,7 +73,7 @@
                 {% if template.show_store_name %}<div>{{ store_setting.store_name|default:"Melodu Pet Store" }}</div>{% endif %}
                 {% if template.header_text %}<div>{{ template.header_text }}</div>{% endif %}
                 {% if template.show_product_name %}<div class="name">{{ batch.product.name }}</div>{% endif %}
-                {% if template.show_animal_type and batch.product.animal_type %}<div>{{ batch.product.get_animal_type_display }}</div>{% endif %}
+                {% if template.show_animal_type and batch.product.animal_type_labels %}<div>{{ batch.product.animal_type_labels|join:", " }}</div>{% endif %}
                 {% if template.show_life_stage and batch.product.life_stage %}<div>{{ batch.product.get_life_stage_display }}</div>{% endif %}
                 {% if template.show_price %}<div>{{ store_setting.currency_symbol|default:"$" }}{{ batch.selling_price }}</div>{% endif %}
                 {% if template.show_sku %}<div>{{ batch.product.product_code }}</div>{% endif %}

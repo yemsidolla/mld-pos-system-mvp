@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
-from catalog.models import Brand, Category, Product, ProductTag, Supplier
+from catalog.models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier
 from inventory.services import receive_stock
 
 from .models import BatchUploadJob, BatchUploadRow
@@ -187,6 +187,11 @@ def split_tag_names(value):
     return [name.strip() for name in raw.split(",") if name.strip()]
 
 
+def split_animal_type_codes(value):
+    raw = str(value or "").replace(";", ",")
+    return [code.strip().upper() for code in raw.split(",") if code.strip()]
+
+
 def validate_headers(target, headers):
     schema = get_schema(target)
     expected = set(schema["fields"])
@@ -265,10 +270,11 @@ def normalize_row(target, row_data):
                 errors.append("category: category name does not exist")
             if normalized.get("brand") and not Brand.objects.filter(name=normalized["brand"]).exists():
                 errors.append("brand: brand name does not exist")
-            animal_type = (normalized.get("animal_type") or "").strip().upper()
-            if animal_type and animal_type not in {choice for choice, _ in Product.AnimalType.choices}:
+            animal_types = split_animal_type_codes(normalized.get("animal_type"))
+            valid_animal_types = {choice for choice, _ in Product.AnimalType.choices}
+            if any(code not in valid_animal_types for code in animal_types):
                 errors.append("animal_type: invalid value")
-            normalized["animal_type"] = animal_type
+            normalized["animal_type"] = "; ".join(animal_types)
             life_stage = (normalized.get("life_stage") or "").strip().upper()
             if life_stage and life_stage not in {choice for choice, _ in Product.LifeStage.choices}:
                 errors.append("life_stage: invalid value")
@@ -445,6 +451,7 @@ def _commit_supplier(data):
 def _commit_product(data):
     category = Category.objects.filter(name=data.get("category")).first() if data.get("category") else None
     brand = Brand.objects.filter(name=data.get("brand")).first() if data.get("brand") else None
+    animal_type_codes = split_animal_type_codes(data.get("animal_type"))
     obj, created = Product.objects.update_or_create(
         product_code=data["product_code"],
         defaults={
@@ -457,11 +464,23 @@ def _commit_product(data):
             "default_selling_price": Decimal(data.get("default_selling_price") or "0"),
             "min_stock": data.get("min_stock") or 0,
             "description": data.get("description", ""),
-            "animal_type": (data.get("animal_type") or "").strip().upper(),
+            "animal_type": animal_type_codes[0] if animal_type_codes else "",
             "life_stage": (data.get("life_stage") or "").strip().upper(),
             "is_active": data.get("is_active", True),
         },
     )
+    if animal_type_codes:
+        animal_labels = dict(Product.AnimalType.choices)
+        animal_types = [
+            AnimalTypeOption.objects.get_or_create(
+                code=code,
+                defaults={"name": animal_labels.get(code, code.title())},
+            )[0]
+            for code in animal_type_codes
+        ]
+        obj.animal_types.set(animal_types)
+    else:
+        obj.animal_types.clear()
     tag_names = split_tag_names(data.get("tags"))
     if tag_names:
         tags = [ProductTag.objects.get_or_create(name=name)[0] for name in tag_names]

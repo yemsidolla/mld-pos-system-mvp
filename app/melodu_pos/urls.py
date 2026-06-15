@@ -38,6 +38,7 @@ from core.views import (
     dashboard_login_view,
     dashboard_logout_view,
     health_check,
+    protected_media_view,
     scan_decode_image_view,
     scan_resolve_view,
     role_create_view,
@@ -159,6 +160,7 @@ urlpatterns = [
     path("dashboard/system-health/", system_health_view, name="system-health"),
     path("dashboard/stock-in/", stock_in_view, name="stock-in"),
     path("health/", health_check, name="health-check"),
+    path("media/<path:path>", protected_media_view, name="protected-media"),
 ]
 
 if settings.OIDC_ENABLED:

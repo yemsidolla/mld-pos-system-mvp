@@ -82,6 +82,20 @@ class ProductTag(TimeStampedModel):
         return self.name
 
 
+class AnimalTypeOption(TimeStampedModel):
+    """Reusable animal type option for products that apply to multiple pets."""
+
+    code = models.CharField(max_length=20, unique=True)
+    name = models.CharField(max_length=80)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Product(TimeStampedModel):
     class AnimalType(models.TextChoices):
         DOG = "DOG", "Dog"
@@ -138,6 +152,7 @@ class Product(TimeStampedModel):
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="products/", blank=True, null=True)
     animal_type = models.CharField(max_length=20, choices=AnimalType.choices, blank=True)
+    animal_types = models.ManyToManyField(AnimalTypeOption, blank=True, related_name="products")
     life_stage = models.CharField(max_length=20, choices=LifeStage.choices, blank=True)
     tags = models.ManyToManyField(ProductTag, blank=True, related_name="products")
     is_active = models.BooleanField(default=True)
@@ -147,3 +162,13 @@ class Product(TimeStampedModel):
 
     def __str__(self):
         return f"{self.name} ({self.product_code})"
+
+    @property
+    def animal_type_labels(self):
+        if self.pk:
+            labels = [animal_type.name for animal_type in self.animal_types.all()]
+            if labels:
+                return labels
+        if self.animal_type:
+            return [self.get_animal_type_display()]
+        return []

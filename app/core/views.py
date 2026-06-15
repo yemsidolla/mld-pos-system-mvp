@@ -1,5 +1,8 @@
 import logging
+import mimetypes
+import os
 from datetime import timedelta
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,12 +12,12 @@ from django.core.exceptions import ValidationError
 from django.db import connections
 from django.db.migrations.executor import MigrationExecutor
 from django.db.models import F, Sum
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils._os import safe_join
 from django.utils.http import url_has_allowed_host_and_scheme
-from urllib.parse import quote
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from PIL import Image, UnidentifiedImageError
@@ -59,6 +62,20 @@ def _safe_next_url(request):
     ):
         return next_url
     return ""
+
+
+@dashboard_required
+def protected_media_view(request, path):
+    try:
+        full_path = safe_join(settings.MEDIA_ROOT, path)
+    except ValueError as exc:
+        raise Http404("Media file not found.") from exc
+
+    if not os.path.isfile(full_path):
+        raise Http404("Media file not found.")
+
+    content_type, _encoding = mimetypes.guess_type(full_path)
+    return FileResponse(open(full_path, "rb"), content_type=content_type or "application/octet-stream")
 
 
 @never_cache

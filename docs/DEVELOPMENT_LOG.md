@@ -457,3 +457,11 @@
 - Added audit logs for cost changes, stock batch cost changes, below-cost sales, promotion below-cost sales, promotion changes, and admin overrides.
 - Improved POS responsiveness with promotion labels, touch-friendly quantity steppers, a sticky desktop cart, clearer empty states, and double-submit protection.
 - Confirmed local and production compose service lists still include only `postgres` and `web`.
+
+### Catalog Fixes: Product Images And Multi-Animal Products
+
+- Added protected dashboard media serving for `/media/...` so uploaded product images and generated media remain visible when production Nginx only proxies to Django.
+- Added an explicit current-image preview to product edit forms; the browser file input still clears after refresh by design, but the saved image now remains visible.
+- Added reusable `AnimalTypeOption` records and a Product multi-select relation so one product can target multiple animal types.
+- Kept the legacy `Product.animal_type` field populated with the first selected option for backward compatibility.
+- Updated product list filters, Django Admin, label printing, batch upload, tests, and docs for multi-animal products.

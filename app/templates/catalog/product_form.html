@@ -41,6 +41,14 @@
                             {{ field }}
                             <button class="btn" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% trans "New Brand" %}</button>
                         </div>
+                    {% elif field.name == "image" %}
+                        {% if product.image %}
+                            <div class="media-preview">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                                <span class="muted">{% trans "Current image" %}</span>
+                            </div>
+                        {% endif %}
+                        {{ field }}
                     {% else %}
                         {{ field }}
                     {% endif %}

@@ -1,7 +1,7 @@
 from django import forms
 from django.db.models import Q
 
-from .models import Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
+from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
 class CatalogFilterForm(forms.Form):
@@ -47,17 +47,42 @@ class ProductFilterForm(forms.Form):
 
 
 class ProductForm(forms.ModelForm):
+    animal_types = forms.ModelMultipleChoiceField(
+        queryset=AnimalTypeOption.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="Animal types",
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         category_filter = Q(is_active=True)
         brand_filter = Q(is_active=True)
+        animal_type_filter = Q(is_active=True)
         if self.instance and self.instance.pk:
             if self.instance.category_id:
                 category_filter |= Q(pk=self.instance.category_id)
             if self.instance.brand_id:
                 brand_filter |= Q(pk=self.instance.brand_id)
+            animal_type_filter |= Q(products=self.instance)
+            if self.instance.animal_type and not self.instance.animal_types.exists():
+                legacy = AnimalTypeOption.objects.filter(code=self.instance.animal_type).first()
+                if legacy:
+                    self.initial.setdefault("animal_types", [legacy.pk])
         self.fields["category"].queryset = Category.objects.filter(category_filter).order_by("name")
         self.fields["brand"].queryset = Brand.objects.filter(brand_filter).order_by("name")
+        self.fields["animal_types"].queryset = (
+            AnimalTypeOption.objects.filter(animal_type_filter).distinct().order_by("name")
+        )
+
+    def save(self, commit=True):
+        product = super().save(commit=False)
+        selected = list(self.cleaned_data.get("animal_types") or [])
+        product.animal_type = selected[0].code if selected else ""
+        if commit:
+            product.save()
+            self.save_m2m()
+        return product
 
     class Meta:
         model = Product
@@ -73,7 +98,7 @@ class ProductForm(forms.ModelForm):
             "min_stock",
             "description",
             "image",
-            "animal_type",
+            "animal_types",
             "life_stage",
             "tags",
             "is_active",

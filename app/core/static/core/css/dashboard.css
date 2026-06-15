@@ -365,6 +365,20 @@ button.btn-danger {
     gap: 14px;
 }
 .form-stack { display: grid; gap: 14px; }
+.media-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 8px;
+}
+.media-preview img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-subtle);
+}
 .scan-lookup { margin-bottom: 14px; }
 .form-actions,
 .actions,

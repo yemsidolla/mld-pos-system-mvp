@@ -91,10 +91,10 @@
                     <td>{{ product.category|default:"-" }}</td>
                     <td>{{ product.brand|default:"-" }}</td>
                     <td>
-                        {% if product.animal_type %}<span class="pill pill-info">{{ product.get_animal_type_display }}</span>{% endif %}
+                        {% for animal in product.animal_type_labels %}<span class="pill pill-info">{{ animal }}</span>{% endfor %}
                         {% if product.life_stage %}<span class="pill pill-info">{{ product.get_life_stage_display }}</span>{% endif %}
                         {% for tag in product.tags.all %}<span class="pill pill-success">{{ tag.name }}</span>{% endfor %}
-                        {% if not product.animal_type and not product.life_stage and not product.tags.all %}-{% endif %}
+                        {% if not product.animal_type_labels and not product.life_stage and not product.tags.all %}-{% endif %}
                     </td>
                     <td class="mono">{{ product.default_selling_price }}</td>
                     <td>

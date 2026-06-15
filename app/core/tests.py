@@ -63,6 +63,30 @@ class HealthCheckTests(TestCase):
         self.assertEqual(payload["unapplied_migrations"], ["sessions.0001_initial"])
 
 
+class ProtectedMediaTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser("media-user", "media@example.com", "Admin123")
+
+    def test_protected_media_requires_login(self):
+        response = self.client.get(reverse("protected-media", kwargs={"path": "products/cat.jpg"}))
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_protected_media_serves_existing_file_to_dashboard_user(self):
+        self.client.force_login(self.user)
+
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            product_dir = os.path.join(media_root, "products")
+            os.makedirs(product_dir, exist_ok=True)
+            with open(os.path.join(product_dir, "cat.jpg"), "wb") as handle:
+                handle.write(b"saved-image")
+
+            response = self.client.get(reverse("protected-media", kwargs={"path": "products/cat.jpg"}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(b"".join(response.streaming_content), b"saved-image")
+
+
 class DashboardShellTests(TestCase):
     def setUp(self):
         self.admin = get_user_model().objects.create_user(

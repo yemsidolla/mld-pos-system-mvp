@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
+from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
 @admin.register(Category)
@@ -35,6 +35,14 @@ class ProductTagAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
 
+@admin.register(AnimalTypeOption)
+class AnimalTypeOptionAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "code")
+    readonly_fields = ("created_at", "updated_at")
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = (
@@ -43,17 +51,21 @@ class ProductAdmin(admin.ModelAdmin):
         "original_barcode",
         "category",
         "brand",
-        "animal_type",
+        "animal_type_list",
         "life_stage",
         "default_selling_price",
         "min_stock",
         "is_active",
     )
-    list_filter = ("is_active", "category", "brand", "animal_type", "life_stage", "tags")
+    list_filter = ("is_active", "category", "brand", "animal_types", "life_stage", "tags")
     search_fields = ("name", "product_code", "original_barcode")
     readonly_fields = ("created_at", "updated_at")
     autocomplete_fields = ("category", "brand")
-    filter_horizontal = ("tags",)
+    filter_horizontal = ("animal_types", "tags")
+
+    @admin.display(description="Animal types")
+    def animal_type_list(self, obj):
+        return ", ".join(obj.animal_type_labels) or "-"
 
 
 @admin.register(SupplierProductCost)

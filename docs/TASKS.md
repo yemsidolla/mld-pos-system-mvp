@@ -317,6 +317,8 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add optional batch-upload columns with backward compatibility | AI Generated |
 | Auto-create tags and validate classification on upload | AI Generated |
 | Include tag list in product audit snapshots | AI Generated |
+| Upgrade animal type from single value to multi-select options | AI Generated |
+| Add protected dashboard media serving for uploaded product images | AI Generated |
 | Add V4 Phase 2 tests and documentation | AI Generated |
 
 ## V4 Phase 3: Printer Settings & 80mm Receipt

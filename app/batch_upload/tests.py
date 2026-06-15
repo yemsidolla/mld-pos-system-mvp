@@ -11,7 +11,7 @@ from django.urls import reverse
 from openpyxl import Workbook
 
 from audit.models import AuditLog
-from catalog.models import Brand, Category, Product, ProductTag, Supplier
+from catalog.models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier
 from core.permissions import CASHIER_GROUP
 from inventory.models import InventoryMovement, StockBatch
 
@@ -365,7 +365,7 @@ class ProductClassificationUploadTests(TestCase):
         content = (
             "product_code,original_barcode,name,category,brand,unit,default_cost_price,"
             "default_selling_price,min_stock,description,animal_type,life_stage,tags,is_active\n"
-            "P100,8850000001000,Kitten Food,Food,Melodu,Bag,1.50,2.50,3,,cat,kitten,Grain Free; Indoor,TRUE\n"
+            "P100,8850000001000,Kitten Food,Food,Melodu,Bag,1.50,2.50,3,,cat; dog,kitten,Grain Free; Indoor,TRUE\n"
         )
         job = create_upload_job(
             target=BatchUploadJob.Target.PRODUCTS,
@@ -378,9 +378,11 @@ class ProductClassificationUploadTests(TestCase):
 
         product = Product.objects.get(product_code="P100")
         self.assertEqual(product.animal_type, "CAT")
+        self.assertEqual(set(product.animal_types.values_list("code", flat=True)), {"CAT", "DOG"})
         self.assertEqual(product.life_stage, "KITTEN")
         self.assertEqual(set(product.tags.values_list("name", flat=True)), {"Grain Free", "Indoor"})
         self.assertEqual(ProductTag.objects.filter(name__in=["Grain Free", "Indoor"]).count(), 2)
+        self.assertEqual(AnimalTypeOption.objects.filter(code__in=["CAT", "DOG"]).count(), 2)
 
     def test_upload_without_optional_columns_still_works(self):
         content = (

@@ -1,16 +1,18 @@
 from decimal import Decimal
+from tempfile import TemporaryDirectory
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from audit.models import AuditLog
 from core.permissions import ADMIN_GROUP, CASHIER_GROUP
 from .admin import ProductAdmin
-from .models import Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
+from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
 class CatalogModelTests(TestCase):
@@ -80,7 +82,7 @@ class CatalogAdminTests(TestCase):
         self.assertEqual(product_admin.search_fields, ("name", "product_code", "original_barcode"))
         self.assertEqual(
             product_admin.list_filter,
-            ("is_active", "category", "brand", "animal_type", "life_stage", "tags"),
+            ("is_active", "category", "brand", "animal_types", "life_stage", "tags"),
         )
 
 
@@ -434,14 +436,16 @@ class ProductClassificationTests(TestCase):
 
     def test_product_can_have_classification_and_tags(self):
         product = Product.objects.create(product_code="P001", name="Cat Food")
+        cat = AnimalTypeOption.objects.get(code=Product.AnimalType.CAT)
+        dog = AnimalTypeOption.objects.get(code=Product.AnimalType.DOG)
         tag = ProductTag.objects.create(name="Grain Free")
-        product.animal_type = Product.AnimalType.CAT
         product.life_stage = Product.LifeStage.ADULT
         product.save()
+        product.animal_types.set([cat, dog])
         product.tags.add(tag)
 
         product.refresh_from_db()
-        self.assertEqual(product.animal_type, "CAT")
+        self.assertEqual(product.animal_type_labels, ["Cat", "Dog"])
         self.assertEqual(product.life_stage, "ADULT")
         self.assertEqual(list(product.tags.values_list("name", flat=True)), ["Grain Free"])
 
@@ -452,30 +456,53 @@ class ProductClassificationTests(TestCase):
         self.assertEqual(product.tags.count(), 0)
 
     def test_create_product_with_classification_and_tags_via_dashboard(self):
+        cat = AnimalTypeOption.objects.get(code=Product.AnimalType.CAT)
+        dog = AnimalTypeOption.objects.get(code=Product.AnimalType.DOG)
         tag1 = ProductTag.objects.create(name="Grain Free")
         tag2 = ProductTag.objects.create(name="Indoor")
         self.client.force_login(self.admin)
 
         response = self.client.post(
             reverse("product-create"),
-            self._base_payload(animal_type="CAT", life_stage="KITTEN", tags=[tag1.id, tag2.id]),
+            self._base_payload(animal_types=[cat.id, dog.id], life_stage="KITTEN", tags=[tag1.id, tag2.id]),
         )
 
         self.assertRedirects(response, reverse("product-list"))
         product = Product.objects.get(product_code="P010")
         self.assertEqual(product.animal_type, "CAT")
+        self.assertEqual(set(product.animal_types.values_list("code", flat=True)), {"CAT", "DOG"})
         self.assertEqual(product.life_stage, "KITTEN")
         self.assertEqual(set(product.tags.values_list("name", flat=True)), {"Grain Free", "Indoor"})
         audit = AuditLog.objects.filter(action=AuditLog.Action.CREATE, module="catalog").latest("created_at")
+        self.assertEqual(audit.new_value.get("animal_types"), ["Cat", "Dog"])
         self.assertEqual(audit.new_value.get("tags"), ["Grain Free", "Indoor"])
+
+    def test_product_image_upload_persists_after_refresh(self):
+        self.client.force_login(self.admin)
+        image = SimpleUploadedFile("cat.jpg", b"fake image bytes", content_type="image/jpeg")
+
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            response = self.client.post(reverse("product-create"), self._base_payload(image=image))
+
+            self.assertRedirects(response, reverse("product-list"))
+            product = Product.objects.get(product_code="P010")
+            self.assertTrue(product.image.name.startswith("products/"))
+
+            refresh = self.client.get(reverse("product-edit", kwargs={"product_id": product.pk}))
+            self.assertContains(refresh, "Current image")
+            self.assertContains(refresh, product.image.url)
 
     def test_product_list_filters_by_animal_type_and_tag(self):
         dental = ProductTag.objects.create(name="Dental Care")
+        cat = AnimalTypeOption.objects.get(code=Product.AnimalType.CAT)
+        dog = AnimalTypeOption.objects.get(code=Product.AnimalType.DOG)
         cat_food = Product.objects.create(
             product_code="C1", name="Cat Food", animal_type=Product.AnimalType.CAT
         )
+        cat_food.animal_types.add(cat)
         cat_food.tags.add(dental)
-        Product.objects.create(product_code="D1", name="Dog Food", animal_type=Product.AnimalType.DOG)
+        dog_food = Product.objects.create(product_code="D1", name="Dog Food", animal_type=Product.AnimalType.DOG)
+        dog_food.animal_types.add(dog)
         self.client.force_login(self.admin)
 
         by_animal = self.client.get(reverse("product-list"), {"animal_type": "CAT"})
@@ -491,7 +518,7 @@ class ProductClassificationTests(TestCase):
 
         response = self.client.get(reverse("product-create"))
 
-        self.assertContains(response, 'name="animal_type"')
+        self.assertContains(response, 'name="animal_types"')
         self.assertContains(response, 'name="life_stage"')
         self.assertContains(response, 'name="tags"')
 
@@ -499,12 +526,16 @@ class ProductClassificationTests(TestCase):
 class ProductColumnFilterTests(TestCase):
     def setUp(self):
         self.admin = get_user_model().objects.create_superuser("pcf-admin", "a@x.com", "Admin123")
+        self.cat = AnimalTypeOption.objects.get(code=Product.AnimalType.CAT)
+        self.dog = AnimalTypeOption.objects.get(code=Product.AnimalType.DOG)
         self.cat_food = Product.objects.create(
             product_code="C1", name="Cat Food", animal_type=Product.AnimalType.CAT
         )
+        self.cat_food.animal_types.add(self.cat)
         self.dog_food = Product.objects.create(
             product_code="D1", name="Dog Food", animal_type=Product.AnimalType.DOG
         )
+        self.dog_food.animal_types.add(self.dog)
         self.bird_food = Product.objects.create(product_code="B1", name="Bird Seed")
         self.client.force_login(self.admin)
 

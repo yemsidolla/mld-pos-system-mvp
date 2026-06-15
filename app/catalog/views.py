@@ -215,7 +215,7 @@ def product_list_view(request):
     form = ProductFilterForm(request.GET or None)
     products = (
         Product.objects.select_related("category", "brand")
-        .prefetch_related("tags")
+        .prefetch_related("animal_types", "tags")
         .order_by("name", "product_code")
     )
 
@@ -241,7 +241,9 @@ def product_list_view(request):
         if brands:
             products = products.filter(brand__in=brands)
         if animal_types:
-            products = products.filter(animal_type__in=animal_types)
+            products = products.filter(
+                Q(animal_types__code__in=animal_types) | Q(animal_type__in=animal_types)
+            ).distinct()
         if life_stages:
             products = products.filter(life_stage__in=life_stages)
         if tags:
