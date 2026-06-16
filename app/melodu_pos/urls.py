@@ -15,6 +15,9 @@ from batch_upload.views import (
     batch_upload_template_view,
 )
 from catalog.views import (
+    animal_type_create_view,
+    animal_type_edit_view,
+    animal_type_list_view,
     brand_create_view,
     brand_edit_view,
     brand_list_view,
@@ -100,6 +103,9 @@ urlpatterns = [
     path("dashboard/brands/", brand_list_view, name="brand-list"),
     path("dashboard/brands/new/", brand_create_view, name="brand-create"),
     path("dashboard/brands/<int:brand_id>/edit/", brand_edit_view, name="brand-edit"),
+    path("dashboard/animal-types/", animal_type_list_view, name="animal-type-list"),
+    path("dashboard/animal-types/new/", animal_type_create_view, name="animal-type-create"),
+    path("dashboard/animal-types/<int:animal_type_id>/edit/", animal_type_edit_view, name="animal-type-edit"),
     path("dashboard/suppliers/", supplier_list_view, name="supplier-list"),
     path("dashboard/suppliers/new/", supplier_create_view, name="supplier-create"),
     path("dashboard/suppliers/<int:supplier_id>/edit/", supplier_edit_view, name="supplier-edit"),

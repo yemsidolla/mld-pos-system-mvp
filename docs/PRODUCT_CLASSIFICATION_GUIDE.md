@@ -6,7 +6,9 @@ valid with nothing set.
 
 ## Fields
 
-- **Animal types** (multiple choice): Dog, Cat, Rabbit, Hamster, Bird, Fish, Other.
+- **Animal types** (multiple choice): reusable species options such as Dog,
+  Cat, Rabbit, Hamster, Bird, Fish, and Other. Admin users can create more
+  animal types when the store genuinely needs them.
 - **Life stage** (single choice): Baby, Puppy, Kitten, Adult, Senior, All ages.
 - **Tags** (`ProductTag`, many): free-form labels you create and reuse, e.g.
   *Grain Free*, *Dental Care*, *Sensitive Skin*, *Small Breed*, *Indoor*, *Snack*,
@@ -17,10 +19,15 @@ valid with nothing set.
 ## Where it appears
 
 - **Product form** (`/dashboard/products/new/` and edit): multi-select animal
-  type checkboxes, a life stage dropdown, and a multi-select tag picker.
+  type checkboxes, a life stage dropdown, and a multi-select tag picker. The
+  form includes a **New animal type** quick-add button for creating an option
+  without leaving unsaved product data.
 - **Product list** (`/dashboard/products/`): filter by animal type, life stage,
   and tag; the free-text search also matches tag names. Each row shows a
   Classification column with badges.
+- **Animal Types** (`/dashboard/animal-types/`): Admin users can create, edit,
+  activate, or deactivate reusable animal type options. Leave the code blank on
+  create to generate it from the name, e.g. `Reptile` becomes `REPTILE`.
 - **Django Admin**: `Product` gains animal type / life stage / tag filters plus
   animal type and tag pickers; `AnimalTypeOption` and `ProductTag` have their
   own admin sections.
@@ -32,8 +39,8 @@ The product upload supports three new **optional** columns:
 `animal_type`, `life_stage`, `tags`. Files without them keep working.
 
 - `animal_type`: use one or more code values (case-insensitive), separated by
-  `;` or `,`, e.g. `CAT; DOG`. Invalid values are flagged in preview and never
-  committed.
+  `;` or `,`, e.g. `CAT; DOG`. Codes must match active Animal Types from the
+  dashboard. Invalid values are flagged in preview and never committed.
 - `life_stage`: use one code value (case-insensitive), e.g. `ADULT`.
 - `tags`: one cell, separated by `;` or `,` (e.g. `Grain Free; Indoor`). Tags
   are created automatically if they do not exist. On update, leaving `tags`
@@ -44,7 +51,7 @@ Download the current template from the Batch Upload page or see
 
 ## Notes
 
-- Animal types are seeded as reusable options from the fixed pet list. Extend
-  them later only if the store genuinely needs more; prefer tags first for
-  product qualities that are not species.
+- Animal types are seeded as reusable options from the starting pet list. Add
+  more only for species or animal groups; prefer tags for product qualities that
+  are not species.
 - Tags are shared across products; rename or deactivate them in Django Admin.

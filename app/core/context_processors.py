@@ -52,6 +52,7 @@ def dashboard_context(request):
                 {"label": "Products", "icon": "package", "url_name": "product-list", "href": "/dashboard/products/"},
                 {"label": "Categories", "icon": "category", "url_name": "category-list", "href": "/dashboard/categories/"},
                 {"label": "Brands", "icon": "tag", "url_name": "brand-list", "href": "/dashboard/brands/"},
+                {"label": "Animal Types", "icon": "tag", "url_name": "animal-type-list", "href": "/dashboard/animal-types/"},
                 {"label": "Suppliers", "icon": "users", "url_name": "supplier-list", "href": "/dashboard/suppliers/"},
             ]
         )

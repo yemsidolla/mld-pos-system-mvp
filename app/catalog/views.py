@@ -15,24 +15,27 @@ from core.pagination import paginate
 from core.permissions import can_manage_catalog, catalog_required, costs_required
 
 from .forms import (
+    AnimalTypeOptionForm,
     BrandForm,
     CatalogFilterForm,
     CategoryForm,
     ProductFilterForm,
     ProductForm,
+    QuickAnimalTypeOptionForm,
     QuickBrandForm,
     QuickCategoryForm,
     QuickSupplierForm,
     SupplierForm,
     SupplierProductCostForm,
 )
-from .models import Brand, Category, Product, Supplier, SupplierProductCost
+from .models import AnimalTypeOption, Brand, Category, Product, Supplier, SupplierProductCost
 
 
 QUICK_CREATE_FORMS = {
     "category": (QuickCategoryForm, "Category"),
     "brand": (QuickBrandForm, "Brand"),
     "supplier": (QuickSupplierForm, "Supplier"),
+    "animal_type": (QuickAnimalTypeOptionForm, "AnimalTypeOption"),
 }
 
 
@@ -252,7 +255,11 @@ def product_list_view(request):
 
         # Active-filter summary bar (DESIGN_SYSTEM §4.15). One chip per column;
         # its remove link drops that column's filter while keeping the rest.
-        animal_labels = dict(Product.AnimalType.choices)
+        animal_labels = dict(
+            AnimalTypeOption.objects.filter(code__in=animal_types).values_list("code", "name")
+        )
+        for code, label in Product.AnimalType.choices:
+            animal_labels.setdefault(code, label)
         stage_labels = dict(Product.LifeStage.choices)
         status_labels = {"active": _("Active"), "inactive": _("Inactive")}
 
@@ -470,6 +477,55 @@ def brand_edit_view(request, brand_id):
         subtitle="Update brand naming, description, or active status.",
         list_url_name="brand-list",
         object_type="Brand",
+    )
+
+
+@catalog_required
+def animal_type_list_view(request):
+    return _master_data_list_view(
+        request,
+        title="Animal Types",
+        subtitle="Maintain reusable species options used on products, filters, labels, and uploads.",
+        queryset=AnimalTypeOption.objects.annotate(product_count=Count("products")).order_by("name"),
+        search_fields=("name", "code"),
+        columns={
+            "labels": ["Code", "Products"],
+            "edit_url_name": "animal-type-edit",
+            "edit_kwarg": "animal_type_id",
+        },
+        row_builder=lambda animal_type: [animal_type.code, animal_type.product_count],
+        create_url_name="animal-type-create",
+        create_label="New Animal Type",
+        empty_message="No animal types found.",
+    )
+
+
+@catalog_required
+def animal_type_create_view(request):
+    return _master_data_form_view(
+        request,
+        form_class=AnimalTypeOptionForm,
+        instance=None,
+        mode="create",
+        title="New Animal Type",
+        subtitle="Create an animal type before assigning it to products or product uploads.",
+        list_url_name="animal-type-list",
+        object_type="AnimalTypeOption",
+    )
+
+
+@catalog_required
+def animal_type_edit_view(request, animal_type_id):
+    animal_type = get_object_or_404(AnimalTypeOption, pk=animal_type_id)
+    return _master_data_form_view(
+        request,
+        form_class=AnimalTypeOptionForm,
+        instance=animal_type,
+        mode="edit",
+        title="Edit Animal Type",
+        subtitle="Update animal type naming, upload code, or active status.",
+        list_url_name="animal-type-list",
+        object_type="AnimalTypeOption",
     )
 
 

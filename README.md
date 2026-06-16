@@ -10,6 +10,8 @@ Current implementation: Version 1 MVP phases 0 through 11 plus the batch upload 
 
 The MVP includes master data, audit logs, stock-in, batch barcode/QR generation, label printing, POS sale, sale cancellation, inventory adjustment, reports, live logs, system health, roles, batch upload, a shared dashboard shell, reusable scanner modal, English/Khmer language support, and deployment/backup documentation.
 
+For the latest handoff summary, read `docs/CURRENT_STATUS.md`.
+
 ## Quick Start
 
 Copy environment settings:
@@ -48,7 +50,7 @@ Create or reset the development admin user:
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py setup_roles --admin-username admin --password Admin123
 ```
 
-For production with host Nginx, use the production compose file and point host Nginx to `127.0.0.1:${WEB_HOST_PORT}`. Docker should run only PostgreSQL and Django.
+For production with host Nginx, use the production compose file and point host Nginx to `127.0.0.1:${WEB_HOST_PORT}`. Docker runs PostgreSQL, Django, and optional MinIO media storage; host Nginx remains the public reverse proxy.
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
@@ -111,6 +113,7 @@ Implement one phase at a time. Do not start the next phase until the current pha
 ```bash
 scripts/backup_db.sh
 scripts/backup_media.sh
+scripts/backup_minio.sh
 ```
 
-See `docs/BACKUP_GUIDE.md`, `docs/BATCH_UPLOAD_GUIDE.md`, `docs/DASHBOARD_UX_GUIDE.md`, and `docs/DEPLOYMENT_GUIDE.md`.
+See `docs/CURRENT_STATUS.md`, `docs/BACKUP_GUIDE.md`, `docs/BATCH_UPLOAD_GUIDE.md`, `docs/DASHBOARD_UX_GUIDE.md`, `docs/MINIO_STORAGE_GUIDE.md`, and `docs/DEPLOYMENT_GUIDE.md`.

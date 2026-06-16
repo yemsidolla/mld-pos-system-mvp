@@ -1,7 +1,30 @@
+import re
+
 from django import forms
 from django.db.models import Q
 
 from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
+
+
+def animal_type_code_from_name(name):
+    code = re.sub(r"[^A-Za-z0-9]+", "_", name.strip()).strip("_").upper()
+    return code[:20] or "ANIMAL"
+
+
+def _validate_animal_type_uniqueness(*, code, name, instance=None):
+    instance_pk = instance.pk if instance is not None else None
+    code_qs = AnimalTypeOption.objects.filter(code__iexact=code)
+    name_qs = AnimalTypeOption.objects.filter(name__iexact=name)
+    if instance_pk:
+        code_qs = code_qs.exclude(pk=instance_pk)
+        name_qs = name_qs.exclude(pk=instance_pk)
+    errors = {}
+    if code and code_qs.exists():
+        errors["code"] = "Animal type code already exists."
+    if name and name_qs.exists():
+        errors["name"] = "Animal type name already exists."
+    if errors:
+        raise forms.ValidationError(errors)
 
 
 class CatalogFilterForm(forms.Form):
@@ -25,7 +48,7 @@ class ProductFilterForm(forms.Form):
         queryset=Brand.objects.none(), required=False, widget=forms.CheckboxSelectMultiple
     )
     animal_type = forms.MultipleChoiceField(
-        choices=Product.AnimalType.choices, required=False, widget=forms.CheckboxSelectMultiple
+        choices=(), required=False, widget=forms.CheckboxSelectMultiple
     )
     life_stage = forms.MultipleChoiceField(
         choices=Product.LifeStage.choices, required=False, widget=forms.CheckboxSelectMultiple
@@ -43,6 +66,12 @@ class ProductFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
         self.fields["brand"].queryset = Brand.objects.filter(is_active=True).order_by("name")
+        animal_choices = list(
+            AnimalTypeOption.objects.filter(is_active=True).order_by("name").values_list("code", "name")
+        )
+        if not animal_choices:
+            animal_choices = list(Product.AnimalType.choices)
+        self.fields["animal_type"].choices = animal_choices
         self.fields["tag"].queryset = ProductTag.objects.filter(is_active=True).order_by("name")
 
 
@@ -137,6 +166,29 @@ class SupplierForm(forms.ModelForm):
         }
 
 
+class AnimalTypeOptionForm(forms.ModelForm):
+    code = forms.CharField(
+        required=False,
+        help_text="Leave blank to generate from the name. Codes are used in filters and batch upload.",
+    )
+
+    class Meta:
+        model = AnimalTypeOption
+        fields = ("name", "code", "is_active")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = (cleaned_data.get("name") or "").strip()
+        code = (cleaned_data.get("code") or "").strip().upper()
+        if name:
+            cleaned_data["name"] = name
+        if not code and name:
+            code = animal_type_code_from_name(name)
+        cleaned_data["code"] = code
+        _validate_animal_type_uniqueness(code=code, name=name, instance=self.instance)
+        return cleaned_data
+
+
 class SupplierProductCostForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -186,3 +238,25 @@ class QuickSupplierForm(QuickCreateNameMixin, forms.ModelForm):
     class Meta:
         model = Supplier
         fields = ("name", "contact_person", "phone", "telegram")
+
+
+class QuickAnimalTypeOptionForm(QuickCreateNameMixin, forms.ModelForm):
+    class Meta:
+        model = AnimalTypeOption
+        fields = ("name",)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        name = (cleaned_data.get("name") or "").strip()
+        code = animal_type_code_from_name(name) if name else ""
+        if code and AnimalTypeOption.objects.filter(code__iexact=code).exists():
+            self.add_error("name", "Animal type code already exists.")
+        cleaned_data["code"] = code
+        return cleaned_data
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.code = self.cleaned_data["code"]
+        if commit:
+            obj.save()
+        return obj

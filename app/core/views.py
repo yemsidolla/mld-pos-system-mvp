@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.exceptions import ValidationError
+from django.core.files.storage import default_storage
 from django.db import connections
 from django.db.migrations.executor import MigrationExecutor
 from django.db.models import F, Sum
@@ -66,6 +67,11 @@ def _safe_next_url(request):
 
 @dashboard_required
 def protected_media_view(request, path):
+    if settings.USE_S3_MEDIA:
+        if not default_storage.exists(path):
+            raise Http404("Media file not found.")
+        return redirect(default_storage.url(path))
+
     try:
         full_path = safe_join(settings.MEDIA_ROOT, path)
     except ValueError as exc:

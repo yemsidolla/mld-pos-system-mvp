@@ -8,6 +8,7 @@
     <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan Search" %}</button>
     <a class="btn" href="{% url 'category-list' %}">{% trans "Categories" %}</a>
     <a class="btn" href="{% url 'brand-list' %}">{% trans "Brands" %}</a>
+    <a class="btn" href="{% url 'animal-type-list' %}">{% trans "Animal Types" %}</a>
     <a class="btn" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
     <a class="btn btn-primary" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
 {% endblock %}

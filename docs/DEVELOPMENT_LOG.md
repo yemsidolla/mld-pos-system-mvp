@@ -465,3 +465,16 @@
 - Added reusable `AnimalTypeOption` records and a Product multi-select relation so one product can target multiple animal types.
 - Kept the legacy `Product.animal_type` field populated with the first selected option for backward compatibility.
 - Updated product list filters, Django Admin, label printing, batch upload, tests, and docs for multi-animal products.
+- Made animal types dashboard-creatable through `/dashboard/animal-types/` and the Product form quick-add modal, with generated upload codes and custom-code batch upload validation.
+
+### Media Storage: MinIO
+
+- Added optional MinIO/S3-compatible media storage controlled by `USE_S3_MEDIA`.
+- Added `django-storages[s3]`, S3 storage settings, MinIO compose services, bucket initialization, and `data/minio` persistence.
+- Updated protected media handling to redirect authenticated `/media/...` requests to signed object URLs when S3 media is enabled.
+- Added MinIO backup/restore scripts and deployment documentation for host Nginx HTTPS proxying.
+
+### Documentation: Current Status
+
+- Added `docs/CURRENT_STATUS.md` as the project handoff source of truth for current architecture, feature state, deployment mode, media storage, backup, verification, known notes, and suggested next work.
+- Linked the current status document from `README.md` and tracked it in `docs/TASKS.md`.

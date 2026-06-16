@@ -82,6 +82,7 @@
             <div>
                 {{ form.animal_types.label_tag }}
                 {{ form.animal_types }}
+                <button class="btn" type="button" data-quick-create data-quick-create-type="animal_type" data-quick-create-target="#id_animal_types" data-quick-create-field-name="animal_types">{% icon "plus" 16 %} {% trans "New animal type" %}</button>
                 {{ form.animal_types.errors }}
                 {% if form.animal_types.help_text %}<p class="muted">{{ form.animal_types.help_text }}</p>{% endif %}
             </div>

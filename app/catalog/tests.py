@@ -1,3 +1,4 @@
+from io import BytesIO
 from decimal import Decimal
 from tempfile import TemporaryDirectory
 
@@ -8,11 +9,18 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 
 from audit.models import AuditLog
 from core.permissions import ADMIN_GROUP, CASHIER_GROUP
 from .admin import ProductAdmin
 from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
+
+
+def tiny_image_upload(name="cat.png"):
+    buffer = BytesIO()
+    Image.new("RGB", (1, 1), color="white").save(buffer, format="PNG")
+    return SimpleUploadedFile(name, buffer.getvalue(), content_type="image/png")
 
 
 class CatalogModelTests(TestCase):
@@ -208,6 +216,9 @@ class ProductDashboardTests(TestCase):
         self.assertContains(response, 'data-quick-create-target="#id_category"')
         self.assertContains(response, 'data-quick-create-type="brand"')
         self.assertContains(response, 'data-quick-create-target="#id_brand"')
+        self.assertContains(response, 'data-quick-create-type="animal_type"')
+        self.assertContains(response, 'data-quick-create-target="#id_animal_types"')
+        self.assertContains(response, 'data-quick-create-field-name="animal_types"')
 
 
 class CatalogQuickCreateTests(TestCase):
@@ -265,6 +276,20 @@ class CatalogQuickCreateTests(TestCase):
         self.assertTrue(Supplier.objects.filter(name="Pet Wholesale", is_active=True).exists())
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.CREATE, object_type="Supplier").exists())
 
+    def test_admin_can_quick_create_animal_type(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(reverse("catalog-quick-create"), {"type": "animal_type", "name": "Reptile"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "ok")
+        self.assertEqual(payload["item"]["type"], "animal_type")
+        animal_type = AnimalTypeOption.objects.get(name="Reptile")
+        self.assertEqual(animal_type.code, "REPTILE")
+        self.assertTrue(animal_type.is_active)
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.CREATE, object_type="AnimalTypeOption").exists())
+
     def test_quick_create_rejects_case_insensitive_duplicate_name(self):
         Category.objects.create(name="Treats")
         self.client.force_login(self.admin)
@@ -315,6 +340,7 @@ class MasterDataDashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("category-list"))
         self.assertContains(response, reverse("brand-list"))
+        self.assertContains(response, reverse("animal-type-list"))
         self.assertContains(response, reverse("supplier-list"))
         self.assertContains(response, reverse("supplier-product-cost-list"))
         self.assertContains(response, reverse("promotion-list"))
@@ -349,6 +375,41 @@ class MasterDataDashboardTests(TestCase):
 
         self.assertRedirects(response, reverse("brand-list"))
         self.assertTrue(Brand.objects.filter(name="Happy Paw").exists())
+
+    def test_admin_can_create_animal_type_from_dashboard(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("animal-type-create"),
+            {
+                "name": "Reptile",
+                "code": "",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("animal-type-list"))
+        animal_type = AnimalTypeOption.objects.get(name="Reptile")
+        self.assertEqual(animal_type.code, "REPTILE")
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.CREATE, object_type="AnimalTypeOption").exists())
+
+    def test_admin_can_edit_animal_type_from_dashboard(self):
+        animal_type = AnimalTypeOption.objects.create(name="Reptile", code="REPTILE")
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("animal-type-edit", kwargs={"animal_type_id": animal_type.id}),
+            {
+                "name": "Reptiles",
+                "code": "REPTILE",
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("animal-type-list"))
+        animal_type.refresh_from_db()
+        self.assertEqual(animal_type.name, "Reptiles")
+        self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.UPDATE, object_type="AnimalTypeOption").exists())
 
     def test_admin_can_edit_supplier_from_dashboard(self):
         supplier = Supplier.objects.create(name="Pet Wholesale", phone="010000000")
@@ -481,11 +542,13 @@ class ProductClassificationTests(TestCase):
 
     def test_product_image_upload_persists_after_refresh(self):
         self.client.force_login(self.admin)
-        image = SimpleUploadedFile("cat.jpg", b"fake image bytes", content_type="image/jpeg")
+        image = tiny_image_upload()
 
         with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
             response = self.client.post(reverse("product-create"), self._base_payload(image=image))
 
+            if response.status_code != 302:
+                self.fail(response.context["form"].errors.as_text())
             self.assertRedirects(response, reverse("product-list"))
             product = Product.objects.get(product_code="P010")
             self.assertTrue(product.image.name.startswith("products/"))
@@ -498,6 +561,7 @@ class ProductClassificationTests(TestCase):
         dental = ProductTag.objects.create(name="Dental Care")
         cat = AnimalTypeOption.objects.get(code=Product.AnimalType.CAT)
         dog = AnimalTypeOption.objects.get(code=Product.AnimalType.DOG)
+        reptile = AnimalTypeOption.objects.create(name="Reptile", code="REPTILE")
         cat_food = Product.objects.create(
             product_code="C1", name="Cat Food", animal_type=Product.AnimalType.CAT
         )
@@ -505,11 +569,19 @@ class ProductClassificationTests(TestCase):
         cat_food.tags.add(dental)
         dog_food = Product.objects.create(product_code="D1", name="Dog Food", animal_type=Product.AnimalType.DOG)
         dog_food.animal_types.add(dog)
+        lizard_food = Product.objects.create(product_code="R1", name="Lizard Food", animal_type="REPTILE")
+        lizard_food.animal_types.add(reptile)
         self.client.force_login(self.admin)
 
         by_animal = self.client.get(reverse("product-list"), {"animal_type": "CAT"})
         self.assertContains(by_animal, "Cat Food")
         self.assertNotContains(by_animal, "Dog Food")
+        self.assertNotContains(by_animal, "Lizard Food")
+
+        by_custom_animal = self.client.get(reverse("product-list"), {"animal_type": "REPTILE"})
+        self.assertContains(by_custom_animal, "Reptile")
+        self.assertContains(by_custom_animal, "Lizard Food")
+        self.assertNotContains(by_custom_animal, "Cat Food")
 
         by_tag = self.client.get(reverse("product-list"), {"tag": dental.id})
         self.assertContains(by_tag, "Cat Food")

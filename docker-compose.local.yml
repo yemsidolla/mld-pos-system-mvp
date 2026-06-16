@@ -2,6 +2,12 @@ services:
   postgres:
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  minio:
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
   web:
     ports:
       - "8000:8000"
@@ -15,3 +21,4 @@ volumes:
   static_data:
   media_data:
   logs_data:
+  minio_data:

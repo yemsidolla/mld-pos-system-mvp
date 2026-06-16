@@ -21,10 +21,12 @@ data/postgres/*
 data/media/*
 data/static/*
 data/logs/*
+data/minio/*
 !data/postgres/.gitkeep
 !data/media/.gitkeep
 !data/static/.gitkeep
 !data/logs/.gitkeep
+!data/minio/.gitkeep
 
 # OS/editor
 .DS_Store

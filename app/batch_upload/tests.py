@@ -384,6 +384,26 @@ class ProductClassificationUploadTests(TestCase):
         self.assertEqual(ProductTag.objects.filter(name__in=["Grain Free", "Indoor"]).count(), 2)
         self.assertEqual(AnimalTypeOption.objects.filter(code__in=["CAT", "DOG"]).count(), 2)
 
+    def test_upload_accepts_custom_active_animal_type(self):
+        AnimalTypeOption.objects.create(name="Reptile", code="REPTILE")
+        content = (
+            "product_code,original_barcode,name,category,brand,unit,default_cost_price,"
+            "default_selling_price,min_stock,description,animal_type,life_stage,tags,is_active\n"
+            "P103,8850000001003,Lizard Food,Food,Melodu,Bag,1.50,2.50,3,,REPTILE,,,TRUE\n"
+        )
+        job = create_upload_job(
+            target=BatchUploadJob.Target.PRODUCTS,
+            uploaded_file=csv_upload("products.csv", content),
+            uploaded_by=self.admin,
+        )
+        self.assertEqual(job.rows.get().validation_errors, [])
+
+        commit_upload_job(job=job, committed_by=self.admin)
+
+        product = Product.objects.get(product_code="P103")
+        self.assertEqual(product.animal_type, "REPTILE")
+        self.assertEqual(list(product.animal_types.values_list("name", flat=True)), ["Reptile"])
+
     def test_upload_without_optional_columns_still_works(self):
         content = (
             "product_code,original_barcode,name,category,brand,unit,default_cost_price,"

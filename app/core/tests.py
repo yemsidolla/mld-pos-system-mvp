@@ -86,6 +86,19 @@ class ProtectedMediaTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(b"".join(response.streaming_content), b"saved-image")
 
+    @override_settings(USE_S3_MEDIA=True)
+    @mock.patch("core.views.default_storage")
+    def test_protected_media_redirects_to_signed_storage_url_when_s3_media_enabled(self, storage):
+        storage.exists.return_value = True
+        storage.url.return_value = "https://media.example.com/melodu-media/products/cat.jpg?signature=abc"
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("protected-media", kwargs={"path": "products/cat.jpg"}))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], storage.url.return_value)
+        storage.exists.assert_called_once_with("products/cat.jpg")
+
 
 class DashboardShellTests(TestCase):
     def setUp(self):

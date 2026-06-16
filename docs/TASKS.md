@@ -176,6 +176,7 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Add backup guide | Done |
 | Add database backup command | Done |
 | Add media backup command | Done |
+| Add optional MinIO media storage and backup command | AI Generated |
 | Add restore instruction | Done |
 | Add production checklist | Done |
 
@@ -237,6 +238,7 @@ Phase 0 created starter deployment files only. Final production deployment and b
 
 | Task | Status |
 | --- | --- |
+| Add current project status handoff document | AI Generated |
 | Produce V2 baseline audit documentation | Done |
 | Produce V2 roadmap documentation | Done |
 | Produce business rules documentation | Done |
@@ -318,6 +320,7 @@ Phase 0 created starter deployment files only. Final production deployment and b
 | Auto-create tags and validate classification on upload | AI Generated |
 | Include tag list in product audit snapshots | AI Generated |
 | Upgrade animal type from single value to multi-select options | AI Generated |
+| Add dashboard create/edit and quick-add workflow for animal types | AI Generated |
 | Add protected dashboard media serving for uploaded product images | AI Generated |
 | Add V4 Phase 2 tests and documentation | AI Generated |
 

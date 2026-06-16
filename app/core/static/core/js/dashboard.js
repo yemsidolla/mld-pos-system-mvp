@@ -102,6 +102,12 @@
                 { name: "phone", label: "Phone" },
                 { name: "telegram", label: "Telegram" }
             ]
+        },
+        animal_type: {
+            title: "New Animal Type",
+            fields: [
+                { name: "name", label: "Animal type name", required: true }
+            ]
         }
     };
 
@@ -195,6 +201,51 @@
         select.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
+    function findCheckbox(container, value) {
+        var checkboxes = container.querySelectorAll("input[type='checkbox']");
+        for (var index = 0; index < checkboxes.length; index += 1) {
+            if (checkboxes[index].value === value) return checkboxes[index];
+        }
+        return null;
+    }
+
+    function appendAndCheckOption(container, item, fieldName) {
+        var value = String(item.id);
+        var existing = findCheckbox(container, value);
+        if (existing) {
+            existing.checked = true;
+            existing.dispatchEvent(new Event("change", { bubbles: true }));
+            return;
+        }
+
+        var index = container.querySelectorAll("input[type='checkbox']").length;
+        var wrapper = document.createElement(container.tagName === "UL" ? "li" : "div");
+        var label = document.createElement("label");
+        var input = document.createElement("input");
+        var id = (container.id || "quick-create-checkbox") + "_" + index;
+
+        input.type = "checkbox";
+        input.name = fieldName || container.getAttribute("data-field-name") || (container.id || "").replace(/^id_/, "");
+        input.value = value;
+        input.id = id;
+        input.checked = true;
+        label.setAttribute("for", id);
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(" " + item.label));
+        wrapper.appendChild(label);
+        container.appendChild(wrapper);
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function appendAndSelectTarget(target, item, fieldName) {
+        if (!target) return;
+        if (target.tagName === "SELECT") {
+            appendAndSelectOption(target, item);
+            return;
+        }
+        appendAndCheckOption(target, item, fieldName);
+    }
+
     document.addEventListener("click", function (event) {
         var button = event.target.closest("[data-quick-create]");
         if (button) openQuickCreate(button);
@@ -214,7 +265,8 @@
 
         var type = activeQuickCreateButton.getAttribute("data-quick-create-type");
         var targetSelector = activeQuickCreateButton.getAttribute("data-quick-create-target");
-        var select = targetSelector ? document.querySelector(targetSelector) : null;
+        var target = targetSelector ? document.querySelector(targetSelector) : null;
+        var fieldName = activeQuickCreateButton.getAttribute("data-quick-create-field-name");
         var url = quickCreateModal.getAttribute("data-quick-create-url");
         var data = new FormData(quickCreateForm);
         data.append("type", type);
@@ -238,7 +290,7 @@
                 quickCreateStatus.textContent = "Review the fields and try again.";
                 return;
             }
-            if (select) appendAndSelectOption(select, response.payload.item);
+            appendAndSelectTarget(target, response.payload.item, fieldName);
             closeQuickCreate();
         }).catch(function () {
             showQuickCreateErrors(null, "Quick add was unavailable. Try again.");

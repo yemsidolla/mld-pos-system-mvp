@@ -272,6 +272,9 @@ def normalize_row(target, row_data):
                 errors.append("brand: brand name does not exist")
             animal_types = split_animal_type_codes(normalized.get("animal_type"))
             valid_animal_types = {choice for choice, _ in Product.AnimalType.choices}
+            valid_animal_types.update(
+                AnimalTypeOption.objects.filter(is_active=True).values_list("code", flat=True)
+            )
             if any(code not in valid_animal_types for code in animal_types):
                 errors.append("animal_type: invalid value")
             normalized["animal_type"] = "; ".join(animal_types)
@@ -470,12 +473,8 @@ def _commit_product(data):
         },
     )
     if animal_type_codes:
-        animal_labels = dict(Product.AnimalType.choices)
         animal_types = [
-            AnimalTypeOption.objects.get_or_create(
-                code=code,
-                defaults={"name": animal_labels.get(code, code.title())},
-            )[0]
+            AnimalTypeOption.objects.get(code=code)
             for code in animal_type_codes
         ]
         obj.animal_types.set(animal_types)

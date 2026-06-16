@@ -12,6 +12,7 @@ Version 1 MVP is a Django monolith for Melodu Pet Store.
 - Gunicorn for Django
 - External host Nginx reverse proxy
 - Docker-backed static, media, log, and database persistence
+- Optional MinIO/S3-compatible media storage for uploaded and generated media
 
 ## Core Business Rule
 
@@ -35,8 +36,8 @@ Version 1 does not include Next.js, Node.js, Redis, Celery, customer accounts, l
 ### Phase 0: Project Bootstrap
 
 - Django project and required apps are created.
-- Docker Compose runs PostgreSQL and Gunicorn/Django. It does not include an internal Nginx container.
-- Static, media, database, and log folders persist under `data/`.
+- Docker Compose runs PostgreSQL, Gunicorn/Django, and optional MinIO media storage. It does not include an internal Nginx container.
+- Static, local media, MinIO object data, database, and log folders persist under `data/`.
 - `/health/` checks the database connection.
 
 ### Phase 1: Master Data
@@ -148,13 +149,14 @@ Version 1 does not include Next.js, Node.js, Redis, Celery, customer accounts, l
 
 ### Phase 11: Production Deployment and Backup
 
-- Production Compose settings are available in `docker-compose.prod.yml` for PostgreSQL and Django.
+- Production Compose settings are available in `docker-compose.prod.yml` for PostgreSQL, Django, and optional MinIO media storage.
 - Production HTTPS/reverse proxy is handled by Nginx on the host, outside Docker.
 - Production setup steps are documented in `docs/DEPLOYMENT_GUIDE.md`.
 - Backup and restore steps are documented in `docs/BACKUP_GUIDE.md`.
 - Production checklist is documented in `docs/PRODUCTION_CHECKLIST.md`.
 - Database backup script is `scripts/backup_db.sh`.
 - Media backup script is `scripts/backup_media.sh`.
+- MinIO media backup script is `scripts/backup_minio.sh` when `USE_S3_MEDIA=True`.
 - Database restore script is `scripts/restore_db.sh`.
 - Generated backups are ignored by git via `backups/`.
 

@@ -172,6 +172,10 @@ USE_TZ = True
 DATA_ROOT = Path(os.environ.get("DATA_ROOT", PROJECT_ROOT / "data"))
 STATIC_URL = "/static/"
 STATIC_ROOT = Path(os.environ.get("DJANGO_STATIC_ROOT", DATA_ROOT / "static"))
+MEDIA_URL = "/media/"
+MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", DATA_ROOT / "media"))
+USE_S3_MEDIA = env_bool("USE_S3_MEDIA", False)
+
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -180,8 +184,44 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
-MEDIA_URL = "/media/"
-MEDIA_ROOT = Path(os.environ.get("DJANGO_MEDIA_ROOT", DATA_ROOT / "media"))
+if USE_S3_MEDIA:
+    INSTALLED_APPS.append("storages")
+    AWS_STORAGE_BUCKET_NAME = os.environ.get("S3_STORAGE_BUCKET_NAME", "melodu-media")
+    AWS_S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID", "")
+    AWS_S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY", "")
+    AWS_S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "http://minio:9000")
+    AWS_S3_REGION_NAME = os.environ.get("S3_REGION_NAME", "us-east-1")
+    AWS_S3_SIGNATURE_VERSION = os.environ.get("S3_SIGNATURE_VERSION", "s3v4")
+    AWS_S3_ADDRESSING_STYLE = os.environ.get("S3_ADDRESSING_STYLE", "path")
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = env_bool("S3_QUERYSTRING_AUTH", True)
+    AWS_QUERYSTRING_EXPIRE = env_int("S3_QUERYSTRING_EXPIRE", 3600)
+    AWS_S3_OBJECT_PARAMETERS = {
+        "CacheControl": os.environ.get("S3_MEDIA_CACHE_CONTROL", "max-age=86400"),
+    }
+
+    s3_storage_options = {
+        "bucket_name": AWS_STORAGE_BUCKET_NAME,
+        "access_key": AWS_S3_ACCESS_KEY_ID,
+        "secret_key": AWS_S3_SECRET_ACCESS_KEY,
+        "endpoint_url": AWS_S3_ENDPOINT_URL,
+        "region_name": AWS_S3_REGION_NAME,
+        "signature_version": AWS_S3_SIGNATURE_VERSION,
+        "addressing_style": AWS_S3_ADDRESSING_STYLE,
+        "file_overwrite": AWS_S3_FILE_OVERWRITE,
+        "default_acl": AWS_DEFAULT_ACL,
+        "querystring_auth": AWS_QUERYSTRING_AUTH,
+        "querystring_expire": AWS_QUERYSTRING_EXPIRE,
+        "object_parameters": AWS_S3_OBJECT_PARAMETERS,
+    }
+    custom_domain = os.environ.get("S3_CUSTOM_DOMAIN", "").strip()
+    if custom_domain:
+        s3_storage_options["custom_domain"] = custom_domain
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": s3_storage_options,
+    }
 LOG_DIR = Path(os.environ.get("DJANGO_LOG_DIR", DATA_ROOT / "logs"))
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 

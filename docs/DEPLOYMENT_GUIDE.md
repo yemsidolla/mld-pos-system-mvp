@@ -154,6 +154,67 @@ systemctl reload nginx
 
 There is intentionally no Docker `nginx` service. Host Nginx proxies to Gunicorn/Django, and WhiteNoise serves collected static files from Django.
 
+## MinIO Media Storage
+
+Use MinIO when uploaded/generated media should live outside the Django web
+container filesystem. Static files still use WhiteNoise.
+
+1. Set production media storage values:
+
+```env
+USE_S3_MEDIA=True
+MINIO_ROOT_USER=melodu_minio
+MINIO_ROOT_PASSWORD=replace-with-strong-password
+S3_STORAGE_BUCKET_NAME=melodu-media
+S3_ACCESS_KEY_ID=melodu_minio
+S3_SECRET_ACCESS_KEY=replace-with-strong-password
+S3_ENDPOINT_URL=https://melodu-media.khlovepet.com
+S3_REGION_NAME=us-east-1
+S3_QUERYSTRING_AUTH=True
+S3_QUERYSTRING_EXPIRE=3600
+```
+
+2. Start or restart production compose. The `minio-init` service creates the
+   bucket automatically.
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+3. Proxy the MinIO API through host Nginx so browser and phone media URLs are
+   reachable over HTTPS:
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name melodu-media.khlovepet.com;
+
+    ssl_certificate     /etc/letsencrypt/live/khlovepet.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/khlovepet.com/privkey.pem;
+
+    client_max_body_size 100m;
+
+    location / {
+        proxy_pass http://127.0.0.1:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
+```
+
+4. Reload Nginx and restart Django:
+
+```bash
+nginx -t
+systemctl reload nginx
+docker compose -f docker-compose.prod.yml restart web
+```
+
+See `docs/MINIO_STORAGE_GUIDE.md` for backup, restore, and existing-media
+migration notes.
+
 ## Backup
 
 Database backup:
@@ -166,6 +227,12 @@ Media backup:
 
 ```bash
 scripts/backup_media.sh
+```
+
+MinIO backup when `USE_S3_MEDIA=True`:
+
+```bash
+scripts/backup_minio.sh
 ```
 
 ## Restore
@@ -201,4 +268,5 @@ docker compose -f docker-compose.prod.yml exec web python manage.py expire_batch
 - Set secure cookie options to `True` when HTTPS is enabled.
 - Use HTTPS for camera-based barcode/QR scanning.
 - Confirm `data/postgres`, `data/media`, `data/static`, and `data/logs` are backed up.
+- If MinIO is enabled, confirm `data/minio` is backed up.
 - Rehearse restore monthly on a non-production copy.
