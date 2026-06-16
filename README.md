@@ -12,6 +12,15 @@ The MVP includes master data, audit logs, stock-in, batch barcode/QR generation,
 
 For the latest handoff summary, read `docs/CURRENT_STATUS.md`.
 
+## Standard Way of Working
+
+Before planning or implementing future Melodu POS work, read:
+
+- `docs/STANDARD_WAY_OF_WORKING.md`
+
+This document defines how requirements, design-system changes, implementation,
+testing, documentation updates, and releases must be handled.
+
 ## Quick Start
 
 Copy environment settings:
