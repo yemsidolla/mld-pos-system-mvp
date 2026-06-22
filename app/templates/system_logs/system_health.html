@@ -10,19 +10,101 @@
 {% endblock %}
 
 {% block content %}
+<section class="metric-grid">
+    <article class="metric-card {% if overall_status != 'OK' %}kpi-warning{% endif %}">
+        <span>{% trans "Overall" %}</span>
+        <strong class="small-value"><span class="badge {{ overall_badge_class }}">{{ overall_status }}</span></strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "Database" %}</span>
+        <strong class="small-value">
+            <span class="badge {% if database_ok %}badge-success{% else %}badge-danger{% endif %}">{{ database_status|upper }}</span>
+        </strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "Logs" %}</span>
+        <strong class="small-value">
+            <span class="badge {% if log_writable_ok %}badge-success{% else %}badge-danger{% endif %}">{{ log_writable_status|upper }}</span>
+        </strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "Disk Free" %}</span>
+        <strong class="small-value mono">{{ disk_free_display }}</strong>
+    </article>
+    <article class="metric-card {% if disk_status == 'critical' %}kpi-danger{% elif disk_status == 'warning' %}kpi-warning{% endif %}">
+        <span>{% trans "Disk Used" %}</span>
+        <strong class="small-value mono">{{ disk_used_percent }}%</strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "App Version" %}</span>
+        <strong class="small-value mono">{{ app_version }}</strong>
+    </article>
+</section>
+
 <section class="panel">
-    <table class="data-table">
-        <tbody>
-        <tr><th>{% trans "Database Status" %}</th><td><span class="badge">{{ database_status }}</span></td></tr>
-        <tr><th>{% trans "App Version" %}</th><td>{{ app_version }}</td></tr>
-        <tr><th>{% trans "Disk Total" %}</th><td>{{ disk_total }}</td></tr>
-        <tr><th>{% trans "Disk Used" %}</th><td>{{ disk_used }}</td></tr>
-        <tr><th>{% trans "Disk Free" %}</th><td>{{ disk_free }}</td></tr>
-        <tr><th>{% trans "Log Writable Status" %}</th><td><span class="badge">{{ log_writable_status }}</span></td></tr>
-        <tr><th>{% trans "Last Sale Time" %}</th><td>{{ last_sale_time|default:"" }}</td></tr>
-        <tr><th>{% trans "Last Stock-In Time" %}</th><td>{{ last_stock_in_time|default:"" }}</td></tr>
-        <tr><th>{% trans "Last Error" %}</th><td>{{ last_error }}</td></tr>
-        </tbody>
-    </table>
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Health Details" %}</h2>
+            <p>{% trans "Human-readable checks for production troubleshooting. Review warnings before they become outages." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <tbody>
+            <tr><th>{% trans "Database Status" %}</th><td><span class="badge {% if database_ok %}badge-success{% else %}badge-danger{% endif %}">{{ database_status }}</span></td></tr>
+            <tr><th>{% trans "App Version" %}</th><td class="mono">{{ app_version }}</td></tr>
+            <tr><th>{% trans "Disk Total" %}</th><td class="mono">{{ disk_total_display }}</td></tr>
+            <tr><th>{% trans "Disk Used" %}</th><td class="mono">{{ disk_used_display }}</td></tr>
+            <tr><th>{% trans "Disk Used Percent" %}</th><td><span class="badge {% if disk_status == 'critical' %}badge-danger{% elif disk_status == 'warning' %}badge-warning{% else %}badge-success{% endif %}">{{ disk_used_percent }}% · {{ disk_status|upper }}</span></td></tr>
+            <tr><th>{% trans "Disk Free" %}</th><td class="mono">{{ disk_free_display }}</td></tr>
+            <tr><th>{% trans "Log Writable Status" %}</th><td><span class="badge {% if log_writable_ok %}badge-success{% else %}badge-danger{% endif %}">{{ log_writable_status }}</span></td></tr>
+            <tr><th>{% trans "Last Sale Time" %}</th><td>{{ last_sale_time|default:"" }}</td></tr>
+            <tr><th>{% trans "Last Stock-In Time" %}</th><td>{{ last_stock_in_time|default:"" }}</td></tr>
+            <tr><th>{% trans "Last Error" %}</th><td>{{ last_error|default:"-" }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Operator Notes" %}</h2>
+            <p>{% trans "Safe production checks only. Secrets and full environment values must never be shown here." %}</p>
+        </div>
+    </header>
+    <div class="alert alert-info">
+        {% trans "Use Live Logs for recent sanitized errors, and use the deployment runbook for server-level checks." %}
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Backup / Reset Safeguards" %}</h2>
+            <p>{% trans "Visibility only. Backups and resets must be run from the server console with the runbook." %}</p>
+        </div>
+    </header>
+    <div class="alert alert-warning">
+        {% trans "There is intentionally no dashboard reset button. Data reset remains owner-level, command-line, dry-run-first, backup-confirmed, and audited." %}
+    </div>
+    <div class="table-scroll">
+        <table class="data-table">
+            <tbody>
+            <tr>
+                <th>{% trans "Backup Commands" %}</th>
+                <td>{% for command in backup_commands %}<span class="badge mono">{{ command }}</span> {% endfor %}</td>
+            </tr>
+            <tr>
+                <th>{% trans "Runbooks" %}</th>
+                <td>{% for doc in backup_docs %}<span class="badge mono">{{ doc }}</span> {% endfor %}</td>
+            </tr>
+            <tr>
+                <th>{% trans "Reset Safety" %}</th>
+                <td>{% trans "Requires ALLOW_DATA_RESET=1, exact reset phrase, backup acknowledgement, and command-line execution." %}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </section>
 {% endblock %}

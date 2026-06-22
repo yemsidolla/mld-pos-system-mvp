@@ -11,15 +11,45 @@
 
 {% block content %}
 <section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Report Definition" %}</h2>
+            <p>{% trans "Low stock means available active, unexpired stock is at or below the product minimum. Rows are prioritized by reorder gap." %}</p>
+        </div>
+    </header>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card kpi-warning"><span>{% trans "Low-stock Products" %}</span><strong>{{ summary.product_count }}</strong></article>
+    <article class="metric-card"><span>{% trans "Available Units" %}</span><strong>{{ summary.total_available }}</strong></article>
+    <article class="metric-card kpi-danger"><span>{% trans "Out of Stock" %}</span><strong>{{ summary.out_of_stock_count }}</strong></article>
+    <article class="metric-card kpi-warning"><span>{% trans "Reorder Units" %}</span><strong>{{ summary.reorder_units }}</strong></article>
+</section>
+<section class="panel">
+    <div class="table-scroll">
     <table class="data-table">
-        <thead><tr><th>{% trans "Product" %}</th><th>{% trans "Product Code" %}</th><th>{% trans "Total Available" %}</th><th>{% trans "Min Stock" %}</th></tr></thead>
+        <thead><tr><th>{% trans "Product" %}</th><th>{% trans "Product Code" %}</th><th>{% trans "Total Available" %}</th><th>{% trans "Min Stock" %}</th><th>{% trans "Reorder Gap" %}</th><th>{% trans "State" %}</th><th>{% trans "Action" %}</th></tr></thead>
         <tbody>
         {% for product in products %}
-            <tr><td>{{ product.name }}</td><td>{{ product.product_code }}</td><td>{{ product.total_available }}</td><td>{{ product.min_stock }}</td></tr>
+            <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.product_code }}</td>
+                <td>{{ product.total_available }}</td>
+                <td>{{ product.min_stock }}</td>
+                <td>{{ product.reorder_gap }}</td>
+                <td><span class="badge {{ product.stock_action_class }}">{{ product.stock_action_label }}</span></td>
+                <td>
+                    <div class="table-actions">
+                        <a class="btn" href="{% url 'inventory-summary' %}?q={{ product.product_code|urlencode }}">{% trans "Open Stock" %}</a>
+                        <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
+                    </div>
+                </td>
+            </tr>
         {% empty %}
-            <tr><td colspan="4" class="empty-cell">{% trans "No low stock products." %}</td></tr>
+            <tr><td colspan="7" class="empty-cell">{% trans "No low stock products." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% endblock %}

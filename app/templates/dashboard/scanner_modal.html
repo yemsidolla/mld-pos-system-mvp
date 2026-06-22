@@ -10,6 +10,10 @@
             <button class="icon-button" type="button" data-scanner-close aria-label="{% trans 'Close scanner' %}">×</button>
         </header>
         <div class="scanner-status" data-scanner-status>{% trans "Use the camera, upload an image, or type the code manually." %}</div>
+        <div class="scanner-help">
+            <strong>{% trans "Best results" %}</strong>
+            <span>{% trans "Keep the full code straight, bright, and close to the camera. If camera scan fails, upload a sharp photo or type the code." %}</span>
+        </div>
         <div id="melodu-scanner-reader" class="scanner-reader"></div>
         <div class="scanner-actions">
             <button class="btn btn-primary" type="button" data-scanner-start>{% trans "Open Camera" %}</button>

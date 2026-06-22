@@ -6,11 +6,38 @@
 {% block page_subtitle %}{% trans "Read-only record of sensitive actions. Audit entries cannot be edited or deleted." %}{% endblock %}
 
 {% block content %}
+<section class="metric-grid">
+    <article class="metric-card">
+        <span>{% trans "Entries" %}</span>
+        <strong>{{ summary.total_count }}</strong>
+    </article>
+    <article class="metric-card {% if summary.risk_count %}kpi-warning{% endif %}">
+        <span>{% trans "Risk Events" %}</span>
+        <strong>{{ summary.risk_count }}</strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "Modules" %}</span>
+        <strong>{{ summary.module_count }}</strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "Users" %}</span>
+        <strong>{{ summary.user_count }}</strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "Mode" %}</span>
+        <strong class="small-value">{% trans "Read-only" %}</strong>
+    </article>
+    <article class="metric-card">
+        <span>{% trans "Order" %}</span>
+        <strong class="small-value">{% trans "Newest first" %}</strong>
+    </article>
+</section>
+
 <section class="panel">
     <header class="panel-header">
         <div>
             <h2>{% trans "Filters" %}</h2>
-            <p>{% blocktrans count count=total_count %}{{ count }} entry found.{% plural %}{{ count }} entries found.{% endblocktrans %}</p>
+            <p>{% blocktrans count count=summary.total_count %}{{ count }} entry found.{% plural %}{{ count }} entries found.{% endblocktrans %}</p>
         </div>
     </header>
     {% include "dashboard/_list_filter.html" %}
@@ -31,6 +58,7 @@
                     <th>{% trans "User" %}</th>
                     <th>{% trans "Action" %}</th>
                     <th>{% trans "Module" %}</th>
+                    <th>{% trans "Risk" %}</th>
                     <th>{% trans "Object" %}</th>
                     <th>{% trans "IP" %}</th>
                 </tr>
@@ -40,11 +68,15 @@
                 <tr>
                     <td class="mono">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
                     <td>{{ log.user.username|default:"—" }}</td>
-                    <td><span class="badge">{{ log.get_action_display }}</span></td>
+                    <td><span class="badge {% if log.is_risk_action %}badge-warning{% endif %}">{{ log.get_action_display }}</span></td>
                     <td>{{ log.module }}</td>
+                    <td>{% if log.is_risk_action %}<span class="badge badge-warning">{% trans "Review" %}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
                     <td>
                         {% if log.object_display or log.object_type %}
                             {{ log.object_display|default:log.object_type }}
+                            {% if log.object_type or log.object_id %}
+                                <br><span class="muted mono">{{ log.object_type|default:"Object" }}{% if log.object_id %} #{{ log.object_id }}{% endif %}</span>
+                            {% endif %}
                             {% if log.old_value or log.new_value %}
                                 <details>
                                     <summary class="muted">{% trans "Details" %}</summary>
@@ -74,7 +106,7 @@
                     <td class="muted mono">{{ log.ip_address|default:"—" }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="6" class="empty-cell">{% trans "No audit entries found." %}</td></tr>
+                <tr><td colspan="7" class="empty-cell">{% trans "No audit entries found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

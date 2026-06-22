@@ -19,6 +19,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils._os import safe_join
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from PIL import Image, UnidentifiedImageError
@@ -389,29 +390,42 @@ def store_settings_view(request):
 def _error_context(request, status_code, title, message):
     user = getattr(request, "user", None)
     if user and user.is_authenticated and is_cashier_user(user) and not is_admin_user(user):
-        action_label = "Back to POS"
+        action_label = _("Back to POS")
         action_url = reverse("pos-sale")
-        secondary_label = "Login again"
+        secondary_label = _("Login again")
         secondary_url = reverse("dashboard-login")
     elif user and user.is_authenticated and can_access_dashboard(user):
-        action_label = "Back to Dashboard"
+        action_label = _("Back to Dashboard")
         action_url = reverse("dashboard-home")
-        secondary_label = "Login again"
+        secondary_label = _("Login again")
         secondary_url = reverse("dashboard-login")
     else:
-        action_label = "Login again"
+        action_label = _("Login again")
         action_url = reverse("dashboard-login")
         secondary_label = ""
         secondary_url = ""
+
+    support_hints = {
+        "403": _("Return to an area your role can use. If this should be allowed, ask an Owner to update your role."),
+        "404": _("Check that the link is current. If this happened after editing or deleting data, return to the list and search again."),
+        "500": _("Retry once. If it happens again, ask an administrator to check System Health and Live Logs."),
+    }
+    footer_notes = {
+        "403": _("AUDIT TRAIL ACTIVE"),
+        "404": _("NO TECHNICAL DETAILS SHOWN"),
+        "500": _("NO TECHNICAL DETAILS SHOWN"),
+    }
 
     return {
         "status_code": status_code,
         "title": title,
         "message": message,
+        "support_hint": support_hints.get(status_code, _("Use the available action below to continue safely.")),
         "action_label": action_label,
         "action_url": action_url,
         "secondary_label": secondary_label,
         "secondary_url": secondary_url,
+        "footer_note": footer_notes.get(status_code, "CONTROLLED ERROR PAGE"),
     }
 
 
@@ -422,8 +436,8 @@ def dashboard_permission_denied_view(request, exception=None):
         _error_context(
             request,
             "403",
-            "Access denied",
-            "Your account does not have permission to open this area.",
+            _("Access denied"),
+            _("Your account does not have permission to open this area."),
         ),
         status=403,
     )
@@ -436,8 +450,8 @@ def dashboard_page_not_found_view(request, exception=None):
         _error_context(
             request,
             "404",
-            "Page or item not found",
-            "The page or record you requested could not be found.",
+            _("Page or item not found"),
+            _("The page or record you requested could not be found."),
         ),
         status=404,
     )
@@ -450,8 +464,8 @@ def dashboard_server_error_view(request):
         _error_context(
             request,
             "500",
-            "Unexpected error",
-            "Something went wrong while handling the request.",
+            _("Unexpected error"),
+            _("Something went wrong while handling the request."),
         ),
         status=500,
     )

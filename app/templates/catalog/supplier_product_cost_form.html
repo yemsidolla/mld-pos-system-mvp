@@ -3,13 +3,14 @@
 
 {% block title %}{% if mode == "create" %}{% trans "New Reference Cost" %}{% else %}{% trans "Edit Reference Cost" %}{% endif %}{% endblock %}
 {% block page_title %}{% if mode == "create" %}{% trans "New Reference Cost" %}{% else %}{% trans "Edit Reference Cost" %}{% endif %}{% endblock %}
-{% block page_subtitle %}{% trans "Set the expected product cost for a specific supplier." %}{% endblock %}
+{% block page_subtitle %}{% trans "Set the expected supplier cost. Actual and landed costs are still recorded per received stock batch." %}{% endblock %}
 {% block header_actions %}
     <a class="btn" href="{% url 'supplier-product-cost-list' %}">{% trans "Back to Reference Costs" %}</a>
 {% endblock %}
 
 {% block content %}
 <section class="panel">
+    <p class="muted">{% trans "Reference cost is planning data. Stock-in Actual Unit Cost records what was paid for a batch; Landed Unit Cost can include shipping or handling." %}</p>
     {% if form.non_field_errors %}
         <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}

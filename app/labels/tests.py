@@ -36,6 +36,22 @@ class LabelTemplateModelTests(TestCase):
         self.assertTrue(LabelTemplate.objects.filter(template_type="PRODUCT", is_default=True).exists())
         self.assertEqual(LabelTemplate.default_for("PRODUCT").name, "Standard Product Label")
 
+    def test_enabled_field_labels_describe_selected_print_fields(self):
+        template = LabelTemplate.objects.create(
+            name="Shelf",
+            show_store_name=False,
+            show_product_name=True,
+            show_price=True,
+            show_barcode=False,
+            show_qr=True,
+        )
+
+        self.assertIn("Product", template.enabled_field_labels)
+        self.assertIn("Price", template.enabled_field_labels)
+        self.assertIn("QR", template.enabled_field_labels)
+        self.assertNotIn("Store", template.enabled_field_labels)
+        self.assertNotIn("Barcode", template.enabled_field_labels)
+
 
 class LabelTemplateAccessTests(TestCase):
     def setUp(self):
@@ -45,7 +61,13 @@ class LabelTemplateAccessTests(TestCase):
 
     def test_owner_can_manage_templates(self):
         self.client.force_login(self.owner)
-        self.assertEqual(self.client.get(reverse("label-template-list")).status_code, 200)
+        list_response = self.client.get(reverse("label-template-list"))
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, "Promotion Labels")
+        self.assertContains(list_response, "Defaults")
+        self.assertContains(list_response, "Inactive")
+        self.assertContains(list_response, "Orientation / Font")
+        self.assertContains(list_response, "Fields Shown")
 
         response = self.client.post(
             reverse("label-template-create"),
@@ -68,6 +90,31 @@ class LabelTemplateAccessTests(TestCase):
         self.assertTrue(
             AuditLog.objects.filter(action=AuditLog.Action.CREATE, module="labels").exists()
         )
+
+    def test_template_form_groups_fields_and_explains_defaults(self):
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("label-template-create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Template Identity")
+        self.assertContains(response, "Paper And Text")
+        self.assertContains(response, "Fields On Label")
+        self.assertContains(response, "Default And Status")
+        self.assertContains(response, "Saved templates are never overwritten")
+        self.assertContains(response, "Only one active default is kept per template type")
+        self.assertContains(response, "Physical label width")
+
+    def test_empty_template_list_points_to_create_flow(self):
+        LabelTemplate.objects.all().delete()
+        self.client.force_login(self.owner)
+
+        response = self.client.get(reverse("label-template-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No templates yet.")
+        self.assertContains(response, "Create a template before printing")
+        self.assertContains(response, "New Template")
 
     def test_inventory_staff_cannot_manage_templates(self):
         self.client.force_login(_profile_user("inv", ROLE_INVENTORY))
@@ -107,7 +154,13 @@ class LabelPrintTests(TestCase):
 
     def test_inventory_staff_can_open_print_page(self):
         self.client.force_login(_profile_user("inv2", ROLE_INVENTORY))
-        self.assertEqual(self.client.get(reverse("label-print")).status_code, 200)
+        response = self.client.get(reverse("label-print"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-scan-target="#template-label-batch-code"')
+        self.assertContains(response, 'data-scan-select-target="#id_stock_batches"')
+        self.assertContains(response, "Select one or more active batches")
+        self.assertContains(response, "Copies per selected batch")
+        self.assertContains(response, "Product and shelf labels print from active stock batches")
 
     def test_batch_query_param_preselects_batch_and_template(self):
         batch = self._batch()
@@ -138,6 +191,11 @@ class LabelPrintTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Cat Food")
+        self.assertContains(response, "Print Preview")
+        self.assertContains(response, "Selected Batches")
+        self.assertContains(response, "Copies Per Batch")
+        self.assertContains(response, "Total Labels")
+        self.assertContains(response, "Open Print Dialog")
         # quantity 3 for one batch => three rendered label cards.
         self.assertContains(response, 'class="tpl-label"', count=3)
         self.assertTrue(
@@ -188,6 +246,11 @@ class PromotionLabelTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Cat Food")
+        self.assertContains(response, "Promotion Print Preview")
+        self.assertContains(response, "Active Products")
+        self.assertContains(response, "Copies Per Product")
+        self.assertContains(response, "Promotion window")
+        self.assertContains(response, "Open Print Dialog")
         self.assertContains(response, "10.00")  # original price
         self.assertContains(response, "8.00")   # 20% off
         self.assertContains(response, 'class="promo-label"', count=2)
@@ -199,7 +262,11 @@ class PromotionLabelTests(TestCase):
 
     def test_inventory_staff_can_open_but_viewer_cannot(self):
         self.client.force_login(_profile_user("promo-inv", ROLE_INVENTORY))
-        self.assertEqual(self.client.get(reverse("promotion-label-print")).status_code, 200)
+        response = self.client.get(reverse("promotion-label-print"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Only active promotions are listed.")
+        self.assertContains(response, "Copies per active product in the promotion.")
+        self.assertContains(response, "Promotion labels print one card per active product")
 
         self.client.force_login(_profile_user("promo-vw", ROLE_VIEWER))
         self.assertEqual(self.client.get(reverse("promotion-label-print")).status_code, 403)

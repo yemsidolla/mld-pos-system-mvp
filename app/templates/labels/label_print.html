@@ -7,6 +7,7 @@
 {% block header_actions %}
     <a class="btn no-print" href="{% url 'barcode-print' %}">{% trans "Barcode / QR Print" %}</a>
     <a class="btn no-print" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
+    <button class="btn btn-primary no-print" type="button" data-scan-target="#template-label-batch-code" data-scan-select-target="#id_stock_batches" data-scan-select-match="stock_batch" data-scan-context="label_print">{% trans "Scan Batch" %}</button>
 {% endblock %}
 
 {% block extra_head %}
@@ -39,7 +40,19 @@
             <p>{% trans "Quantity is the number of copies per selected batch." %}</p>
         </div>
     </header>
+    <div class="alert alert-warning">
+        {% trans "Product and shelf labels print from active stock batches. Use Barcode / QR Print for a quick single-batch code label." %}
+    </div>
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="form-stack scan-lookup">
+        <div>
+            <label for="template-label-batch-code">{% trans "Scan Batch Code" %}</label>
+            <div class="input-row">
+                <input id="template-label-batch-code" type="text" autocomplete="off">
+                <button class="btn" type="button" data-scan-target="#template-label-batch-code" data-scan-select-target="#id_stock_batches" data-scan-select-match="stock_batch" data-scan-context="label_print">{% trans "Scan" %}</button>
+            </div>
+        </div>
+    </div>
     <form class="form-stack" method="post">
         {% csrf_token %}
         <div class="form-grid">
@@ -48,6 +61,7 @@
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
+                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -59,12 +73,19 @@
 </section>
 
 {% if template and labels %}
+<section class="metric-grid no-print">
+    <article class="metric-card"><span>{% trans "Template Type" %}</span><strong class="small-value">{{ template.get_template_type_display }}</strong></article>
+    <article class="metric-card"><span>{% trans "Selected Batches" %}</span><strong>{{ batches|length }}</strong></article>
+    <article class="metric-card"><span>{% trans "Copies Per Batch" %}</span><strong>{{ quantity }}</strong></article>
+    <article class="metric-card"><span>{% trans "Total Labels" %}</span><strong>{{ labels|length }}</strong></article>
+</section>
 <section class="panel">
     <header class="panel-header no-print">
         <div>
-            <h2>{% trans "Preview" %}</h2>
-            <p>{{ template.name }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
+            <h2>{% trans "Print Preview" %}</h2>
+            <p>{{ template.name }} · {{ template.paper_width_mm }}×{{ template.paper_height_mm }}mm · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
         </div>
+        <button class="btn btn-success" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
     </header>
     <div class="label-sheet">
         {% for batch in labels %}

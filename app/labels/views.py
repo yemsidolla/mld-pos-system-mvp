@@ -14,6 +14,31 @@ from .models import LabelTemplate
 MODULE = "labels"
 
 
+def label_template_field_groups(form):
+    return [
+        ("Template Identity", [form["name"], form["template_type"]]),
+        ("Paper And Text", [form["paper_width_mm"], form["paper_height_mm"], form["orientation"], form["font_size_px"]]),
+        (
+            "Fields On Label",
+            [
+                form["show_store_name"],
+                form["show_logo"],
+                form["show_product_name"],
+                form["show_price"],
+                form["show_sku"],
+                form["show_barcode"],
+                form["show_qr"],
+                form["show_batch"],
+                form["show_expiry"],
+                form["show_animal_type"],
+                form["show_life_stage"],
+            ],
+        ),
+        ("Custom Text", [form["header_text"], form["custom_footer"]]),
+        ("Default And Status", [form["is_default"], form["is_active"]]),
+    ]
+
+
 def products_for_promotion(promotion):
     if promotion.product_id:
         return [promotion.product] if promotion.product.is_active else []
@@ -27,7 +52,16 @@ def products_for_promotion(promotion):
 @catalog_required
 def label_template_list_view(request):
     templates = LabelTemplate.objects.all()
-    return render(request, "labels/template_list.html", {"templates": templates})
+    return render(
+        request,
+        "labels/template_list.html",
+        {
+            "templates": templates,
+            "template_count": templates.count(),
+            "default_count": templates.filter(is_default=True).count(),
+            "inactive_count": templates.filter(is_active=False).count(),
+        },
+    )
 
 
 @catalog_required
@@ -46,7 +80,11 @@ def label_template_create_view(request):
         )
         messages.success(request, f"Label template '{template.name}' was created.")
         return redirect("label-template-list")
-    return render(request, "labels/template_form.html", {"form": form, "mode": "create"})
+    return render(
+        request,
+        "labels/template_form.html",
+        {"form": form, "mode": "create", "field_groups": label_template_field_groups(form)},
+    )
 
 
 @catalog_required
@@ -69,7 +107,7 @@ def label_template_edit_view(request, template_id):
     return render(
         request,
         "labels/template_form.html",
-        {"form": form, "mode": "edit", "template": template},
+        {"form": form, "mode": "edit", "template": template, "field_groups": label_template_field_groups(form)},
     )
 
 
@@ -87,7 +125,7 @@ def label_print_view(request):
                 initial["template"] = default_template.pk
 
     form = LabelPrintForm(request.POST or None, initial=initial or None)
-    context = {"form": form, "labels": [], "template": None, "auto_print": False}
+    context = {"form": form, "labels": [], "template": None, "auto_print": False, "batches": [], "quantity": None}
 
     if request.method == "POST" and form.is_valid():
         template = form.cleaned_data["template"]
@@ -97,7 +135,7 @@ def label_print_view(request):
         for batch in batches:
             for _ in range(quantity):
                 labels.append(batch)
-        context.update({"template": template, "labels": labels})
+        context.update({"template": template, "labels": labels, "batches": list(batches), "quantity": quantity})
 
         if request.POST.get("action") == "print":
             context["auto_print"] = True
@@ -120,7 +158,15 @@ def label_print_view(request):
 @inventory_required
 def promotion_label_print_view(request):
     form = PromotionLabelForm(request.POST or None)
-    context = {"form": form, "labels": [], "template": None, "auto_print": False, "promotion": None}
+    context = {
+        "form": form,
+        "labels": [],
+        "template": None,
+        "auto_print": False,
+        "promotion": None,
+        "products": [],
+        "quantity": None,
+    }
 
     if request.method == "POST" and form.is_valid():
         promotion = form.cleaned_data["promotion"]
@@ -143,7 +189,15 @@ def promotion_label_print_view(request):
                     "custom_text": custom_text,
                 }
                 labels.extend([card] * quantity)
-            context.update({"promotion": promotion, "template": template, "labels": labels})
+            context.update(
+                {
+                    "promotion": promotion,
+                    "template": template,
+                    "labels": labels,
+                    "products": products,
+                    "quantity": quantity,
+                }
+            )
 
             if request.POST.get("action") == "print":
                 context["auto_print"] = True

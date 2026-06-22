@@ -62,14 +62,16 @@
         </header>
         <div class="action-grid">
             {% if caps.can_pos %}
-                <a class="action-card" href="{% url 'pos-sale' %}">{% icon "cart" 20 "action-ic" %}<strong>{% trans "POS Sale" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
+                <a class="action-card" href="{% url 'pos-sale' %}">{% icon "cart" 20 "action-ic" %}<strong>{% trans "Open POS" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
             {% endif %}
             {% if caps.can_inventory %}
                 <a class="action-card" href="{% url 'stock-in' %}">{% icon "truck" 20 "action-ic" %}<strong>{% trans "Receive Stock" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
                 <a class="action-card" href="{% url 'inventory-summary' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Stock Overview" %}</strong><span>{% trans "Batches, expiry, and stock levels." %}</span></a>
+                <a class="action-card" href="{% url 'label-print' %}">{% icon "printer" 20 "action-ic" %}<strong>{% trans "Print Labels" %}</strong><span>{% trans "Prepare labels from stock batches." %}</span></a>
             {% endif %}
             {% if caps.can_catalog %}
                 <a class="action-card" href="{% url 'product-list' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Products" %}</strong><span>{% trans "Search and update master data." %}</span></a>
+                <a class="action-card" href="{% url 'batch-upload' %}">{% icon "upload" 20 "action-ic" %}<strong>{% trans "Batch Upload" %}</strong><span>{% trans "Preview and commit CSV or XLSX rows." %}</span></a>
             {% endif %}
             {% if caps.can_sales_history %}
                 <a class="action-card" href="{% url 'sales-history' %}">{% icon "receipt" 20 "action-ic" %}<strong>{% trans "Sales History" %}</strong><span>{% trans "Filter and inspect completed sales." %}</span></a>

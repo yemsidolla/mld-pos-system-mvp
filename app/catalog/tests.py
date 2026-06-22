@@ -123,8 +123,24 @@ class ProductDashboardTests(TestCase):
         self.assertContains(response, "Product Catalog")
         self.assertContains(response, "Cat Food")
         self.assertContains(response, 'data-scan-target="#id_q"')
+        self.assertContains(response, 'type="search" name="q"')
+        self.assertContains(response, "Search name, code, barcode, or tag")
         self.assertContains(response, "Photo")
         self.assertContains(response, "product-thumb-empty")
+
+    def test_product_list_renders_product_image_when_available(self):
+        self.client.force_login(self.admin)
+
+        with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            self.product.image = tiny_image_upload()
+            self.product.save()
+
+            response = self.client.get(reverse("product-list"))
+
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'class="product-thumb"')
+            self.assertContains(response, self.product.image.url)
+            self.assertNotContains(response, "product-thumb-empty")
 
     def test_product_list_filters_by_search(self):
         Product.objects.create(product_code="P002", name="Dog Toy")
@@ -455,6 +471,35 @@ class MasterDataDashboardTests(TestCase):
         cost = SupplierProductCost.objects.get(product=product, supplier=supplier)
         self.assertEqual(cost.reference_unit_cost, Decimal("1.75"))
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.COST_CHANGE, object_type="SupplierProductCost").exists())
+
+    def test_reference_cost_pages_explain_cost_terms(self):
+        category = Category.objects.create(name="Food")
+        product = Product.objects.create(
+            product_code="P002",
+            name="Kitten Food",
+            category=category,
+            default_cost_price=Decimal("1.25"),
+        )
+        supplier = Supplier.objects.create(name="Pet Wholesale")
+        SupplierProductCost.objects.create(
+            product=product,
+            supplier=supplier,
+            reference_unit_cost=Decimal("1.75"),
+            notes="Vendor June quote",
+        )
+        self.client.force_login(self.admin)
+
+        list_response = self.client.get(reverse("supplier-product-cost-list"))
+        form_response = self.client.get(reverse("supplier-product-cost-create"))
+
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, "Product Default Cost")
+        self.assertContains(list_response, "Supplier Reference Unit Cost")
+        self.assertContains(list_response, "Vendor June quote")
+        self.assertContains(list_response, "1.25")
+        self.assertEqual(form_response.status_code, 200)
+        self.assertContains(form_response, "Actual and landed costs are still recorded per received stock batch")
+        self.assertContains(form_response, "Quote or expected vendor cost")
 
     def test_cashier_cannot_access_supplier_product_cost_pages(self):
         self.client.force_login(self.cashier)

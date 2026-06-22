@@ -313,15 +313,15 @@ class PosPageTests(TestCase):
             default_selling_price=Decimal("2.50"),
         )
 
-    def create_batch(self, quantity=5):
+    def create_batch(self, quantity=5, actual_unit_cost=Decimal("1.50"), selling_price=Decimal("2.50")):
         with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
             stock_batch, _movement = receive_stock(
                 product=self.product,
                 supplier=self.supplier,
                 quantity=quantity,
                 expiry_date=date(2027, 6, 1),
-                actual_unit_cost=Decimal("1.50"),
-                selling_price=Decimal("2.50"),
+                actual_unit_cost=actual_unit_cost,
+                selling_price=selling_price,
                 received_by=self.cashier,
             )
         return StockBatch.objects.get(pk=stock_batch.pk)
@@ -393,6 +393,57 @@ class PosPageTests(TestCase):
         self.client.post(reverse("pos-sale"), {"action": "remove_item", "stock_batch_id": stock_batch.id})
         self.assertEqual(active_cart_items(self.client.session), [])
 
+    def test_cart_shows_promotion_price_explanation(self):
+        stock_batch = self.create_batch()
+        Promotion.objects.create(
+            name="Cat food 20 off",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("20.00"),
+            start_date=timezone.localdate() - timedelta(days=1),
+            end_date=timezone.localdate() + timedelta(days=1),
+            product=self.product,
+            created_by=self.cashier,
+        )
+        self.client.force_login(self.cashier)
+        self.client.post(
+            reverse("pos-sale"),
+            {"action": "add_batch", "stock_batch_id": stock_batch.id, "quantity": "1"},
+        )
+
+        response = self.client.get(reverse("pos-sale"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Promotion discount in cart")
+        self.assertContains(response, "Cat food 20 off")
+        self.assertContains(response, "Was")
+        self.assertContains(response, "Now")
+        self.assertContains(response, "Save")
+        self.assertContains(response, "0.50")
+
+    def test_cart_warns_cashier_when_manager_approval_is_needed(self):
+        stock_batch = self.create_batch(actual_unit_cost=Decimal("1.50"), selling_price=Decimal("2.50"))
+        Promotion.objects.create(
+            name="Clearance final price",
+            discount_type=Promotion.DiscountType.FIXED_FINAL_PRICE,
+            value=Decimal("1.00"),
+            start_date=timezone.localdate() - timedelta(days=1),
+            end_date=timezone.localdate() + timedelta(days=1),
+            product=self.product,
+            allow_below_cost=False,
+            created_by=self.cashier,
+        )
+        self.client.force_login(self.cashier)
+        self.client.post(
+            reverse("pos-sale"),
+            {"action": "add_batch", "stock_batch_id": stock_batch.id, "quantity": "1"},
+        )
+
+        response = self.client.get(reverse("pos-sale"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Manager approval")
+        self.assertContains(response, "need manager approval")
+
 
 class PromotionDashboardTests(TestCase):
     def setUp(self):
@@ -425,6 +476,80 @@ class PromotionDashboardTests(TestCase):
         self.assertContains(cashier_response, "Access denied", status_code=403)
         self.assertEqual(admin_response.status_code, 200)
         self.assertContains(admin_response, "Promotions")
+        self.assertContains(admin_response, "Promotion Labels")
+
+    def test_promotion_list_shows_timeline_status(self):
+        today = timezone.localdate()
+        Promotion.objects.create(
+            name="Running Promo",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("10.00"),
+            start_date=today - timedelta(days=1),
+            end_date=today + timedelta(days=1),
+            is_active=True,
+            category=self.category,
+            created_by=self.admin,
+        )
+        Promotion.objects.create(
+            name="Upcoming Promo",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("5.00"),
+            start_date=today + timedelta(days=1),
+            end_date=today + timedelta(days=7),
+            is_active=True,
+            category=self.category,
+            created_by=self.admin,
+        )
+        Promotion.objects.create(
+            name="Ended Promo",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("5.00"),
+            start_date=today - timedelta(days=7),
+            end_date=today - timedelta(days=1),
+            is_active=True,
+            category=self.category,
+            created_by=self.admin,
+        )
+        Promotion.objects.create(
+            name="Inactive Promo",
+            discount_type=Promotion.DiscountType.PERCENTAGE,
+            value=Decimal("5.00"),
+            start_date=today - timedelta(days=1),
+            end_date=today + timedelta(days=1),
+            is_active=False,
+            category=self.category,
+            created_by=self.admin,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("promotion-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Timeline")
+        self.assertContains(response, "Promotions")
+        self.assertContains(response, "Ends in")
+        self.assertContains(response, "Starts in")
+        self.assertContains(response, "Ended 1 day(s) ago")
+        self.assertContains(response, "10% off")
+        self.assertContains(response, "Running")
+        self.assertContains(response, "Upcoming")
+        self.assertContains(response, "Ended")
+        self.assertContains(response, "Inactive")
+
+    def test_promotion_form_renders_guidance_and_help(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("promotion-create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Promotions do not stack")
+        self.assertContains(response, "Choose either a product or a category, not both.")
+        self.assertContains(response, "Promotion Identity")
+        self.assertContains(response, "Discount And Dates")
+        self.assertContains(response, "Scope")
+        self.assertContains(response, "Safety")
+        self.assertContains(response, "Percentage, fixed amount off, or fixed final price.")
+        self.assertContains(response, "Only allow this when the owner accepts selling below cost.")
 
     def test_admin_can_create_promotion_from_dashboard(self):
         self.client.force_login(self.admin)
@@ -470,6 +595,28 @@ class PromotionDashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Promotion must apply to a product or category.")
         self.assertFalse(Promotion.objects.filter(name="No scope").exists())
+
+    def test_promotion_form_rejects_product_and_category_together(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("promotion-create"),
+            {
+                "name": "Too broad",
+                "discount_type": Promotion.DiscountType.FIXED_AMOUNT,
+                "value": "0.50",
+                "start_date": timezone.localdate().isoformat(),
+                "end_date": (timezone.localdate() + timedelta(days=7)).isoformat(),
+                "is_active": "on",
+                "product": self.product.id,
+                "category": self.category.id,
+                "allow_below_cost": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Choose either a product or a category, not both.")
+        self.assertFalse(Promotion.objects.filter(name="Too broad").exists())
 
 
 class SalesCancellationTests(TestCase):
@@ -544,8 +691,34 @@ class SalesCancellationTests(TestCase):
         # V5 Phase 5: every filtered list offers a consistent Filter + Reset.
         self.assertContains(history, "Filter")
         self.assertContains(history, "Reset")
+        self.assertContains(history, "Sales Found")
+        self.assertContains(history, "Receipt Reprints")
+        self.assertContains(history, "Completed Revenue")
         self.assertEqual(detail.status_code, 200)
         self.assertContains(detail, "Cancel Sale")
+        self.assertContains(detail, "Exception Tracking")
+
+    def test_sales_history_filters_by_status_and_summarizes_exceptions(self):
+        sale, _stock_batch = self.create_sale()
+        cancel_sale(sale=sale, cancelled_by=self.admin, reason="Mistake")
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("sales-history"), {"status": Sale.Status.CANCELLED})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, sale.sale_no)
+        self.assertContains(response, "Cancelled")
+        self.assertEqual(response.context["summary"]["sale_count"], 1)
+        self.assertEqual(response.context["summary"]["cancelled_count"], 1)
+
+    def test_empty_sales_history_gives_filter_guidance(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("sales-history"), {"payment_method": Sale.PaymentMethod.CASH})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No sales found.")
+        self.assertContains(response, "Try different filters")
 
     def test_cashier_cannot_cancel_sale(self):
         sale, _stock_batch = self.create_sale()
@@ -604,6 +777,25 @@ class ReceiptTests(TestCase):
                 action=AuditLog.Action.RECEIPT_PRINT, object_id=str(self.sale.pk)
             ).exists()
         )
+
+    def test_sale_detail_shows_receipt_reprint_tracking(self):
+        AuditLog.objects.create(
+            action=AuditLog.Action.RECEIPT_PRINT,
+            module="pos",
+            user=self.admin,
+            object_type="Sale",
+            object_id=str(self.sale.pk),
+            object_display=self.sale.sale_no,
+            new_value={"reprint": True},
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("sale-detail", kwargs={"sale_id": self.sale.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Exception Tracking")
+        self.assertContains(response, "Receipt Reprints")
+        self.assertEqual(response.context["reprint_count"], 1)
 
     def test_cashier_cannot_reprint(self):
         self.client.force_login(self.cashier)
@@ -730,6 +922,24 @@ class QuickKeyTests(TestCase):
 
         self.assertContains(response, "Quick Keys")
         self.assertContains(response, "Quick Cat Food")
+        self.assertContains(response, 'value="8851111111119"')
+        self.assertNotContains(response, 'value="P910"')
+
+    def test_quick_key_products_without_barcode_are_hidden(self):
+        from core.models import StoreSetting
+
+        no_barcode = Product.objects.create(
+            product_code="P911",
+            name="No Barcode Product",
+            default_cost_price=Decimal("1.50"),
+            default_selling_price=Decimal("2.50"),
+        )
+        StoreSetting.load().quick_key_products.add(no_barcode)
+
+        response = self.client.get(reverse("pos-sale"))
+
+        self.assertNotContains(response, "Quick Keys")
+        self.assertNotContains(response, "No Barcode Product")
 
     def test_no_quick_keys_section_when_nothing_configured_or_sold(self):
         response = self.client.get(reverse("pos-sale"))
@@ -753,6 +963,7 @@ class QuickKeyTests(TestCase):
 
         self.assertContains(response, "Promotions")
         self.assertContains(response, "-10%")
+        self.assertContains(response, 'value="8851111111119"')
 
 
 class PaymentFlowTests(TestCase):

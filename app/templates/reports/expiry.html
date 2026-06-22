@@ -11,15 +11,59 @@
 
 {% block content %}
 <section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Report Definition" %}</h2>
+            <p>{% trans "Expiry report includes active batches with available stock that are expired or due within the warning window." %}</p>
+        </div>
+    </header>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card"><span>{% trans "Batches" %}</span><strong>{{ summary.batch_count }}</strong></article>
+    <article class="metric-card kpi-danger"><span>{% trans "Expired" %}</span><strong>{{ summary.expired_count }}</strong></article>
+    <article class="metric-card kpi-danger"><span>{% trans "Critical" %}</span><strong>{{ summary.critical_count }}</strong></article>
+    <article class="metric-card kpi-warning"><span>{% trans "Warning" %}</span><strong>{{ summary.warning_count }}</strong></article>
+    <article class="metric-card kpi-danger"><span>{% trans "Review Now" %}</span><strong>{{ summary.review_now_count }}</strong></article>
+</section>
+<section class="panel">
+    <div class="table-scroll">
     <table class="data-table">
-        <thead><tr><th>{% trans "Batch" %}</th><th>{% trans "Product" %}</th><th>{% trans "Expiry" %}</th><th>{% trans "Status" %}</th><th>{% trans "Available" %}</th></tr></thead>
+        <thead><tr><th>{% trans "Batch" %}</th><th>{% trans "Product" %}</th><th>{% trans "Supplier" %}</th><th>{% trans "Expiry" %}</th><th>{% trans "Days" %}</th><th>{% trans "Status" %}</th><th>{% trans "Available" %}</th><th>{% trans "Next Action" %}</th></tr></thead>
         <tbody>
         {% for row in rows %}
-            <tr><td>{{ row.batch.batch_no }}</td><td>{{ row.batch.product.name }}</td><td>{{ row.batch.expiry_date }}</td><td><span class="badge">{{ row.expiry_status }}</span></td><td>{{ row.batch.quantity_available }}</td></tr>
+            <tr>
+                <td><a href="{% url 'stock-batch-detail' row.batch.id %}">{{ row.batch.batch_no }}</a></td>
+                <td>{{ row.batch.product.name }}<br><span class="muted">{{ row.batch.product.product_code }}</span></td>
+                <td>{{ row.batch.supplier.name }}</td>
+                <td>{{ row.batch.expiry_date }}</td>
+                <td class="mono">
+                    {% if row.days_until_expiry < 0 %}
+                        {% trans "Expired" %}
+                    {% else %}
+                        {{ row.days_until_expiry }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if row.expiry_status == "Expired" or row.expiry_status == "Critical" %}
+                        <span class="badge badge-danger">{{ row.expiry_status }}</span>
+                    {% elif row.expiry_status == "Warning" %}
+                        <span class="badge badge-warning">{{ row.expiry_status }}</span>
+                    {% else %}
+                        <span class="badge badge-success">{{ row.expiry_status }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ row.batch.quantity_available }}</td>
+                <td>
+                    <span class="badge">{{ row.action_label }}</span>
+                    <br><a class="btn" href="{% url 'stock-batch-detail' row.batch.id %}">{% trans "Open Batch" %}</a>
+                </td>
+            </tr>
         {% empty %}
-            <tr><td colspan="5" class="empty-cell">{% trans "No expiring batches found." %}</td></tr>
+            <tr><td colspan="8" class="empty-cell">{% trans "No expiring batches found." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% endblock %}

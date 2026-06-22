@@ -5,13 +5,47 @@
 {% block title %}{% trans "Live Backend Logs" %}{% endblock %}
 {% block page_title %}{% trans "Live Backend Logs" %}{% endblock %}
 {% block page_subtitle %}{% trans "Auto-refreshing sanitized application and error logs." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'system-health' %}">{% trans "System Health" %}</a>
+    <a class="btn" href="{% url 'dashboard-home' %}">{% trans "Dashboard" %}</a>
+{% endblock %}
 
 {% block content %}
+<section class="metric-grid">
+    <article class="metric-card {% if error_line_count %}kpi-warning{% endif %}"><span>{% trans "Error Lines" %}</span><strong>{{ error_line_count }}</strong></article>
+    <article class="metric-card"><span>{% trans "App Lines" %}</span><strong>{{ app_line_count }}</strong></article>
+</section>
+
 <section class="panel">
-    <h2>{% trans "Errors" %}</h2>
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Log Stream" %}</h2>
+            <p>{% trans "Auto-refreshes every 5 seconds. Sensitive values are redacted before display." %}</p>
+        </div>
+    </header>
+    <div class="alert alert-warning">
+        {% trans "Sanitized operational logs only. Do not paste secrets into logs or support notes." %}
+    </div>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Errors" %}</h2>
+            <p>{% trans "Newest entries appear first." %}</p>
+        </div>
+    </header>
     <pre class="log-block error-log">{% for line in error_lines %}{{ line }}
 {% empty %}{% trans "No error logs found." %}{% endfor %}</pre>
-    <h2>{% trans "Application" %}</h2>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Application" %}</h2>
+            <p>{% trans "Newest entries appear first." %}</p>
+        </div>
+    </header>
     <pre class="log-block">{% for line in app_lines %}{{ line }}
 {% empty %}{% trans "No application logs found." %}{% endfor %}</pre>
 </section>

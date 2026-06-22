@@ -12,6 +12,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+from django.utils.translation import gettext, override
 
 from accounts.models import StaffProfile
 from audit.models import AuditLog
@@ -26,6 +27,9 @@ from core.permissions import (
     ROLE_VIEWER,
 )
 from core.views import dashboard_server_error_view
+from inventory.forms import StockInForm
+from labels.forms import LabelPrintForm as TemplateLabelPrintForm
+from pos.forms import PromotionForm, ScanForm
 from inventory.models import StockBatch
 from inventory.services import receive_stock
 
@@ -132,6 +136,9 @@ class DashboardShellTests(TestCase):
         self.assertContains(response, "Costs")
         self.assertContains(response, "Promotions")
         self.assertContains(response, "Batch Upload")
+        self.assertContains(response, "Store Settings")
+        self.assertContains(response, "Login &amp; Authentication")
+        self.assertContains(response, "Style Guide")
         self.assertContains(response, "Django Admin")
 
     def test_cashier_dashboard_hides_admin_navigation(self):
@@ -145,6 +152,36 @@ class DashboardShellTests(TestCase):
         self.assertNotContains(response, "Promotions")
         self.assertNotContains(response, "Batch Upload")
         self.assertNotContains(response, "Django Admin")
+
+
+class TranslationCoverageTests(TestCase):
+    def test_khmer_translates_v7_staff_facing_terms(self):
+        expected = {
+            "Stock Overview": "ទិដ្ឋភាពស្តុក",
+            "Scan Barcode or QR": "ស្កេនបាកូដ ឬ QR",
+            "What to do next": "អ្វីត្រូវធ្វើបន្ទាប់",
+            "Choose an active product with an original barcode. Use Scan Product to fill this field faster.": (
+                "ជ្រើសផលិតផលសកម្មដែលមានបាកូដដើម។ ប្រើ ស្កេនផលិតផល ដើម្បីបំពេញវាលនេះឱ្យលឿន។"
+            ),
+            "Choose the layout used for every selected batch.": "ជ្រើសប្លង់សម្រាប់ Batch ដែលបានជ្រើសទាំងអស់។",
+            "Percentage, fixed amount off, or fixed final price.": "ភាគរយ បញ្ចុះចំនួនថេរ ឬតម្លៃចុងក្រោយថេរ។",
+        }
+
+        with override("km"):
+            for source, translated in expected.items():
+                self.assertEqual(gettext(source), translated)
+
+    def test_v7_python_form_copy_uses_gettext_wrappers(self):
+        with override("km"):
+            stock_form = StockInForm()
+            scan_form = ScanForm()
+            label_form = TemplateLabelPrintForm()
+            promotion_form = PromotionForm()
+
+            self.assertEqual(scan_form.fields["scan_value"].label, "ស្កេនបាកូដ ឬ QR")
+            self.assertIn("បាកូដដើម", str(stock_form.fields["product"].help_text))
+            self.assertIn("ប្លង់", str(label_form.fields["template"].help_text))
+            self.assertIn("ភាគរយ", str(promotion_form.fields["discount_type"].help_text))
 
 
 class RoleAwareHomeTests(TestCase):
@@ -167,8 +204,8 @@ class RoleAwareHomeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Receive Stock")
         self.assertContains(response, "Stock Overview")
+        self.assertContains(response, "Print Labels")
         self.assertNotContains(response, "Open POS")
-        self.assertNotContains(response, "POS Sale")
 
     def test_viewer_home_shows_reports_and_no_pos(self):
         self.client.force_login(self._user("aud", ROLE_VIEWER))
@@ -190,7 +227,8 @@ class RoleAwareHomeTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Open POS")
-        self.assertContains(response, "POS Sale")
+        self.assertNotContains(response, "Batch Upload")
+        self.assertNotContains(response, "Print Labels")
 
     def test_mobile_nav_is_role_weighted_and_capped(self):
         self.client.force_login(self._user("cmob", ROLE_CASHIER))
@@ -321,6 +359,10 @@ class DashboardErrorPageTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertContains(response, "Access denied", status_code=403)
         self.assertContains(response, "Back to POS", status_code=403)
+        self.assertContains(response, "What to do next", status_code=403)
+        self.assertContains(response, "ask an Owner to update your role", status_code=403)
+        self.assertContains(response, "AUDIT TRAIL ACTIVE", status_code=403)
+        self.assertNotContains(response, "EVENT LOGGED", status_code=403)
 
     @override_settings(DEBUG=False, ALLOWED_HOSTS=["testserver"])
     def test_missing_dashboard_object_renders_friendly_404(self):
@@ -330,6 +372,8 @@ class DashboardErrorPageTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertContains(response, "Page or item not found", status_code=404)
+        self.assertContains(response, "Check that the link is current", status_code=404)
+        self.assertContains(response, "NO TECHNICAL DETAILS SHOWN", status_code=404)
 
     def test_server_error_handler_renders_friendly_500(self):
         request = RequestFactory().get("/dashboard/error/")
@@ -339,6 +383,8 @@ class DashboardErrorPageTests(TestCase):
 
         self.assertEqual(response.status_code, 500)
         self.assertIn(b"Unexpected error", response.content)
+        self.assertIn(b"System Health and Live Logs", response.content)
+        self.assertIn(b"NO TECHNICAL DETAILS SHOWN", response.content)
 
 
 class ScanResolveTests(TestCase):
@@ -448,6 +494,7 @@ class ScannerPlacementTests(TestCase):
         self.client.force_login(self.cashier)
         pos_response = self.client.get(reverse("pos-sale"))
         self.assertContains(pos_response, 'data-scan-target="#id_scan_value"')
+        self.assertContains(pos_response, "Best results")
 
         self.client.force_login(self.admin)
         stock_response = self.client.get(reverse("stock-in"))
@@ -496,8 +543,21 @@ class ScannerPlacementTests(TestCase):
         self.assertIn("/dashboard/api/scan/decode-image/", source)
         self.assertIn("Math.floor(viewfinderHeight * 0.72)", source)
         self.assertIn('facingMode: { exact: "environment" }', source)
-        self.assertIn('facingMode: { exact: "user" }', source)
-        self.assertNotIn("facingMode: { ideal:", source)
+
+    def test_dashboard_css_contains_mobile_usability_guards(self):
+        dashboard_css = settings.BASE_DIR / "core" / "static" / "core" / "css" / "dashboard.css"
+        source = dashboard_css.read_text()
+
+        self.assertIn("V7-010: mobile/tablet usability guards", source)
+        self.assertIn(".table-scroll:not(.pos-cart-scroll) > .data-table { min-width: 720px; }", source)
+        self.assertIn("body.auth-page", source)
+        self.assertIn("overflow: auto", source)
+        self.assertIn(".scanner-panel", source)
+        self.assertIn(".scanner-help", source)
+        self.assertIn("max-height: 100dvh", source)
+        self.assertIn(".payment-methods", source)
+        self.assertIn("grid-template-columns: repeat(2, 1fr)", source)
+        self.assertIn(".mobile-nav a span", source)
 
 
 class StoreSettingTests(TestCase):
@@ -713,7 +773,7 @@ class StyleguideAccessTests(TestCase):
         self.client.force_login(self.owner)
         response = self.client.get(reverse("styleguide"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Living Styleguide")
+        self.assertContains(response, "Living Style Guide")
         self.assertContains(response, "role-badge")
         self.assertContains(response, "kpi-card")
 

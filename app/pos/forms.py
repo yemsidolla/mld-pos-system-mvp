@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 
 from catalog.models import Category, Product
 
@@ -7,7 +8,7 @@ from .models import Promotion, Sale
 
 
 class ScanForm(forms.Form):
-    scan_value = forms.CharField(label="Scan Barcode or QR", max_length=180)
+    scan_value = forms.CharField(label=_("Scan Barcode or QR"), max_length=180)
 
 
 class AddBatchForm(forms.Form):
@@ -22,7 +23,7 @@ class ConfirmSaleForm(forms.Form):
     override_reason = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 2}),
-        help_text="Required only for admin below-cost override.",
+        help_text=_("Required only for admin below-cost override."),
     )
 
 
@@ -30,7 +31,8 @@ class SaleFilterForm(forms.Form):
     date_from = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
     date_to = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
     cashier = forms.ModelChoiceField(required=False, queryset=get_user_model().objects.none())
-    payment_method = forms.ChoiceField(required=False, choices=[("", "All")] + list(Sale.PaymentMethod.choices))
+    payment_method = forms.ChoiceField(required=False, choices=[("", _("All"))] + list(Sale.PaymentMethod.choices))
+    status = forms.ChoiceField(required=False, choices=[("", _("All"))] + list(Sale.Status.choices))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -47,6 +49,19 @@ class PromotionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["product"].queryset = Product.objects.filter(is_active=True).order_by("name")
         self.fields["category"].queryset = Category.objects.filter(is_active=True).order_by("name")
+        self.fields["discount_type"].help_text = _("Percentage, fixed amount off, or fixed final price.")
+        self.fields["value"].help_text = _("Use the amount for the selected discount type. Percent values cannot exceed 100.")
+        self.fields["product"].help_text = _("Use for an exact product promotion.")
+        self.fields["category"].help_text = _("Use for all active products in one category.")
+        self.fields["allow_below_cost"].help_text = _("Only allow this when the owner accepts selling below cost.")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        product = cleaned_data.get("product")
+        category = cleaned_data.get("category")
+        if product and category:
+            raise forms.ValidationError(_("Choose either a product or a category, not both."))
+        return cleaned_data
 
     class Meta:
         model = Promotion

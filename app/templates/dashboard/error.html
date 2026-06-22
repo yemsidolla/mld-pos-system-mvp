@@ -30,6 +30,11 @@
 
         <p class="error-message">{{ message }}</p>
 
+        <div class="error-next-steps">
+            <h2>{% trans "What to do next" %}</h2>
+            <p>{{ support_hint }}</p>
+        </div>
+
         <div class="form-actions">
             <a class="btn btn-primary" href="{{ action_url }}">{{ action_label }}</a>
             {% if secondary_url %}
@@ -37,10 +42,11 @@
             {% endif %}
         </div>
 
-        <p class="auth-meta" aria-hidden="true">
-            <span>EVENT&nbsp;LOGGED</span><span class="meta-sep">·</span>
-            <span>AUDIT&nbsp;TRAIL&nbsp;ACTIVE</span>
-        </p>
+        {% if footer_note %}
+            <p class="auth-meta" aria-hidden="true">
+                <span>{{ footer_note }}</span>
+            </p>
+        {% endif %}
     </section>
 </main>
 </body>

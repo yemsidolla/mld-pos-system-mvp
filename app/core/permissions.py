@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.shortcuts import render
 from django.urls import reverse
+from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 
 
@@ -265,33 +266,33 @@ def _log_permission_denied(request):
 
 def dashboard_access_denied_response(request):
     user = request.user
-    title = "Access denied"
-    message = "Your account does not have permission to open this area."
+    title = _("Access denied")
+    message = _("Your account does not have permission to open this area.")
     if user.is_authenticated:
         _log_permission_denied(request)
 
     if user.is_authenticated and get_user_role(user) is None:
-        title = "No role assigned"
+        title = _("No role assigned")
         message = (
-            "Your account is signed in but has no Melodu role yet. "
-            "Ask an administrator to assign you a role, then log in again."
+            _("Your account is signed in but has no Melodu role yet. ")
+            + _("Ask an administrator to assign you a role, then log in again.")
         )
-        action_label = "Login again"
+        action_label = _("Login again")
         action_url = reverse("dashboard-login")
         secondary_label = ""
         secondary_url = ""
     elif is_cashier_user(user) and not is_admin_user(user):
-        action_label = "Back to POS"
+        action_label = _("Back to POS")
         action_url = reverse("pos-sale")
-        secondary_label = "Login again"
+        secondary_label = _("Login again")
         secondary_url = reverse("dashboard-login")
     elif can_access_dashboard(user):
-        action_label = "Back to Dashboard"
+        action_label = _("Back to Dashboard")
         action_url = reverse("dashboard-home")
-        secondary_label = "Login again"
+        secondary_label = _("Login again")
         secondary_url = reverse("dashboard-login")
     else:
-        action_label = "Login again"
+        action_label = _("Login again")
         action_url = reverse("dashboard-login")
         secondary_label = ""
         secondary_url = ""
@@ -303,10 +304,15 @@ def dashboard_access_denied_response(request):
             "status_code": "403",
             "title": title,
             "message": message,
+            "support_hint": _(
+                "Return to an area your role can use. "
+                "If this should be allowed, ask an Owner to update your role."
+            ),
             "action_label": action_label,
             "action_url": action_url,
             "secondary_label": secondary_label,
             "secondary_url": secondary_url,
+            "footer_note": _("AUDIT TRAIL ACTIVE"),
         },
         status=403,
     )

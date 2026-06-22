@@ -8,6 +8,36 @@ dashboard UX, batch upload, scanner workflows, role/capability management,
 receipt/label improvements, product classification, and optional MinIO media
 storage.
 
+V7, V8, and V9 are complete with implementation evidence in
+`docs/versions/VERSION_COMPLETION_TRACKER.md`. V10 is complete as a
+multi-store/scale-readiness planning package only; it does not add multi-store
+schema, permissions, routes, templates, or services.
+
+## Documentation Authority
+
+Before planning or implementing future work, use this read order:
+
+1. `docs/STANDARD_WAY_OF_WORKING.md`
+2. `README.md`
+3. `docs/CURRENT_STATUS.md`
+4. `docs/DESIGN_SYSTEM.md` when UI is affected
+5. `docs/product/11_DOCUMENTATION_MAP.md`
+6. `docs/README.md` for the full docs folder index
+7. `docs/product/00_CURRENT_SYSTEM_MAP.md`
+8. Relevant version docs and guides
+9. `docs/product/09_IMPLEMENTATION_BACKLOG.md` or `docs/TASKS.md`
+10. `docs/DEVELOPMENT_LOG.md`
+
+The controlled foundation reset added:
+
+- Product docs under `docs/product/`
+- V6 reset docs under `docs/versions/v6/`
+- ADRs under `docs/decisions/`
+- Durable V7-V10 completion tracking under `docs/versions/VERSION_COMPLETION_TRACKER.md`
+
+Older docs are organized under `docs/legacy/`. When documents overlap,
+start from `docs/product/11_DOCUMENTATION_MAP.md`.
+
 ## Current Architecture
 
 - Backend: Django 5.2 monolith.
@@ -28,6 +58,7 @@ storage.
 
 - Dashboard: `/dashboard/`
 - POS: `/dashboard/pos/`
+- Receipt: `/dashboard/pos/receipt/<sale_id>/`
 - Products: `/dashboard/products/`
 - Animal Types: `/dashboard/animal-types/`
 - Categories: `/dashboard/categories/`
@@ -46,6 +77,17 @@ storage.
 
 Django Admin remains available for raw/back-office inspection and emergency
 maintenance, but daily work should happen in the Melodu Dashboard.
+
+Authoritative route and capability map: `docs/product/00_CURRENT_SYSTEM_MAP.md`.
+
+## Test Coverage
+
+319 automated test methods across 10 custom Django apps in the latest full-suite
+workspace verification. Run:
+
+```bash
+docker compose run --rm web python manage.py test
+```
 
 ## Implemented Business Core
 
@@ -170,7 +212,7 @@ Docker Compose includes:
 Production MinIO should be exposed through host Nginx over HTTPS. Do not expose
 raw MinIO ports publicly.
 
-See `docs/MINIO_STORAGE_GUIDE.md`.
+See `docs/guides/MINIO_STORAGE_GUIDE.md`.
 
 ## Permissions State
 
@@ -184,7 +226,7 @@ Key protections:
   stock-in, and inventory are capability-gated.
 - Cashier users are blocked from Django Admin even if accidentally marked staff.
 - Owner/Manager/Admin-style capabilities are documented in
-  `docs/PERMISSION_MATRIX.md` and V6 permission docs.
+  `docs/reference/PERMISSION_MATRIX.md` and V6 permission docs.
 
 ## Auth State
 
@@ -196,9 +238,9 @@ AUTH_MODE=local
 
 OIDC/Authentik mode is available through the V6 docs:
 
-- `docs/V6_AUTHENTIK_AUTH_ARCHITECTURE.md`
-- `docs/V6_AUTHENTIK_SETUP_GUIDE.md`
-- `docs/V6_CURRENT_AUTH_AUDIT.md`
+- `docs/versions/v6/V6_AUTHENTIK_AUTH_ARCHITECTURE.md`
+- `docs/versions/v6/V6_AUTHENTIK_SETUP_GUIDE.md`
+- `docs/versions/v6/V6_CURRENT_AUTH_AUDIT.md`
 
 Keep local login enabled as an emergency path unless the deployment is fully
 verified.
@@ -221,11 +263,11 @@ Host Nginx proxies:
 
 Important production docs:
 
-- `docs/DEPLOYMENT_GUIDE.md`
-- `docs/DEPLOYMENT_RUNBOOK.md`
-- `docs/PRODUCTION_CHECKLIST.md`
-- `docs/MINIO_STORAGE_GUIDE.md`
-- `docs/BACKUP_GUIDE.md`
+- `docs/guides/DEPLOYMENT_GUIDE.md`
+- `docs/operations/DEPLOYMENT_RUNBOOK.md`
+- `docs/operations/PRODUCTION_CHECKLIST.md`
+- `docs/guides/MINIO_STORAGE_GUIDE.md`
+- `docs/guides/BACKUP_GUIDE.md`
 
 ## Backup State
 
@@ -272,35 +314,34 @@ docker compose run --rm -e USE_S3_MEDIA=True web python manage.py check
 docker compose run --rm web python manage.py test
 ```
 
-Result:
+Latest recorded result:
 
 ```text
-289 tests OK
+319 tests OK
 ```
 
 ## Known Operational Notes
 
-- The local workspace currently has uncommitted implementation changes for:
-  - Dashboard-creatable animal types.
-  - Product form/list updates.
-  - MinIO media storage.
-  - MinIO documentation and backup scripts.
-- `.claude/` is an unrelated untracked local folder and should not be included
-  unless explicitly needed.
 - Existing production files under `data/media` are not automatically migrated to
   MinIO. After enabling MinIO, new uploads go to MinIO; old media should be
   migrated deliberately with a backup in place.
 - When `USE_S3_MEDIA=True`, browser-visible media URLs must use an HTTPS
   endpoint reachable by phones and desktops.
+- Production Authentik/OIDC group claims, phone scanner behavior, physical
+  printer output, and backup/restore recovery should be verified against the
+  live VPS or a production-like clone before being treated as fully proven.
 
 ## Suggested Next Work
 
-- Commit and push the current implementation after review.
 - Decide final production media domain, for example
   `melodu-media.khlovepet.com`.
 - Add host Nginx config for the media domain before enabling MinIO in
   production.
 - Migrate any existing `data/media` files to MinIO only after confirming backup
   and restore.
-- Continue V2/V3/V4/V5/V6 work from the documented task tracker rather than
-  reopening the original Phase 0-11 plan.
+- Use `docs/product/09_IMPLEMENTATION_BACKLOG.md` and `docs/TASKS.md` for the
+  next approved implementation scope.
+- Use `docs/versions/VERSION_COMPLETION_TRACKER.md` before starting any future
+  version work, so completed V7-V10 tasks are not duplicated or removed.
+- Treat future multi-store implementation as unbuilt until a new approved task
+  defines exact model, permission, migration, report, and UI changes.

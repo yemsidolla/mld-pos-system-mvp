@@ -11,18 +11,24 @@
 {% block content %}
 <section class="panel">
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <p class="muted">{% trans "Saved templates are never overwritten by this form. If this template is marked default, only the previous default for the same type is unset." %}</p>
     <form class="form-stack" method="post">
         {% csrf_token %}
-        <div class="form-grid">
-            {% for field in form %}
-                <div>
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
-                    {{ field.errors }}
+        {% for group_title, fields in field_groups %}
+            <section class="form-section">
+                <h2>{{ group_title }}</h2>
+                <div class="form-grid">
+                    {% for field in fields %}
+                        <div>
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+                            {{ field.errors }}
+                        </div>
+                    {% endfor %}
                 </div>
+            </section>
             {% endfor %}
-        </div>
         <div class="form-actions">
             <button class="btn btn-primary" type="submit">{% if mode == "create" %}{% trans "Create Template" %}{% else %}{% trans "Save Template" %}{% endif %}</button>
             <a class="btn" href="{% url 'label-template-list' %}">{% trans "Cancel" %}</a>

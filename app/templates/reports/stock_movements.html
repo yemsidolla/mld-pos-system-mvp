@@ -4,17 +4,66 @@
 {% block title %}{% trans "Stock Movement Report" %}{% endblock %}
 {% block page_title %}{% trans "Stock Movement Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Latest inventory movements for stock traceability." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
+    {% if dashboard_can_manage_inventory %}
+        <a class="btn" href="{% url 'inventory-summary' %}">{% trans "Stock Overview" %}</a>
+    {% endif %}
+    {% if dashboard_can_view_audit %}
+        <a class="btn" href="{% url 'audit-log-list' %}?module=inventory">{% trans "Inventory Audit Logs" %}</a>
+    {% endif %}
+{% endblock %}
 
 {% block content %}
+<section class="metric-grid">
+    <article class="metric-card"><span>{% trans "Movements" %}</span><strong>{{ movement_count }}</strong></article>
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Trace Filters" %}</h2>
+            <p>{% trans "Search product, batch, custom code, reference, note, or user." %}</p>
+        </div>
+    </header>
+    <form class="input-row" method="get">
+        <input type="search" name="q" value="{{ query }}" placeholder="{% trans 'Search stock movement trace' %}">
+        <select name="movement_type">
+            <option value="">{% trans "All movement types" %}</option>
+            {% for value, label in movement_type_choices %}
+                <option value="{{ value }}" {% if movement_type == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
+        <a class="btn" href="{% url 'stock-movement-report' %}">{% trans "Reset" %}</a>
+    </form>
+</section>
+
 <section class="panel">
     <div class="table-scroll">
         <table class="data-table">
-            <thead><tr><th>{% trans "Date" %}</th><th>{% trans "Type" %}</th><th>{% trans "Product" %}</th><th>{% trans "Batch" %}</th><th>{% trans "Qty" %}</th><th>{% trans "Reference" %}</th><th>{% trans "User" %}</th></tr></thead>
+            <thead><tr><th>{% trans "Date" %}</th><th>{% trans "Type" %}</th><th>{% trans "Product" %}</th><th>{% trans "Batch" %}</th><th>{% trans "Qty" %}</th><th>{% trans "Reference" %}</th><th>{% trans "Note" %}</th><th>{% trans "User" %}</th></tr></thead>
             <tbody>
             {% for movement in movements %}
-                <tr><td>{{ movement.created_at }}</td><td><span class="badge">{{ movement.get_movement_type_display }}</span></td><td>{{ movement.product.name }}</td><td>{{ movement.stock_batch.batch_no }}</td><td>{{ movement.quantity }}</td><td>{{ movement.reference_type }} {{ movement.reference_id }}</td><td>{{ movement.created_by.username }}</td></tr>
+                <tr>
+                    <td>{{ movement.created_at|date:"Y-m-d H:i" }}</td>
+                    <td><span class="badge">{{ movement.get_movement_type_display }}</span></td>
+                    <td>{{ movement.product.name }}<br><span class="muted">{{ movement.product.product_code }}</span></td>
+                    <td>
+                        {% if dashboard_can_manage_inventory %}
+                            <a href="{% url 'stock-batch-detail' movement.stock_batch.id %}">{{ movement.stock_batch.batch_no }}</a>
+                        {% else %}
+                            {{ movement.stock_batch.batch_no }}
+                        {% endif %}
+                        <br><span class="muted mono">{{ movement.stock_batch.custom_code }}</span>
+                    </td>
+                    <td class="mono">{{ movement.quantity }}</td>
+                    <td>{{ movement.reference_type }} {{ movement.reference_id }}</td>
+                    <td>{% if movement.note %}{{ movement.note }}{% else %}<span class="muted">-</span>{% endif %}</td>
+                    <td>{{ movement.created_by.username }}</td>
+                </tr>
             {% empty %}
-                <tr><td colspan="7" class="empty-cell">{% trans "No stock movements found." %}</td></tr>
+                <tr><td colspan="8" class="empty-cell">{% trans "No stock movements found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

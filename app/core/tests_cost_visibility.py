@@ -94,6 +94,15 @@ class CostVisibilityPageTests(TestCase):
         response = self.client.get(reverse("supplier-product-cost-list"))
         self.assertEqual(response.status_code, 200)
 
+    def test_stock_in_requires_cost_visibility(self):
+        set_cost_roles(["MANAGER"])
+        self.client.force_login(make_user("stock", ROLE_INVENTORY))
+
+        response = self.client.get(reverse("stock-in"))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Access denied", status_code=403)
+
     def test_sale_detail_cost_column_follows_setting(self):
         sale = Sale.objects.create(
             sale_no="S-0001",

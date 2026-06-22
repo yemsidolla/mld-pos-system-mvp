@@ -57,8 +57,8 @@ Hierarchy:
 1. `README.md`
 2. `docs/STANDARD_WAY_OF_WORKING.md`
 3. `docs/DESIGN_SYSTEM.md`
-4. `docs/V6_*` or other version-specific docs
-5. `docs/*_GUIDE.md`
+4. `docs/versions/` version-specific docs
+5. `docs/guides/` operator and developer guides
 6. `docs/TASKS.md`
 7. `docs/DEVELOPMENT_LOG.md`
 
@@ -182,7 +182,7 @@ README/design-system/roadmap:
 Check first:
 
 - `docs/STANDARD_WAY_OF_WORKING.md`
-- `docs/PERMISSION_MATRIX.md`
+- `docs/reference/PERMISSION_MATRIX.md`
 - V6 auth/permission docs.
 - `core.permissions`, account/auth code, affected views, and tests.
 
@@ -696,7 +696,8 @@ Before any future Melodu POS task starts, the agent must read:
 
 1. `docs/STANDARD_WAY_OF_WORKING.md`
 2. `docs/DESIGN_SYSTEM.md` if UI is affected
-3. The relevant module/version docs
-4. The source files directly affected by the task
+3. `docs/product/00_CURRENT_SYSTEM_MAP.md` for current routes, modules, and capabilities
+4. The relevant module/version docs
+5. The source files directly affected by the task
 
 This rule applies to human developers and AI coding agents.

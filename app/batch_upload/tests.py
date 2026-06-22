@@ -303,6 +303,7 @@ class BatchUploadViewTests(TestCase):
         admin_response = self.client.get(reverse("batch-upload"))
         self.assertEqual(admin_response.status_code, 200)
         self.assertContains(admin_response, "Batch Upload")
+        self.assertContains(admin_response, "Upload a CSV or XLSX file above")
 
     @override_settings(DEBUG=False, ALLOWED_HOSTS=["testserver"])
     def test_invalid_template_target_renders_friendly_404(self):

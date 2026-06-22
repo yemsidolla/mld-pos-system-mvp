@@ -48,7 +48,15 @@
                     <td><a class="btn" href="{% url 'user-edit' row.user.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="6" class="empty-cell">{% trans "No users found." %}</td></tr>
+                <tr>
+                    <td colspan="6" class="empty-cell">
+                        <div class="empty-state">
+                            <strong>{% trans "No users found." %}</strong>
+                            <span>{% trans "Create the first staff account, then assign a Melodu role before they log in." %}</span>
+                            <a class="btn" href="{% url 'user-create' %}">{% trans "New User" %}</a>
+                        </div>
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>

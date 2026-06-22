@@ -5,6 +5,7 @@
 {% block page_title %}{% trans "Promotion Labels" %}{% endblock %}
 {% block page_subtitle %}{% trans "Print special-offer labels for a promotion's products." %}{% endblock %}
 {% block header_actions %}
+    <a class="btn" href="{% url 'promotion-list' %}">{% trans "Promotions" %}</a>
     <a class="btn" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
 {% endblock %}
 
@@ -40,6 +41,9 @@
             <p>{% trans "Quantity is the number of copies per product in the promotion." %}</p>
         </div>
     </header>
+    <div class="alert alert-warning">
+        {% trans "Promotion labels print one card per active product in the selected promotion. Review the active dates and prices before printing." %}
+    </div>
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
     <form class="form-stack" method="post">
         {% csrf_token %}
@@ -49,6 +53,7 @@
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
+                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -60,12 +65,19 @@
 </section>
 
 {% if template and labels %}
+<section class="metric-grid no-print">
+    <article class="metric-card"><span>{% trans "Promotion" %}</span><strong class="small-value">{{ promotion.name }}</strong></article>
+    <article class="metric-card"><span>{% trans "Active Products" %}</span><strong>{{ products|length }}</strong></article>
+    <article class="metric-card"><span>{% trans "Copies Per Product" %}</span><strong>{{ quantity }}</strong></article>
+    <article class="metric-card"><span>{% trans "Total Labels" %}</span><strong>{{ labels|length }}</strong></article>
+</section>
 <section class="panel">
     <header class="panel-header no-print">
         <div>
-            <h2>{% trans "Preview" %}</h2>
-            <p>{{ promotion.name }} · {{ promotion.start_date }} → {{ promotion.end_date }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
+            <h2>{% trans "Promotion Print Preview" %}</h2>
+            <p>{{ promotion.name }} · {% trans "Promotion window" %}: {{ promotion.start_date }} → {{ promotion.end_date }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
         </div>
+        <button class="btn btn-success" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
     </header>
     <div class="label-sheet">
         {% for card in labels %}

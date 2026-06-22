@@ -4,6 +4,20 @@ from django.db import models
 class LabelTemplate(models.Model):
     """Configurable label layout (preset fields, no drag-and-drop)."""
 
+    FIELD_LABELS = (
+        ("show_store_name", "Store"),
+        ("show_logo", "Logo"),
+        ("show_product_name", "Product"),
+        ("show_price", "Price"),
+        ("show_sku", "SKU"),
+        ("show_barcode", "Barcode"),
+        ("show_qr", "QR"),
+        ("show_batch", "Batch"),
+        ("show_expiry", "Expiry"),
+        ("show_animal_type", "Animal type"),
+        ("show_life_stage", "Life stage"),
+    )
+
     class TemplateType(models.TextChoices):
         PRODUCT = "PRODUCT", "Product"
         SHELF = "SHELF", "Shelf"
@@ -50,6 +64,10 @@ class LabelTemplate(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.get_template_type_display()})"
+
+    @property
+    def enabled_field_labels(self):
+        return [label for field, label in self.FIELD_LABELS if getattr(self, field)]
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

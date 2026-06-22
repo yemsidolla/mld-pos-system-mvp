@@ -2,6 +2,47 @@
 
 Statuses: Pending, AI Planned, AI Generated, Human Reviewing, Fix Required, Testing, Done.
 
+## Controlled Foundation Reset Documentation
+
+| Task | Status |
+| --- | --- |
+| Inspect current codebase and existing docs as reset source of truth | Done |
+| Create `docs/product/00_CURRENT_SYSTEM_MAP.md` | AI Generated |
+| Create `docs/product/01_PRODUCT_VISION_AND_OPERATING_MODEL.md` | AI Generated |
+| Create `docs/product/04_MODULE_MAP.md` | AI Generated |
+| Create `docs/product/05_BRD.md` | AI Generated |
+| Create `docs/product/06_PRD.md` | AI Generated |
+| Create `docs/product/07_TRD.md` | AI Generated |
+| Create `docs/product/08_VERSION_ROADMAP.md` | AI Generated |
+| Create `docs/product/09_IMPLEMENTATION_BACKLOG.md` | AI Generated |
+| Create `docs/product/10_QA_RELEASE_PROCESS.md` | AI Generated |
+| Create `docs/product/11_DOCUMENTATION_MAP.md` | AI Generated |
+| Create V6 foundation reset docs under `docs/versions/v6/` | AI Generated |
+| Create ADR-0001 through ADR-0007 under `docs/decisions/` | AI Generated |
+| Update README compact documentation map | AI Generated |
+| Update current status handoff and remove stale local-change notes | AI Generated |
+| Update development log with reset milestone | AI Generated |
+| Validate documentation structure and git diff | Done |
+
+## V7-V10 Version Roadmap And Tracking
+
+| Task | Status |
+| --- | --- |
+| Read V7-V10 roadmap prompt and Standard Way of Working | Done |
+| Inspect current docs, V6 foundation reset, route map, app modules, templates, static assets, and tests | Done |
+| Create durable version completion tracker | AI Generated |
+| Create V7 scope, task checklist, QA checklist, and release note draft | AI Generated |
+| Create V8 scope, task checklist, QA checklist, and release note draft | AI Generated |
+| Create V9 scope, task checklist, QA checklist, and release note draft | AI Generated |
+| Create V10 scope, task checklist, QA checklist, and release note draft | AI Generated |
+| Align product roadmap and implementation backlog with V7-V10 version docs | AI Generated |
+| Validate documentation-only diff | Done |
+| Complete V7 UX/UI cleanup and staff workflow polish | Done |
+| Complete V8 inventory, label, and promotion professionalization | Done |
+| Complete V9 reports, audit, and owner control | Done |
+| Complete V10 multi-store / scale-readiness planning package | Done |
+| Update durable V7-V10 completion tracker | Done |
+
 ## Phase 0: Project Bootstrap
 
 | Task | Status |

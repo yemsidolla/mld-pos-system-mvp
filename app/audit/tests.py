@@ -82,8 +82,20 @@ class AuditLogDashboardTests(TestCase):
 
     def setUp(self):
         self.manager = self._user("mgr", ROLE_MANAGER)
-        AuditLog.objects.create(action=AuditLog.Action.CREATE, module="catalog", object_display="Widget")
-        AuditLog.objects.create(action=AuditLog.Action.SETTING_CHANGE, module="core", object_display="Store")
+        AuditLog.objects.create(
+            action=AuditLog.Action.CREATE,
+            module="catalog",
+            object_type="Product",
+            object_id="P001",
+            object_display="Widget",
+        )
+        AuditLog.objects.create(
+            action=AuditLog.Action.SETTING_CHANGE,
+            module="core",
+            object_type="StoreSetting",
+            object_id="1",
+            object_display="Store",
+        )
 
     def test_manager_can_view_audit_logs(self):
         self.client.force_login(self.manager)
@@ -93,6 +105,11 @@ class AuditLogDashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Widget")
         self.assertContains(response, "Store")
+        self.assertContains(response, "Read-only")
+        self.assertContains(response, "Newest first")
+        self.assertContains(response, "Risk Events")
+        self.assertContains(response, "Object Type")
+        self.assertContains(response, "Review")
 
     def test_cashier_and_viewer_cannot_view_audit_logs(self):
         for username, role in (("csh", ROLE_CASHIER), ("aud", ROLE_VIEWER)):
@@ -110,6 +127,16 @@ class AuditLogDashboardTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Store")
         self.assertNotContains(response, "Widget")
+
+    def test_search_and_object_type_filters_narrow_results(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.get(reverse("audit-log-list"), {"q": "P001", "object_type": "Product"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Widget")
+        self.assertNotContains(response, "StoreSetting #1")
+        self.assertEqual(response.context["summary"]["total_count"], 1)
 
     def test_audit_dashboard_does_not_write_audit_records(self):
         # The page is strictly read-only: a POST must not create/modify entries.

@@ -12,6 +12,7 @@ from django.urls import reverse
 from audit.models import AuditLog
 from accounts.models import StaffProfile
 from catalog.models import Brand, Category, Product, Supplier
+from core.models import StoreSetting
 
 from .models import InventoryMovement, StockBatch
 from .services import (
@@ -136,6 +137,9 @@ class StockInPageTests(TestCase):
         self.assertContains(response, "Receive Stock")
         self.assertContains(response, "Actual Unit Cost")
         self.assertContains(response, "Landed Unit Cost")
+        self.assertContains(response, "Units received into this new batch")
+        self.assertContains(response, "Required for batch-level expiry control")
+        self.assertContains(response, "Selling price used when this batch is selected in POS")
 
     def test_stock_in_page_renders_supplier_quick_add_control(self):
         user = get_user_model().objects.create_user(
@@ -182,6 +186,7 @@ class StockInPageTests(TestCase):
         self.assertContains(response, "Batch Received")
         self.assertContains(response, f"{reverse('barcode-print')}?batch={batch.pk}")
         self.assertContains(response, f"{reverse('label-print')}?batch={batch.pk}")
+        self.assertContains(response, "Receive Another Batch")
 
     def test_anonymous_user_is_redirected_from_stock_in_page(self):
         response = self.client.get(reverse("stock-in"))
@@ -234,6 +239,12 @@ class BarcodePrintPageTests(TestCase):
         self.assertContains(response, "Expiry Date:")
         self.assertContains(response, "Batch Number:")
         self.assertContains(response, stock_batch.custom_code)
+        self.assertContains(response, "Selected Batch Check")
+        self.assertContains(response, "Original Barcode")
+        self.assertContains(response, "Melodu Custom Code")
+        self.assertContains(response, "Barcode Image")
+        self.assertContains(response, "QR Image")
+        self.assertContains(response, "Template Label")
 
     def test_print_action_creates_audit_log(self):
         self.client.force_login(self.user)
@@ -260,6 +271,8 @@ class BarcodePrintPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["form"].initial.get("stock_batch"), stock_batch.pk)
+        self.assertContains(response, "Choose the exact batch")
+        self.assertContains(response, "Number of identical barcode/QR labels")
 
 
 class InventoryAdjustmentTests(TestCase):
@@ -285,7 +298,7 @@ class InventoryAdjustmentTests(TestCase):
             default_selling_price=Decimal("2.50"),
         )
 
-    def create_batch(self, quantity=10, expiry_date=None):
+    def create_batch(self, quantity=10, expiry_date=None, actual_unit_cost=Decimal("1.50")):
         expiry_date = expiry_date or date(2027, 6, 1)
         with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
             stock_batch, _movement = receive_stock(
@@ -293,7 +306,7 @@ class InventoryAdjustmentTests(TestCase):
                 supplier=self.supplier,
                 quantity=quantity,
                 expiry_date=expiry_date,
-                actual_unit_cost=Decimal("1.50"),
+                actual_unit_cost=actual_unit_cost,
                 selling_price=Decimal("2.50"),
                 received_by=self.admin,
             )
@@ -335,6 +348,90 @@ class InventoryAdjustmentTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Bird Seed")
         self.assertNotContains(response, "Cat Food")
+
+    def test_inventory_summary_renders_search_and_low_stock_status(self):
+        self.product.min_stock = 10
+        self.product.save(update_fields=["min_stock"])
+        self.create_batch(quantity=5)
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("inventory-summary"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Search product, barcode, batch, or custom code")
+        self.assertContains(response, "Level")
+        self.assertContains(response, "Reorder Gap")
+        self.assertContains(response, "Low stock")
+        self.assertContains(response, "Receive Stock")
+        self.assertContains(response, "Review Expiry")
+        self.assertContains(response, "Open")
+
+    def test_inventory_summary_renders_batch_visibility_context(self):
+        stock_batch = self.create_batch(quantity=5, actual_unit_cost=Decimal("7.77"))
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("inventory-summary"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Product / Supplier")
+        self.assertContains(response, "Expiry State")
+        self.assertContains(response, "Received / Available")
+        self.assertContains(response, "Price / Cost")
+        self.assertContains(response, "Codes")
+        self.assertContains(response, self.supplier.name)
+        self.assertContains(response, stock_batch.custom_code)
+        self.assertContains(response, "7.77")
+        self.assertContains(response, "Print")
+
+    def test_inventory_summary_hides_costs_without_cost_visibility(self):
+        setting = StoreSetting.load()
+        setting.cost_visible_roles = [StaffProfile.Role.MANAGER]
+        setting.save(update_fields=["cost_visible_roles", "updated_at"])
+        inventory_user = get_user_model().objects.create_user(username="stock-user", password="Admin123", is_staff=True)
+        StaffProfile.objects.create(user=inventory_user, role=StaffProfile.Role.INVENTORY)
+        self.create_batch(quantity=5, actual_unit_cost=Decimal("7.77"))
+        self.client.force_login(inventory_user)
+
+        response = self.client.get(reverse("inventory-summary"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Cost hidden")
+        self.assertNotContains(response, "7.77")
+        self.assertNotContains(response, "Review Expiry")
+
+    def test_stock_batch_detail_renders_codes_receiving_and_movements(self):
+        stock_batch = self.create_batch(quantity=5)
+        adjust_stock(stock_batch=stock_batch, delta_quantity=-1, reason="Count correction", adjusted_by=self.admin)
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("stock-batch-detail", kwargs={"batch_id": stock_batch.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Batch Number")
+        self.assertContains(response, "Original Barcode")
+        self.assertContains(response, "Received By")
+        self.assertContains(response, "Barcode Image")
+        self.assertContains(response, "QR Image")
+        self.assertContains(response, "Recent Stock Movements")
+        self.assertContains(response, "Adjustment")
+        self.assertContains(response, "Open Movement Report")
+
+    def test_stock_batch_detail_hides_costs_and_report_link_without_permissions(self):
+        setting = StoreSetting.load()
+        setting.cost_visible_roles = [StaffProfile.Role.MANAGER]
+        setting.save(update_fields=["cost_visible_roles", "updated_at"])
+        inventory_user = get_user_model().objects.create_user(username="stock-only", password="Admin123", is_staff=True)
+        StaffProfile.objects.create(user=inventory_user, role=StaffProfile.Role.INVENTORY)
+        stock_batch = self.create_batch(quantity=5, actual_unit_cost=Decimal("7.77"))
+        self.client.force_login(inventory_user)
+
+        response = self.client.get(reverse("stock-batch-detail", kwargs={"batch_id": stock_batch.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Hidden")
+        self.assertNotContains(response, "7.77")
+        self.assertContains(response, "Recent Stock Movements")
+        self.assertNotContains(response, "Open Movement Report")
 
     def test_stock_adjustment_requires_reason(self):
         stock_batch = self.create_batch(quantity=10)
@@ -393,6 +490,9 @@ class InventoryAdjustmentTests(TestCase):
         self.assertContains(summary, "Product Stock Summary")
         self.assertEqual(detail.status_code, 200)
         self.assertContains(detail, "Expiry Status")
+        self.assertContains(detail, "Positive adds stock; negative removes stock")
+        self.assertContains(detail, "Damage removes sellable stock")
+        self.assertContains(detail, "Marking expired sets available stock to zero")
 
     def test_expire_batches_command_uses_movement_and_audit_workflow(self):
         stock_batch = self.create_batch(quantity=5, expiry_date=date(2026, 5, 20))

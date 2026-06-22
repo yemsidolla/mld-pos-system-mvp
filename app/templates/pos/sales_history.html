@@ -6,11 +6,19 @@
 {% block page_subtitle %}{% trans "Filter, inspect, and cancel completed sales when required." %}{% endblock %}
 
 {% block content %}
+<section class="metric-grid">
+    <article class="metric-card"><span>{% trans "Sales Found" %}</span><strong>{{ summary.sale_count }}</strong></article>
+    <article class="metric-card"><span>{% trans "Completed" %}</span><strong>{{ summary.completed_count }}</strong></article>
+    <article class="metric-card {% if summary.cancelled_count %}kpi-warning{% endif %}"><span>{% trans "Cancelled" %}</span><strong>{{ summary.cancelled_count }}</strong></article>
+    <article class="metric-card {% if summary.reprint_count %}kpi-warning{% endif %}"><span>{% trans "Receipt Reprints" %}</span><strong>{{ summary.reprint_count }}</strong></article>
+    <article class="metric-card"><span>{% trans "Completed Revenue" %}</span><strong>{{ summary.completed_total }}</strong></article>
+</section>
+
 <section class="panel">
     <header class="panel-header">
         <div>
             <h2>{% trans "Filters" %}</h2>
-            <p>{% trans "Narrow sales by date, cashier, or payment method." %}</p>
+            <p>{% trans "Narrow sales by date, cashier, payment method, or status." %}</p>
         </div>
     </header>
     {% include "dashboard/_list_filter.html" %}
@@ -33,6 +41,7 @@
                 <th>{% trans "Payment" %}</th>
                 <th>{% trans "Status" %}</th>
                 <th>{% trans "Final" %}</th>
+                <th>{% trans "Exception" %}</th>
             </tr>
             </thead>
             <tbody>
@@ -44,9 +53,17 @@
                     <td>{{ sale.payment_method }}</td>
                     <td><span class="badge">{{ sale.status }}</span></td>
                     <td class="mono">{{ sale.final_amount }}</td>
+                    <td>{% if sale.status == "CANCELLED" %}<span class="badge badge-warning">{% trans "Cancelled" %}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="6" class="empty-cell">{% trans "No sales found." %}</td></tr>
+                <tr>
+                    <td colspan="7" class="empty-cell">
+                        <div class="empty-state">
+                            <strong>{% trans "No sales found." %}</strong>
+                            <span>{% trans "Try different filters, or return after sales have been completed at POS." %}</span>
+                        </div>
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>

@@ -136,6 +136,10 @@ class ProductForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 3}),
             "tags": forms.SelectMultiple(attrs={"size": 6}),
         }
+        help_texts = {
+            "default_cost_price": "Fallback cost used only when no batch or supplier reference cost is available.",
+            "default_selling_price": "Default selling price copied into new stock-in rows unless the batch price is changed.",
+        }
 
 
 class CategoryForm(forms.ModelForm):
@@ -199,6 +203,12 @@ class SupplierProductCostForm(forms.ModelForm):
             supplier_filter |= Q(pk=self.instance.supplier_id)
         self.fields["product"].queryset = Product.objects.filter(product_filter).order_by("name")
         self.fields["supplier"].queryset = Supplier.objects.filter(supplier_filter).order_by("name")
+        self.fields["reference_unit_cost"].label = "Supplier Reference Unit Cost"
+        self.fields["reference_unit_cost"].help_text = (
+            "Quote or expected vendor cost for this product and supplier. "
+            "Actual and landed costs are still recorded per stock batch at Receive Stock."
+        )
+        self.fields["notes"].help_text = "Optional quote date, supplier terms, or pricing condition."
 
     class Meta:
         model = SupplierProductCost

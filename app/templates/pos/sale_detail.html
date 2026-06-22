@@ -19,6 +19,7 @@
 <section class="metric-grid">
     <article class="metric-card"><span>{% trans "Status" %}</span><strong class="small-value">{{ sale.status }}</strong></article>
     <article class="metric-card"><span>{% trans "Payment" %}</span><strong class="small-value">{{ sale.payment_method }}</strong></article>
+    <article class="metric-card {% if reprint_count %}kpi-warning{% endif %}"><span>{% trans "Receipt Reprints" %}</span><strong>{{ reprint_count }}</strong></article>
     <article class="metric-card"><span>{% trans "Total" %}</span><strong>{{ sale.total_amount }}</strong></article>
     <article class="metric-card"><span>{% trans "Final" %}</span><strong>{{ sale.final_amount }}</strong></article>
 </section>
@@ -29,6 +30,32 @@
         <p>{{ sale.cancel_reason }}</p>
     </section>
 {% endif %}
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Exception Tracking" %}</h2>
+            <p>{% trans "Cancellation and receipt reprint events recorded in the audit log." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
+        <table class="data-table">
+            <thead><tr><th>{% trans "Time" %}</th><th>{% trans "Action" %}</th><th>{% trans "User" %}</th><th>{% trans "Details" %}</th></tr></thead>
+            <tbody>
+            {% for log in exception_logs %}
+                <tr>
+                    <td class="mono">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td><span class="badge">{{ log.get_action_display }}</span></td>
+                    <td>{{ log.user.username|default:"-" }}</td>
+                    <td class="muted">{{ log.new_value|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="empty-cell">{% trans "No cancellation or reprint events recorded." %}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 
 <section class="panel">
     <header class="panel-header">

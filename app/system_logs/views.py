@@ -59,16 +59,31 @@ def get_disk_usage_path():
     return Path("/")
 
 
+def format_bytes(value):
+    size = float(value)
+    units = ("B", "KB", "MB", "GB", "TB")
+    for unit in units:
+        if size < 1024 or unit == units[-1]:
+            if unit == "B":
+                return f"{int(size)} {unit}"
+            return f"{size:.1f} {unit}"
+        size /= 1024
+
+
 @system_required
 def live_logs_view(request):
     app_log = settings.LOG_DIR / "app.log"
     error_log = settings.LOG_DIR / "error.log"
+    app_lines = read_latest_log_lines(app_log)
+    error_lines = read_latest_log_lines(error_log)
     return render(
         request,
         "system_logs/live_logs.html",
         {
-            "app_lines": read_latest_log_lines(app_log),
-            "error_lines": read_latest_log_lines(error_log),
+            "app_lines": app_lines,
+            "error_lines": error_lines,
+            "app_line_count": len(app_lines),
+            "error_line_count": len(error_lines),
         },
     )
 
@@ -76,18 +91,56 @@ def live_logs_view(request):
 @system_required
 def system_health_view(request):
     disk = shutil.disk_usage(get_disk_usage_path())
+    database_status = check_database_status()
+    log_writable_status = check_log_writable()
     latest_sale = Sale.objects.order_by("-created_at").first()
     latest_stock_in = StockBatch.objects.order_by("-received_at").first()
     latest_error_lines = read_latest_log_lines(settings.LOG_DIR / "error.log", limit=1)
+    disk_used_percent = round((disk.used / disk.total) * 100, 1) if disk.total else 0
+    if disk_used_percent >= 90:
+        disk_status = "critical"
+    elif disk_used_percent >= 80:
+        disk_status = "warning"
+    else:
+        disk_status = "ok"
+    if database_status != "ok" or log_writable_status != "ok" or disk_status == "critical":
+        overall_status = "Attention"
+        overall_badge_class = "badge-danger"
+    elif latest_error_lines or disk_status == "warning":
+        overall_status = "Review"
+        overall_badge_class = "badge-warning"
+    else:
+        overall_status = "OK"
+        overall_badge_class = "badge-success"
     context = {
-        "database_status": check_database_status(),
+        "overall_status": overall_status,
+        "overall_badge_class": overall_badge_class,
+        "database_status": database_status,
+        "database_ok": database_status == "ok",
         "app_version": settings.APP_VERSION,
         "disk_total": disk.total,
+        "disk_total_display": format_bytes(disk.total),
         "disk_used": disk.used,
+        "disk_used_display": format_bytes(disk.used),
         "disk_free": disk.free,
-        "log_writable_status": check_log_writable(),
+        "disk_free_display": format_bytes(disk.free),
+        "disk_used_percent": disk_used_percent,
+        "disk_status": disk_status,
+        "log_writable_status": log_writable_status,
+        "log_writable_ok": log_writable_status == "ok",
         "last_sale_time": latest_sale.created_at if latest_sale else None,
         "last_stock_in_time": latest_stock_in.received_at if latest_stock_in else None,
         "last_error": latest_error_lines[0] if latest_error_lines else "",
+        "backup_docs": [
+            "docs/guides/BACKUP_GUIDE.md",
+            "docs/guides/MINIO_STORAGE_GUIDE.md",
+            "docs/operations/DEPLOYMENT_RUNBOOK.md",
+            "docs/operations/RESET_ADMIN_RUNBOOK.md",
+        ],
+        "backup_commands": [
+            "scripts/backup_db.sh",
+            "scripts/backup_media.sh",
+            "scripts/backup_minio.sh",
+        ],
     }
     return render(request, "system_logs/system_health.html", context)

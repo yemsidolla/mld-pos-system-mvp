@@ -3,19 +3,29 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 
 from audit.models import AuditLog
 from audit.services import create_audit_log
 from catalog.models import Product
 from core.pagination import paginate
-from core.permissions import inventory_required
+from core.permissions import costs_required, inventory_required
 
 from .forms import DamageStockForm, InventoryAdjustmentForm, LabelPrintForm, MarkExpiredForm, StockInForm
 from .models import StockBatch
 from .services import adjust_stock, get_expiry_status, mark_batch_damaged, mark_batch_expired, receive_stock
 
 
+def _expiry_badge_class(expiry_status):
+    if expiry_status in {"Expired", "Critical"}:
+        return "badge-danger"
+    if expiry_status == "Warning":
+        return "badge-warning"
+    return "badge-success"
+
+
 @inventory_required
+@costs_required
 def stock_in_view(request):
     form = StockInForm(request.POST or None)
     stock_batch = None
@@ -114,7 +124,7 @@ def inventory_summary_view(request):
         .order_by("name")
         .distinct()
     )
-    batches = StockBatch.objects.select_related("product", "supplier").order_by("expiry_date", "batch_no")
+    batches = StockBatch.objects.select_related("product", "supplier", "received_by").order_by("expiry_date", "batch_no")
 
     if query:
         products = products.filter(
@@ -130,7 +140,28 @@ def inventory_summary_view(request):
             | Q(custom_code__icontains=query)
         )
 
+    products = list(products)
+    for product in products:
+        total_available = product.total_available or 0
+        product.is_low_stock = total_available <= product.min_stock
+        product.reorder_gap = max(product.min_stock - total_available, 0)
+        if total_available <= 0:
+            product.stock_action_label = "Out of stock"
+            product.stock_action_class = "badge-danger"
+        elif product.is_low_stock:
+            product.stock_action_label = "Low stock"
+            product.stock_action_class = "badge-warning"
+        else:
+            product.stock_action_label = "OK"
+            product.stock_action_class = "badge-success"
+
     page_obj, querystring = paginate(request, batches)
+    today = timezone.localdate()
+    for batch in page_obj.object_list:
+        batch.expiry_status = get_expiry_status(batch, today=today)
+        batch.expiry_badge_class = _expiry_badge_class(batch.expiry_status)
+        batch.days_until_expiry = (batch.expiry_date - today).days
+
     return render(
         request,
         "inventory/inventory_summary.html",
@@ -193,12 +224,17 @@ def stock_batch_detail_view(request, batch_id):
             messages.error(request, "; ".join(exc.messages))
 
     stock_batch.refresh_from_db()
+    expiry_status = get_expiry_status(stock_batch)
+    recent_movements = stock_batch.movements.select_related("created_by").order_by("-created_at")[:5]
     return render(
         request,
         "inventory/stock_batch_detail.html",
         {
             "stock_batch": stock_batch,
-            "expiry_status": get_expiry_status(stock_batch),
+            "expiry_status": expiry_status,
+            "expiry_badge_class": _expiry_badge_class(expiry_status),
+            "days_until_expiry": (stock_batch.expiry_date - timezone.localdate()).days,
+            "recent_movements": recent_movements,
             "adjustment_form": adjustment_form,
             "damage_form": damage_form,
             "expired_form": expired_form,

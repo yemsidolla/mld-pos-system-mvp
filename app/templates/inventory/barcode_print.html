@@ -17,6 +17,9 @@
             <p>{% trans "Scan a Melodu code or choose a stock batch." %}</p>
         </div>
     </header>
+    <div class="alert alert-warning">
+        {% trans "Use the Melodu custom code for exact batch labels. Original product barcodes identify the product first, then staff must choose the correct batch." %}
+    </div>
     <div class="form-stack scan-lookup">
         <div>
             <label for="label-batch-code">{% trans "Scan Batch Code" %}</label>
@@ -34,6 +37,7 @@
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
+                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -45,6 +49,28 @@
 </section>
 
 {% if stock_batch %}
+    <section class="panel no-print">
+        <header class="panel-header">
+            <div>
+                <h2>{% trans "Selected Batch Check" %}</h2>
+                <p>{% trans "Confirm product, supplier, expiry, and generated code assets before printing." %}</p>
+            </div>
+            <div class="table-actions">
+                <a class="btn" href="{% url 'stock-batch-detail' stock_batch.pk %}">{% trans "Open Batch" %}</a>
+                <a class="btn" href="{% url 'label-print' %}?batch={{ stock_batch.pk }}">{% trans "Template Label" %}</a>
+            </div>
+        </header>
+        <div class="form-grid">
+            <div><strong>{% trans "Product" %}</strong><br>{{ stock_batch.product.name }}<br><span class="muted">{{ stock_batch.product.product_code }}</span></div>
+            <div><strong>{% trans "Supplier" %}</strong><br>{{ stock_batch.supplier.name }}</div>
+            <div><strong>{% trans "Batch" %}</strong><br>{{ stock_batch.batch_no }}</div>
+            <div><strong>{% trans "Expiry" %}</strong><br>{{ stock_batch.expiry_date }}</div>
+            <div><strong>{% trans "Original Barcode" %}</strong><br>{{ stock_batch.product.original_barcode|default:"-" }}</div>
+            <div><strong>{% trans "Melodu Custom Code" %}</strong><br>{{ stock_batch.custom_code }}</div>
+            <div><strong>{% trans "Barcode Image" %}</strong><br>{% if stock_batch.barcode_image %}<span class="badge badge-success">{% trans "Generated" %}</span>{% else %}<span class="badge badge-warning">{% trans "Missing" %}</span>{% endif %}</div>
+            <div><strong>{% trans "QR Image" %}</strong><br>{% if stock_batch.qr_image %}<span class="badge badge-success">{% trans "Generated" %}</span>{% else %}<span class="badge badge-warning">{% trans "Missing" %}</span>{% endif %}</div>
+        </div>
+    </section>
     <section class="panel">
         <div class="label-sheet">
             {% for _ in labels %}

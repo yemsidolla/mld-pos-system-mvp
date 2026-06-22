@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -29,6 +31,15 @@ from .services import cancel_sale, confirm_sale, scan_code, validate_sellable_ba
 
 
 MAX_HELD_SALES = 10
+
+
+def promotion_field_groups(form):
+    return [
+        ("Promotion Identity", [form["name"], form["is_active"]]),
+        ("Discount And Dates", [form["discount_type"], form["value"], form["start_date"], form["end_date"]]),
+        ("Scope", [form["product"], form["category"]]),
+        ("Safety", [form["allow_below_cost"]]),
+    ]
 
 
 def _carts_state(request):
@@ -69,7 +80,11 @@ QUICK_KEY_LIMIT = 12
 def get_quick_keys():
     """Hand-picked quick-key products, else last-30-days top sellers."""
     picked = list(
-        StoreSetting.load().quick_key_products.filter(is_active=True)[:QUICK_KEY_LIMIT]
+        StoreSetting.load()
+        .quick_key_products.filter(is_active=True)
+        .exclude(original_barcode__isnull=True)
+        .exclude(original_barcode="")
+        [:QUICK_KEY_LIMIT]
     )
     if picked:
         return picked
@@ -79,7 +94,9 @@ def get_quick_keys():
             sale__status=Sale.Status.COMPLETED,
             sale__created_at__gte=since,
             product__is_active=True,
+            product__original_barcode__isnull=False,
         )
+        .exclude(product__original_barcode="")
         .values("product")
         .annotate(total_quantity=Sum("quantity"))
         .order_by("-total_quantity")[:8]
@@ -99,9 +116,11 @@ def get_promo_keys():
             is_active=True,
             product__isnull=False,
             product__is_active=True,
+            product__original_barcode__isnull=False,
             start_date__lte=today,
             end_date__gte=today,
         )
+        .exclude(product__original_barcode="")
         .order_by("end_date")[:QUICK_KEY_LIMIT]
     )
     keys = []
@@ -213,13 +232,17 @@ def get_cart_rows(request):
         subtotal = money(promotion_price.final_unit_price * item["quantity"])
         total += subtotal
         cost_snapshot = get_cost_snapshot(stock_batch)
-        below_cost = promotion_price.final_unit_price < cost_snapshot.cost_basis and not (
-            promotion_price.promotion and promotion_price.promotion.allow_below_cost
+        price_below_cost = promotion_price.final_unit_price < cost_snapshot.cost_basis
+        below_cost_allowed_by_promotion = bool(
+            price_below_cost and promotion_price.promotion and promotion_price.promotion.allow_below_cost
         )
+        below_cost = price_below_cost and not below_cost_allowed_by_promotion
         rows.append(
             {
                 "stock_batch": stock_batch,
                 "below_cost": below_cost,
+                "price_below_cost": price_below_cost,
+                "below_cost_allowed_by_promotion": below_cost_allowed_by_promotion,
                 "quantity": item["quantity"],
                 "original_unit_price": promotion_price.original_unit_price,
                 "final_unit_price": promotion_price.final_unit_price,
@@ -334,6 +357,7 @@ def pos_sale_view(request):
             messages.error(request, "Invalid quantity.")
 
     cart_rows, cart_total = get_cart_rows(request)
+    cart_promotion_discount_total = sum((row["discount_amount"] for row in cart_rows), money("0.00"))
     return render(
         request,
         "pos/pos_sale.html",
@@ -347,6 +371,10 @@ def pos_sale_view(request):
             "available_batches": available_batches,
             "cart_rows": cart_rows,
             "cart_total": cart_total,
+            "cart_has_promotions": any(row["promotion_name"] for row in cart_rows),
+            "cart_has_below_cost_warning": any(row["below_cost"] for row in cart_rows),
+            "cart_has_allowed_below_cost_promotion": any(row["below_cost_allowed_by_promotion"] for row in cart_rows),
+            "cart_promotion_discount_total": cart_promotion_discount_total,
         },
     )
 
@@ -395,11 +423,33 @@ def sales_history_view(request):
             sales = sales.filter(cashier=form.cleaned_data["cashier"])
         if form.cleaned_data["payment_method"]:
             sales = sales.filter(payment_method=form.cleaned_data["payment_method"])
+        if form.cleaned_data["status"]:
+            sales = sales.filter(status=form.cleaned_data["status"])
+    filtered_sale_ids = list(sales.values_list("id", flat=True))
+    reprint_count = AuditLog.objects.filter(
+        action=AuditLog.Action.RECEIPT_PRINT,
+        object_type="Sale",
+        object_id__in=[str(sale_id) for sale_id in filtered_sale_ids],
+    ).count()
+    completed_sales = sales.filter(status=Sale.Status.COMPLETED)
+    summary = {
+        "sale_count": sales.count(),
+        "completed_count": completed_sales.count(),
+        "cancelled_count": sales.filter(status=Sale.Status.CANCELLED).count(),
+        "reprint_count": reprint_count,
+        "completed_total": completed_sales.aggregate(total=Sum("final_amount"))["total"] or Decimal("0.00"),
+    }
     page_obj, querystring = paginate(request, sales)
     return render(
         request,
         "pos/sales_history.html",
-        {"form": form, "sales": page_obj, "page_obj": page_obj, "querystring": querystring},
+        {
+            "form": form,
+            "sales": page_obj,
+            "page_obj": page_obj,
+            "querystring": querystring,
+            "summary": summary,
+        },
     )
 
 
@@ -410,7 +460,22 @@ def sale_detail_view(request, sale_id):
         pk=sale_id,
     )
     cancel_form = CancelSaleForm()
-    return render(request, "pos/sale_detail.html", {"sale": sale, "cancel_form": cancel_form})
+    exception_logs = AuditLog.objects.filter(
+        object_type="Sale",
+        object_id=str(sale.pk),
+        action__in=[AuditLog.Action.SALE_CANCEL, AuditLog.Action.RECEIPT_PRINT],
+    ).select_related("user")[:10]
+    reprint_count = sum(1 for log in exception_logs if log.action == AuditLog.Action.RECEIPT_PRINT)
+    return render(
+        request,
+        "pos/sale_detail.html",
+        {
+            "sale": sale,
+            "cancel_form": cancel_form,
+            "exception_logs": exception_logs,
+            "reprint_count": reprint_count,
+        },
+    )
 
 
 @sales_cancel_required
@@ -449,10 +514,45 @@ def promotion_list_view(request):
             | Q(product__product_code__icontains=query)
             | Q(category__name__icontains=query)
         )
+    promotion_count = promotions.count()
+    promotions = list(promotions)
+    today = timezone.localdate()
+    lifecycle_counts = {"running": 0, "upcoming": 0, "ended": 0, "inactive": 0}
+    for promotion in promotions:
+        if not promotion.is_active:
+            promotion.timeline_status = "inactive"
+            promotion.timeline_detail = "Inactive"
+        elif promotion.start_date > today:
+            promotion.timeline_status = "upcoming"
+            promotion.timeline_detail = f"Starts in {(promotion.start_date - today).days} day(s)"
+        elif promotion.end_date < today:
+            promotion.timeline_status = "ended"
+            promotion.timeline_detail = f"Ended {(today - promotion.end_date).days} day(s) ago"
+        else:
+            promotion.timeline_status = "running"
+            promotion.timeline_detail = f"Ends in {(promotion.end_date - today).days} day(s)"
+        lifecycle_counts[promotion.timeline_status] += 1
+        if promotion.discount_type == Promotion.DiscountType.PERCENTAGE:
+            promotion.discount_label = f"{promotion.value.normalize():f}% off"
+        elif promotion.discount_type == Promotion.DiscountType.FIXED_AMOUNT:
+            promotion.discount_label = f"{promotion.value} off"
+        else:
+            promotion.discount_label = f"Final price {promotion.value}"
+        if promotion.product_id:
+            promotion.scope_label = promotion.product.name
+        elif promotion.category_id:
+            promotion.scope_label = f"{promotion.category.name} category"
+        else:
+            promotion.scope_label = "No scope"
     return render(
         request,
         "pos/promotion_list.html",
-        {"promotions": promotions, "query": query, "promotion_count": promotions.count()},
+        {
+            "promotions": promotions,
+            "query": query,
+            "promotion_count": promotion_count,
+            "lifecycle_counts": lifecycle_counts,
+        },
     )
 
 
@@ -481,7 +581,11 @@ def _promotion_form_view(request, *, instance, mode):
         )
         messages.success(request, f"Promotion {promotion.name} was saved.")
         return redirect("promotion-list")
-    return render(request, "pos/promotion_form.html", {"form": form, "mode": mode, "promotion": instance})
+    return render(
+        request,
+        "pos/promotion_form.html",
+        {"form": form, "mode": mode, "promotion": instance, "field_groups": promotion_field_groups(form)},
+    )
 
 
 @promotions_required

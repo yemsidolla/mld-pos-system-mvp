@@ -5,10 +5,18 @@
 {% block page_title %}{% trans "Promotions" %}{% endblock %}
 {% block page_subtitle %}{% trans "Simple automatic discounts for products or categories." %}{% endblock %}
 {% block header_actions %}
+    <a class="btn" href="{% url 'promotion-label-print' %}">{% trans "Promotion Labels" %}</a>
     <a class="btn btn-primary" href="{% url 'promotion-create' %}">{% trans "New Promotion" %}</a>
 {% endblock %}
 
 {% block content %}
+<section class="metric-grid">
+    <article class="metric-card"><span>{% trans "Promotions" %}</span><strong>{{ promotion_count }}</strong></article>
+    <article class="metric-card kpi-success"><span>{% trans "Running" %}</span><strong>{{ lifecycle_counts.running }}</strong></article>
+    <article class="metric-card kpi-warning"><span>{% trans "Upcoming" %}</span><strong>{{ lifecycle_counts.upcoming }}</strong></article>
+    <article class="metric-card"><span>{% trans "Ended" %}</span><strong>{{ lifecycle_counts.ended }}</strong></article>
+</section>
+
 <section class="panel">
     <header class="panel-header">
         <div>
@@ -33,6 +41,7 @@
                 <th>{% trans "Promotion" %}</th>
                 <th>{% trans "Discount" %}</th>
                 <th>{% trans "Dates" %}</th>
+                <th>{% trans "Timeline" %}</th>
                 <th>{% trans "Applies To" %}</th>
                 <th>{% trans "Below Cost" %}</th>
                 <th>{% trans "Status" %}</th>
@@ -43,13 +52,22 @@
             {% for promotion in promotions %}
                 <tr>
                     <td>{{ promotion.name }}</td>
-                    <td>{{ promotion.discount_type }} {{ promotion.value }}</td>
+                    <td>{{ promotion.get_discount_type_display }}<br><span class="muted">{{ promotion.discount_label }}</span></td>
                     <td>{{ promotion.start_date }} - {{ promotion.end_date }}</td>
                     <td>
-                        {% if promotion.product %}{{ promotion.product.name }}{% endif %}
-                        {% if promotion.category %}{% if promotion.product %}<br>{% endif %}{{ promotion.category.name }}{% endif %}
+                        {% if promotion.timeline_status == "running" %}
+                            <span class="badge badge-success">{% trans "Running" %}</span>
+                        {% elif promotion.timeline_status == "upcoming" %}
+                            <span class="badge badge-warning">{% trans "Upcoming" %}</span>
+                        {% elif promotion.timeline_status == "ended" %}
+                            <span class="badge">{% trans "Ended" %}</span>
+                        {% else %}
+                            <span class="badge badge-danger">{% trans "Inactive" %}</span>
+                        {% endif %}
+                        <br><span class="muted">{{ promotion.timeline_detail }}</span>
                     </td>
-                    <td>{% if promotion.allow_below_cost %}{% trans "Allowed" %}{% else %}{% trans "Blocked" %}{% endif %}</td>
+                    <td>{{ promotion.scope_label }}</td>
+                    <td>{% if promotion.allow_below_cost %}<span class="badge badge-warning">{% trans "Allowed" %}</span>{% else %}<span class="badge badge-success">{% trans "Blocked" %}</span>{% endif %}</td>
                     <td>
                         {% if promotion.is_active %}
                             <span class="badge badge-success">{% trans "Active" %}</span>
@@ -60,7 +78,7 @@
                     <td><a class="btn" href="{% url 'promotion-edit' promotion.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="7" class="empty-cell">{% trans "No promotions found." %}</td></tr>
+                <tr><td colspan="8" class="empty-cell">{% trans "No promotions found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

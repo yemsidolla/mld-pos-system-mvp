@@ -144,3 +144,465 @@ msgstr "ចម្រោះ"
 
 msgid "Language"
 msgstr "ភាសា"
+
+msgid "Products"
+msgstr "ផលិតផល"
+
+msgid "Product Catalog"
+msgstr "បញ្ជីផលិតផល"
+
+msgid "Create, search, and maintain product master data for daily store operations."
+msgstr "បង្កើត ស្វែងរក និងថែទាំទិន្នន័យផលិតផលសម្រាប់ការងារប្រចាំថ្ងៃ។"
+
+msgid "Scan Search"
+msgstr "ស្កេនដើម្បីស្វែងរក"
+
+msgid "Categories"
+msgstr "ប្រភេទ"
+
+msgid "Brands"
+msgstr "ម៉ាក"
+
+msgid "Animal Types"
+msgstr "ប្រភេទសត្វ"
+
+msgid "New Product"
+msgstr "ផលិតផលថ្មី"
+
+msgid "Search"
+msgstr "ស្វែងរក"
+
+msgid "Reset"
+msgstr "កំណត់ឡើងវិញ"
+
+msgid "Photo"
+msgstr "រូបភាព"
+
+msgid "Code"
+msgstr "កូដ"
+
+msgid "Barcode"
+msgstr "បាកូដ"
+
+msgid "Category"
+msgstr "ប្រភេទ"
+
+msgid "Brand"
+msgstr "ម៉ាក"
+
+msgid "Classification"
+msgstr "ការបែងចែក"
+
+msgid "Animal"
+msgstr "សត្វ"
+
+msgid "Life stage"
+msgstr "វគ្គអាយុ"
+
+msgid "Tag"
+msgstr "ស្លាក"
+
+msgid "Contains…"
+msgstr "មាន…"
+
+msgid "Active"
+msgstr "សកម្ម"
+
+msgid "Inactive"
+msgstr "អសកម្ម"
+
+msgid "No products match these filters."
+msgstr "មិនមានផលិតផលត្រូវនឹងការចម្រោះទាំងនេះទេ។"
+
+msgid "Clear the filters or create a new product for this catalog item."
+msgstr "សម្អាតការចម្រោះ ឬបង្កើតផលិតផលថ្មីសម្រាប់បញ្ជីនេះ។"
+
+msgid "Stock Overview"
+msgstr "ទិដ្ឋភាពស្តុក"
+
+msgid "New Supplier"
+msgstr "អ្នកផ្គត់ផ្គង់ថ្មី"
+
+msgid "Scan Product"
+msgstr "ស្កេនផលិតផល"
+
+msgid "Batch Received"
+msgstr "ទទួល Batch រួចរាល់"
+
+msgid "Print Barcode / QR"
+msgstr "បោះពុម្ព Barcode / QR"
+
+msgid "Print Template Label"
+msgstr "បោះពុម្ពស្លាកតាមគំរូ"
+
+msgid "View Batch"
+msgstr "មើល Batch"
+
+msgid "Receive Another Batch"
+msgstr "ទទួល Batch ផ្សេងទៀត"
+
+msgid "Choose an active product with an original barcode. Use Scan Product to fill this field faster."
+msgstr "ជ្រើសផលិតផលសកម្មដែលមានបាកូដដើម។ ប្រើ ស្កេនផលិតផល ដើម្បីបំពេញវាលនេះឱ្យលឿន។"
+
+msgid "Only active suppliers are shown. Add the supplier first if it is missing."
+msgstr "បង្ហាញតែអ្នកផ្គត់ផ្គង់សកម្មប៉ុណ្ណោះ។ ប្រសិនបើមិនមាន សូមបន្ថែមអ្នកផ្គត់ផ្គង់ជាមុន។"
+
+msgid "Units received into this new batch. Stock-in always creates a new batch."
+msgstr "ចំនួនឯកតាដែលទទួលចូល Batch ថ្មីនេះ។ ការទទួលស្តុកតែងតែបង្កើត Batch ថ្មី។"
+
+msgid "Required for batch-level expiry control and label printing."
+msgstr "ចាំបាច់សម្រាប់គ្រប់គ្រងថ្ងៃផុតកំណត់តាម Batch និងបោះពុម្ពស្លាក។"
+
+msgid "Actual Unit Cost"
+msgstr "ថ្លៃដើមពិតក្នុងមួយឯកតា"
+
+msgid "Landed Unit Cost"
+msgstr "ថ្លៃដើមសរុបក្នុងមួយឯកតា"
+
+msgid "Price paid to the supplier per unit for this batch."
+msgstr "តម្លៃដែលបង់ឱ្យអ្នកផ្គត់ផ្គង់ក្នុងមួយឯកតាសម្រាប់ Batch នេះ។"
+
+msgid "Optional. Use actual cost plus shipping, import, or extra costs."
+msgstr "ជាជម្រើស។ ប្រើថ្លៃដើមពិតបូកថ្លៃដឹកជញ្ជូន នាំចូល ឬចំណាយបន្ថែម។"
+
+msgid "Selling price used when this batch is selected in POS."
+msgstr "តម្លៃលក់ដែលប្រើនៅ POS ពេលជ្រើស Batch នេះ។"
+
+msgid "Optional receiving note for audit and stock traceability."
+msgstr "កំណត់សម្គាល់ទទួលស្តុកសម្រាប់សវនកម្ម និងតាមដានស្តុក។"
+
+msgid "Inventory Lookup"
+msgstr "ស្វែងរកស្តុក"
+
+msgid "Product Stock Summary"
+msgstr "សរុបស្តុកតាមផលិតផល"
+
+msgid "Total Available"
+msgstr "ចំនួនមានសរុប"
+
+msgid "Min Stock"
+msgstr "ស្តុកអប្បបរមា"
+
+msgid "Level"
+msgstr "កម្រិត"
+
+msgid "Low stock"
+msgstr "ស្តុកទាប"
+
+msgid "OK"
+msgstr "ល្អ"
+
+msgid "Batch Stock Detail"
+msgstr "ព័ត៌មានស្តុកតាម Batch"
+
+msgid "Open"
+msgstr "បើក"
+
+msgid "Scan Barcode or QR"
+msgstr "ស្កេនបាកូដ ឬ QR"
+
+msgid "Lookup"
+msgstr "ស្វែងរក"
+
+msgid "Promotions"
+msgstr "ប្រូម៉ូសិន"
+
+msgid "Quick Keys"
+msgstr "ប៊ូតុងរហ័ស"
+
+msgid "Product found. Choose the stock batch and quantity to add."
+msgstr "រកឃើញផលិតផល។ សូមជ្រើស Batch និងចំនួនដើម្បីបន្ថែម។"
+
+msgid "Ready for the next barcode, QR code, or manual lookup."
+msgstr "រួចរាល់សម្រាប់បាកូដ QR ឬការស្វែងរកដោយដៃបន្ទាប់។"
+
+msgid "Sell first"
+msgstr "លក់មុន"
+
+msgid "Add"
+msgstr "បន្ថែម"
+
+msgid "Scan or type a product code to begin the sale."
+msgstr "ស្កេន ឬវាយកូដផលិតផលដើម្បីចាប់ផ្តើមលក់។"
+
+msgid "Batch-level sale items."
+msgstr "ទំនិញលក់តាម Batch។"
+
+msgid "Hold"
+msgstr "ផ្អាក"
+
+msgid "Item"
+msgstr "ទំនិញ"
+
+msgid "Qty"
+msgstr "ចំនួន"
+
+msgid "Promo"
+msgstr "ប្រូម៉ូសិន"
+
+msgid "Subtotal"
+msgstr "សរុបរង"
+
+msgid "Action"
+msgstr "សកម្មភាព"
+
+msgid "Below cost"
+msgstr "ក្រោមថ្លៃដើម"
+
+msgid "Update"
+msgstr "កែប្រែ"
+
+msgid "Remove"
+msgstr "ដកចេញ"
+
+msgid "Cart is empty. Add a sellable batch before checkout."
+msgstr "រទេះទំនេរ។ សូមបន្ថែម Batch ដែលអាចលក់បានមុនបង់ប្រាក់។"
+
+msgid "Cart Total"
+msgstr "សរុបក្នុងរទេះ"
+
+msgid "Riel"
+msgstr "រៀល"
+
+msgid "Adjustments"
+msgstr "ការកែតម្រូវ"
+
+msgid "Complete Sale"
+msgstr "បញ្ចប់ការលក់"
+
+msgid "Clear Cart"
+msgstr "សម្អាតរទេះ"
+
+msgid "PAYMENT"
+msgstr "ការទូទាត់"
+
+msgid "Cash"
+msgstr "សាច់ប្រាក់"
+
+msgid "Card"
+msgstr "កាត"
+
+msgid "Amount Received"
+msgstr "ប្រាក់ទទួលបាន"
+
+msgid "Change"
+msgstr "ប្រាក់អាប់"
+
+msgid "Confirm Cash Payment"
+msgstr "បញ្ជាក់ការទូទាត់សាច់ប្រាក់"
+
+msgid "Back"
+msgstr "ត្រឡប់ក្រោយ"
+
+msgid "Access denied"
+msgstr "មិនអនុញ្ញាតឱ្យចូល"
+
+msgid "No role assigned"
+msgstr "មិនទាន់កំណត់តួនាទី"
+
+msgid "Page or item not found"
+msgstr "រកមិនឃើញទំព័រ ឬទិន្នន័យ"
+
+msgid "Unexpected error"
+msgstr "កំហុសមិនបានរំពឹងទុក"
+
+msgid "Your account does not have permission to open this area."
+msgstr "គណនីរបស់អ្នកមិនមានសិទ្ធិបើកផ្នែកនេះទេ។"
+
+msgid "Return to an area your role can use. If this should be allowed, ask an Owner to update your role."
+msgstr "ត្រឡប់ទៅផ្នែកដែលតួនាទីអ្នកអាចប្រើបាន។ ប្រសិនបើគួរត្រូវបានអនុញ្ញាត សូមឱ្យ Owner កែតួនាទី។"
+
+msgid "What to do next"
+msgstr "អ្វីត្រូវធ្វើបន្ទាប់"
+
+msgid "Back to POS"
+msgstr "ត្រឡប់ទៅ POS"
+
+msgid "Back to Dashboard"
+msgstr "ត្រឡប់ទៅផ្ទាំងគ្រប់គ្រង"
+
+msgid "Login again"
+msgstr "ចូលម្តងទៀត"
+
+msgid "AUDIT TRAIL ACTIVE"
+msgstr "កំណត់ត្រាសវនកម្មកំពុងដំណើរការ"
+
+msgid "NO TECHNICAL DETAILS SHOWN"
+msgstr "មិនបង្ហាញព័ត៌មានបច្ចេកទេស"
+
+msgid "Log Stream"
+msgstr "ស្ទ្រីមកំណត់ហេតុ"
+
+msgid "Auto-refreshes every 5 seconds. Sensitive values are redacted before display."
+msgstr "ធ្វើបច្ចុប្បន្នភាពរៀងរាល់ 5 វិនាទី។ តម្លៃរសើបត្រូវបានលាក់មុនបង្ហាញ។"
+
+msgid "Sanitized operational logs only. Do not paste secrets into logs or support notes."
+msgstr "បង្ហាញតែកំណត់ហេតុប្រតិបត្តិការដែលបានសម្អាត។ កុំដាក់ពាក្យសម្ងាត់ក្នុងកំណត់ហេតុ ឬកំណត់សម្គាល់ជំនួយ។"
+
+msgid "Errors"
+msgstr "កំហុស"
+
+msgid "Newest entries appear first."
+msgstr "ធាតុថ្មីបង្ហាញមុន។"
+
+msgid "Application"
+msgstr "កម្មវិធី"
+
+msgid "No error logs found."
+msgstr "មិនមានកំណត់ហេតុកំហុសទេ។"
+
+msgid "No application logs found."
+msgstr "មិនមានកំណត់ហេតុកម្មវិធីទេ។"
+
+msgid "Database"
+msgstr "មូលដ្ឋានទិន្នន័យ"
+
+msgid "Logs"
+msgstr "កំណត់ហេតុ"
+
+msgid "Disk Free"
+msgstr "ទំហំថាសនៅសល់"
+
+msgid "App Version"
+msgstr "កំណែកម្មវិធី"
+
+msgid "Health Details"
+msgstr "ព័ត៌មានសុខភាពប្រព័ន្ធ"
+
+msgid "Database Status"
+msgstr "ស្ថានភាពមូលដ្ឋានទិន្នន័យ"
+
+msgid "Disk Total"
+msgstr "ទំហំថាសសរុប"
+
+msgid "Disk Used"
+msgstr "ទំហំថាសបានប្រើ"
+
+msgid "Log Writable Status"
+msgstr "ស្ថានភាពសរសេរកំណត់ហេតុ"
+
+msgid "Last Sale Time"
+msgstr "ពេលលក់ចុងក្រោយ"
+
+msgid "Last Stock-In Time"
+msgstr "ពេលទទួលស្តុកចុងក្រោយ"
+
+msgid "Last Error"
+msgstr "កំហុសចុងក្រោយ"
+
+msgid "Audit Logs"
+msgstr "កំណត់ត្រាសវនកម្ម"
+
+msgid "Entries"
+msgstr "ធាតុ"
+
+msgid "Mode"
+msgstr "របៀប"
+
+msgid "Read-only"
+msgstr "បានតែអាន"
+
+msgid "Order"
+msgstr "លំដាប់"
+
+msgid "Newest first"
+msgstr "ថ្មីមុន"
+
+msgid "Filters"
+msgstr "ការចម្រោះ"
+
+msgid "Activity"
+msgstr "សកម្មភាព"
+
+msgid "Time"
+msgstr "ពេលវេលា"
+
+msgid "User"
+msgstr "អ្នកប្រើ"
+
+msgid "Module"
+msgstr "ម៉ូឌុល"
+
+msgid "Object"
+msgstr "វត្ថុ"
+
+msgid "Details"
+msgstr "លម្អិត"
+
+msgid "No audit entries found."
+msgstr "មិនមានធាតុសវនកម្មទេ។"
+
+msgid "Upload File"
+msgstr "បញ្ចូលឯកសារ"
+
+msgid "Upload And Preview"
+msgstr "បញ្ចូល និងមើលជាមុន"
+
+msgid "Templates"
+msgstr "គំរូ"
+
+msgid "Recent Uploads"
+msgstr "ការបញ្ចូលថ្មីៗ"
+
+msgid "No upload jobs yet."
+msgstr "មិនទាន់មានការបញ្ចូលទិន្នន័យទេ។"
+
+msgid "Upload a CSV or XLSX file above to create a preview job before committing data."
+msgstr "បញ្ចូលឯកសារ CSV ឬ XLSX ខាងលើ ដើម្បីបង្កើតការមើលជាមុន មុនពេលរក្សាទុកទិន្នន័យ។"
+
+msgid "Print Labels"
+msgstr "បោះពុម្ពស្លាក"
+
+msgid "Label Templates"
+msgstr "គំរូស្លាក"
+
+msgid "Promotion Labels"
+msgstr "ស្លាកប្រូម៉ូសិន"
+
+msgid "New Template"
+msgstr "គំរូថ្មី"
+
+msgid "No templates yet."
+msgstr "មិនទាន់មានគំរូទេ។"
+
+msgid "Create a template before printing product, shelf, or promotion labels."
+msgstr "បង្កើតគំរូមុនបោះពុម្ពស្លាកផលិតផល ធ្នើ ឬប្រូម៉ូសិន។"
+
+msgid "Choose the layout used for every selected batch."
+msgstr "ជ្រើសប្លង់សម្រាប់ Batch ដែលបានជ្រើសទាំងអស់។"
+
+msgid "Select one or more active batches. Use Scan Batch to fill one batch quickly."
+msgstr "ជ្រើស Batch សកម្មមួយ ឬច្រើន។ ប្រើ ស្កេន Batch ដើម្បីបំពេញបានលឿន។"
+
+msgid "Copies per selected batch."
+msgstr "ចំនួនច្បាប់ចម្លងក្នុងមួយ Batch។"
+
+msgid "Only active promotions are listed."
+msgstr "បង្ហាញតែប្រូម៉ូសិនសកម្ម។"
+
+msgid "Promotion or custom templates can be used for offer labels."
+msgstr "អាចប្រើគំរូប្រូម៉ូសិន ឬគំរូផ្ទាល់ខ្លួនសម្រាប់ស្លាកបញ្ចុះតម្លៃ។"
+
+msgid "Copies per active product in the promotion."
+msgstr "ចំនួនច្បាប់ចម្លងក្នុងមួយផលិតផលសកម្មក្នុងប្រូម៉ូសិន។"
+
+msgid "Special Offer"
+msgstr "ការផ្តល់ជូនពិសេស"
+
+msgid "Optional offer text printed on every promotion label."
+msgstr "អត្ថបទផ្តល់ជូនជាជម្រើស ដែលបោះពុម្ពលើស្លាកប្រូម៉ូសិនរាល់សន្លឹក។"
+
+msgid "Percentage, fixed amount off, or fixed final price."
+msgstr "ភាគរយ បញ្ចុះចំនួនថេរ ឬតម្លៃចុងក្រោយថេរ។"
+
+msgid "Use the amount for the selected discount type. Percent values cannot exceed 100."
+msgstr "ប្រើចំនួនសម្រាប់ប្រភេទបញ្ចុះតម្លៃដែលបានជ្រើស។ តម្លៃភាគរយមិនអាចលើស 100 បានទេ។"
+
+msgid "Use for an exact product promotion."
+msgstr "ប្រើសម្រាប់ប្រូម៉ូសិនផលិតផលជាក់លាក់។"
+
+msgid "Use for all active products in one category."
+msgstr "ប្រើសម្រាប់ផលិតផលសកម្មទាំងអស់ក្នុងប្រភេទមួយ។"
+
+msgid "Only allow this when the owner accepts selling below cost."
+msgstr "អនុញ្ញាតតែពេល Owner ព្រមទទួលការលក់ក្រោមថ្លៃដើម។"

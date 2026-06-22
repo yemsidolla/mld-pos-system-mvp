@@ -61,7 +61,14 @@
                     <td>{{ job.created_at }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="6" class="empty-cell">{% trans "No upload jobs yet." %}</td></tr>
+                <tr>
+                    <td colspan="6" class="empty-cell">
+                        <div class="empty-state">
+                            <strong>{% trans "No upload jobs yet." %}</strong>
+                            <span>{% trans "Upload a CSV or XLSX file above to create a preview job before committing data." %}</span>
+                        </div>
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>

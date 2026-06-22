@@ -1,7 +1,7 @@
 # Authentik identity provider for Melodu (auth.khlovepet.com).
 # Standalone stack — run it separately from the POS stack:
 #   docker compose -f docker-compose.authentik.yml --env-file .env.authentik up -d
-# See docs/V6_AUTHENTIK_SETUP_GUIDE.md for setup, Nginx, and hardening notes.
+# See docs/versions/v6/V6_AUTHENTIK_SETUP_GUIDE.md for setup, Nginx, and hardening notes.
 #
 # No Docker socket is mounted. If you later need a Docker-managed outpost,
 # use a docker-socket-proxy container instead of mounting /var/run/docker.sock.

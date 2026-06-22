@@ -22,19 +22,27 @@
         </div>
     </header>
 
-    {% if active_filters %}
-    <div class="filter-bar">
-        <span class="filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
-        {% for f in active_filters %}
-            {% if not forloop.first %}<span class="filter-bar-join">{% trans "and" %}</span>{% endif %}
-            <span class="filter-chip">{{ f.label }}: {{ f.values|join:", " }}
-                <a href="{{ f.remove_url }}" aria-label="{% trans 'Remove filter' %}">{% icon "x" 13 %}</a></span>
-        {% endfor %}
-        <a class="filter-bar-clear" href="{{ clear_url }}">{% trans "Clear all" %}</a>
-    </div>
-    {% endif %}
+    <form class="form-stack" method="get">
+        <div class="input-row catalog-search-row">
+            <input id="id_q" type="search" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Search name, code, barcode, or tag' %}" autocomplete="off">
+            <button class="btn btn-primary" type="submit">{% icon "search" 16 %} {% trans "Search" %}</button>
+            <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
+            {% if active_filters %}<a class="btn" href="{{ clear_url }}">{% trans "Reset" %}</a>{% endif %}
+        </div>
 
-    <form method="get">
+        {% if active_filters %}
+        <div class="filter-bar">
+            <span class="filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
+            {% for f in active_filters %}
+                {% if not forloop.first %}<span class="filter-bar-join">{% trans "and" %}</span>{% endif %}
+                <span class="filter-chip">{{ f.label }}: {{ f.values|join:", " }}
+                    <a href="{{ f.remove_url }}" aria-label="{% trans 'Remove filter' %}">{% icon "x" 13 %}</a></span>
+            {% endfor %}
+            <a class="filter-bar-clear" href="{{ clear_url }}">{% trans "Clear all" %}</a>
+        </div>
+        {% endif %}
+
+        <div class="table-scroll">
         <table class="data-table">
             <thead>
                 <tr>
@@ -45,7 +53,7 @@
                             <summary aria-label="{% trans 'Search products' %}">{% icon "search" 14 %}</summary>
                             <div class="col-filter-pop">
                                 <p class="col-filter-title">{% trans "Search name, code, or barcode" %}</p>
-                                <input class="col-filter-search" id="id_q" type="text" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Contains…' %}">
+                                <input class="col-filter-search" id="id_q_column" type="text" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Contains…' %}">
                                 <div class="col-filter-actions">
                                     <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
                                     <a class="btn" href="{{ clear_url }}">{% trans "Clear" %}</a>
@@ -116,10 +124,19 @@
                     <td><a class="btn" href="{% url 'product-edit' product.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="10" class="empty-cell">{% trans "No products match these filters." %}</td></tr>
+                <tr>
+                    <td colspan="10" class="empty-cell">
+                        <div class="empty-state">
+                            <strong>{% trans "No products match these filters." %}</strong>
+                            <span>{% trans "Clear the filters or create a new product for this catalog item." %}</span>
+                            <a class="btn" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
+                        </div>
+                    </td>
+                </tr>
             {% endfor %}
             </tbody>
         </table>
+        </div>
     </form>
     {% include "dashboard/_pagination.html" %}
 </section>

@@ -13,11 +13,11 @@
     <header class="panel-header">
         <div>
             <h2>{% trans "Inventory Lookup" %}</h2>
-            <p>{% trans "Scan or type a product code, barcode, batch number, or custom code." %}</p>
+            <p>{% trans "Scan or type a product name, product code, original barcode, batch number, or Melodu custom code." %}</p>
         </div>
     </header>
     <form class="input-row" method="get">
-        <input id="inventory-search" name="q" type="text" value="{{ query }}" placeholder="{% trans 'Search inventory' %}" autocomplete="off">
+        <input id="inventory-search" name="q" type="search" value="{{ query }}" placeholder="{% trans 'Search product, barcode, batch, or custom code' %}" autocomplete="off">
         <button class="btn btn-primary" type="submit">{% trans "Search" %}</button>
         <button class="btn" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan" %}</button>
         {% if query %}<a class="btn" href="{% url 'inventory-summary' %}">{% trans "Reset" %}</a>{% endif %}
@@ -39,6 +39,9 @@
                 <th>{% trans "Product Code" %}</th>
                 <th>{% trans "Total Available" %}</th>
                 <th>{% trans "Min Stock" %}</th>
+                <th>{% trans "Reorder Gap" %}</th>
+                <th>{% trans "Level" %}</th>
+                <th>{% trans "Next Action" %}</th>
             </tr>
             </thead>
             <tbody>
@@ -48,9 +51,21 @@
                     <td>{{ product.product_code }}</td>
                     <td>{{ product.total_available|default:0 }}</td>
                     <td>{{ product.min_stock }}</td>
+                    <td>{{ product.reorder_gap }}</td>
+                    <td>
+                        <span class="badge {{ product.stock_action_class }}">{{ product.stock_action_label }}</span>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
+                            {% if dashboard_can_view_reports %}
+                                <a class="btn" href="{% url 'expiry-report' %}">{% trans "Review Expiry" %}</a>
+                            {% endif %}
+                        </div>
+                    </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="4" class="empty-cell">{% trans "No stock batches found." %}</td></tr>
+                <tr><td colspan="7" class="empty-cell">{% trans "No stock batches found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -69,19 +84,51 @@
             <thead>
             <tr>
                 <th>{% trans "Batch" %}</th>
-                <th>{% trans "Product" %}</th>
-                <th>{% trans "Expiry" %}</th>
-                <th>{% trans "Available" %}</th>
+                <th>{% trans "Product / Supplier" %}</th>
+                <th>{% trans "Expiry State" %}</th>
+                <th>{% trans "Received / Available" %}</th>
+                <th>{% trans "Price / Cost" %}</th>
+                <th>{% trans "Codes" %}</th>
                 <th>{% trans "Status" %}</th>
+                <th>{% trans "Action" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for batch in batches %}
                 <tr>
-                    <td><a href="{% url 'stock-batch-detail' batch.id %}">{{ batch.batch_no }}</a><br><span class="muted">{{ batch.custom_code }}</span></td>
-                    <td>{{ batch.product.name }}<br><span class="muted">{{ batch.product.product_code }}</span></td>
-                    <td class="mono">{{ batch.expiry_date }}</td>
-                    <td class="mono">{{ batch.quantity_available }}</td>
+                    <td>
+                        <a href="{% url 'stock-batch-detail' batch.id %}">{{ batch.batch_no }}</a>
+                        <br><span class="muted">{{ batch.received_at|date:"Y-m-d" }} · {{ batch.received_by.username }}</span>
+                    </td>
+                    <td>
+                        {{ batch.product.name }}<br>
+                        <span class="muted">{{ batch.product.product_code }} · {{ batch.supplier.name }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {{ batch.expiry_badge_class }}">{{ batch.expiry_status }}</span>
+                        <br>
+                        <span class="muted mono">
+                            {{ batch.expiry_date }}
+                            {% if batch.days_until_expiry < 0 %}
+                                · {% trans "expired" %}
+                            {% else %}
+                                · {{ batch.days_until_expiry }} {% trans "days" %}
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="mono">{{ batch.quantity_received }} / {{ batch.quantity_available }}</td>
+                    <td>
+                        <span class="mono">{{ batch.selling_price }}</span>
+                        {% if dashboard_can_view_costs %}
+                            <br><span class="muted">{% trans "Cost" %}: {{ batch.actual_unit_cost }}</span>
+                        {% else %}
+                            <br><span class="muted cost-hidden">{% trans "Cost hidden" %}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="mono">{{ batch.custom_code }}</span>
+                        <br><span class="muted">{% trans "Original" %}: {{ batch.product.original_barcode|default:"-" }}</span>
+                    </td>
                     <td>
                         {% if batch.status == "ACTIVE" %}
                             <span class="badge badge-success">{{ batch.get_status_display }}</span>
@@ -93,9 +140,17 @@
                             <span class="badge badge-warning">{{ batch.get_status_display }}</span>
                         {% endif %}
                     </td>
+                    <td>
+                        <div class="table-actions">
+                            <a class="btn" href="{% url 'stock-batch-detail' batch.id %}">{% trans "Open" %}</a>
+                            {% if batch.status == "ACTIVE" %}
+                                <a class="btn" href="{% url 'barcode-print' %}?batch={{ batch.pk }}">{% trans "Print" %}</a>
+                            {% endif %}
+                        </div>
+                    </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="5" class="empty-cell">{% trans "No stock batches found." %}</td></tr>
+                <tr><td colspan="8" class="empty-cell">{% trans "No stock batches found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

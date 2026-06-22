@@ -4,18 +4,80 @@
 {% block title %}{% trans "Staff Sales Report" %}{% endblock %}
 {% block page_title %}{% trans "Staff Sales Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Completed sale counts and totals by cashier." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
+    <a class="btn" href="{% url 'daily-sales-report' %}">{% trans "Daily Sales" %}</a>
+{% endblock %}
 
 {% block content %}
 <section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Report Definition" %}</h2>
+            <p>{% trans "Completed sales count toward revenue. Cancellations, receipt reprints, and below-cost overrides are accountability signals." %}</p>
+        </div>
+    </header>
+</section>
+
+<section class="metric-grid">
+    <article class="metric-card"><span>{% trans "Staff" %}</span><strong>{{ summary.staff_count }}</strong></article>
+    <article class="metric-card"><span>{% trans "Completed Sales" %}</span><strong>{{ summary.sale_count }}</strong></article>
+    <article class="metric-card {% if summary.cancelled_count %}kpi-warning{% endif %}"><span>{% trans "Cancelled Sales" %}</span><strong>{{ summary.cancelled_count }}</strong></article>
+    <article class="metric-card {% if summary.reprint_count %}kpi-warning{% endif %}"><span>{% trans "Receipt Reprints" %}</span><strong>{{ summary.reprint_count }}</strong></article>
+    <article class="metric-card {% if summary.override_count %}kpi-danger{% endif %}"><span>{% trans "Below-cost Overrides" %}</span><strong>{{ summary.override_count }}</strong></article>
+    <article class="metric-card"><span>{% trans "Total Sales" %}</span><strong>{{ summary.total_sales }}</strong></article>
+    <article class="metric-card"><span>{% trans "Discounts" %}</span><strong>{{ summary.discount_total }}</strong></article>
+    {% if user_can_view_costs %}
+        <article class="metric-card"><span>{% trans "Cost of Goods" %}</span><strong>{{ summary.total_cost }}</strong></article>
+        <article class="metric-card"><span>{% trans "Gross Margin" %}</span><strong>{{ summary.gross_margin }}</strong></article>
+    {% endif %}
+</section>
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Cashier Accountability" %}</h2>
+            <p>{% trans "Use exception counts as review prompts, not payroll or accounting totals." %}</p>
+        </div>
+    </header>
+    <div class="table-scroll">
     <table class="data-table">
-        <thead><tr><th>{% trans "Staff" %}</th><th>{% trans "Sales Count" %}</th><th>{% trans "Total Sales" %}</th></tr></thead>
+        <thead>
+            <tr>
+                <th>{% trans "Staff" %}</th>
+                <th>{% trans "Completed" %}</th>
+                <th>{% trans "Cancelled" %}</th>
+                <th>{% trans "Reprints" %}</th>
+                <th>{% trans "Overrides" %}</th>
+                <th>{% trans "Discounts" %}</th>
+                <th>{% trans "Average Sale" %}</th>
+                <th>{% trans "Total Sales" %}</th>
+                {% if user_can_view_costs %}
+                    <th>{% trans "Cost" %}</th>
+                    <th>{% trans "Margin" %}</th>
+                {% endif %}
+            </tr>
+        </thead>
         <tbody>
         {% for row in rows %}
-            <tr><td>{{ row.cashier__username }}</td><td>{{ row.sale_count }}</td><td>{{ row.total_sales }}</td></tr>
+            <tr>
+                <td>{{ row.cashier__username }}</td>
+                <td>{{ row.sale_count }}</td>
+                <td><span class="badge {% if row.cancelled_count %}badge-warning{% endif %}">{{ row.cancelled_count }}</span></td>
+                <td><span class="badge {% if row.reprint_count %}badge-warning{% endif %}">{{ row.reprint_count }}</span></td>
+                <td><span class="badge {% if row.override_count %}badge-danger{% endif %}">{{ row.override_count }}</span></td>
+                <td>{{ row.discount_total }}</td>
+                <td>{{ row.average_sale|floatformat:2 }}</td>
+                <td>{{ row.total_sales }}</td>
+                {% if user_can_view_costs %}
+                    <td>{{ row.total_cost }}</td>
+                    <td>{{ row.gross_margin }}</td>
+                {% endif %}
+            </tr>
         {% empty %}
-            <tr><td colspan="3" class="empty-cell">{% trans "No staff sales found." %}</td></tr>
+            <tr><td colspan="{% if user_can_view_costs %}10{% else %}8{% endif %}" class="empty-cell">{% trans "No staff sales found." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>
+    </div>
 </section>
 {% endblock %}

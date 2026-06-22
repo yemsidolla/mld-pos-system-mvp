@@ -13,18 +13,26 @@
     {% if form.non_field_errors %}
         <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}
+    <div class="alert alert-warning">
+        {% trans "Promotions do not stack. POS will choose the best valid promotion for the selected batch. Choose either a product or a category, not both." %}
+    </div>
     <form class="form-stack" method="post">
         {% csrf_token %}
-        <div class="form-grid">
-            {% for field in form %}
-                <div>
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {{ field.errors }}
-                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+        {% for group_title, fields in field_groups %}
+            <section class="form-section">
+                <h2>{{ group_title }}</h2>
+                <div class="form-grid">
+                    {% for field in fields %}
+                        <div>
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {{ field.errors }}
+                            {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                        </div>
+                    {% endfor %}
                 </div>
+            </section>
             {% endfor %}
-        </div>
         <div class="form-actions">
             <button class="btn btn-success" type="submit">{% trans "Save Promotion" %}</button>
             <a class="btn" href="{% url 'promotion-list' %}">{% trans "Cancel" %}</a>

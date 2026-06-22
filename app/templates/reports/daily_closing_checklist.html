@@ -1,0 +1,59 @@
+{% extends "dashboard/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Daily Closing Checklist" %}{% endblock %}
+{% block page_title %}{% trans "Daily Closing Checklist" %}{% endblock %}
+{% block page_subtitle %}{% trans "Read-only owner/manager control checklist for closing the day." %}{% endblock %}
+{% block header_actions %}
+    <a class="btn" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
+    <a class="btn btn-primary" href="{% url 'daily-sales-report' %}">{% trans "Daily Sales" %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Operating Rule" %}</h2>
+            <p>{% trans "This is an operational checklist, not accounting, tax filing, payroll, or a final financial close." %}</p>
+        </div>
+    </header>
+    <div class="alert alert-info">
+        {% trans "Use the links below to review evidence. Do not change historical sales to force a closing total." %}
+    </div>
+</section>
+
+<section class="dashboard-grid">
+    {% for section in checklist_sections %}
+        <article class="panel">
+            <header class="panel-header">
+                <div>
+                    <h2>{{ section.title }}</h2>
+                    <p>{% trans "Mark this complete outside the system after reviewing the evidence." %}</p>
+                </div>
+            </header>
+            <ul class="checklist-list">
+                {% for item in section.items %}
+                    <li>{% trans item %}</li>
+                {% endfor %}
+            </ul>
+        </article>
+    {% endfor %}
+</section>
+
+<section class="panel">
+    <header class="panel-header">
+        <div>
+            <h2>{% trans "Evidence Links" %}</h2>
+            <p>{% trans "Open these pages during closing review." %}</p>
+        </div>
+    </header>
+    <div class="action-grid">
+        <a class="action-card" href="{% url 'daily-sales-report' %}"><strong>{% trans "Daily Sales" %}</strong><span>{% trans "Revenue, payment breakdown, discounts, and cancellations." %}</span></a>
+        <a class="action-card" href="{% url 'staff-sales-report' %}"><strong>{% trans "Staff Sales" %}</strong><span>{% trans "Cashier totals, reprints, cancellations, and overrides." %}</span></a>
+        <a class="action-card" href="{% url 'promotion-report' %}"><strong>{% trans "Promotion & Below-cost" %}</strong><span>{% trans "Discount impact and risky promoted lines." %}</span></a>
+        <a class="action-card" href="{% url 'low-stock-report' %}"><strong>{% trans "Low Stock" %}</strong><span>{% trans "Reorder gaps and urgent replenishment." %}</span></a>
+        <a class="action-card" href="{% url 'expiry-report' %}"><strong>{% trans "Expiry" %}</strong><span>{% trans "Expired, critical, and warning batches." %}</span></a>
+        <a class="action-card" href="{% url 'system-health' %}"><strong>{% trans "System Health" %}</strong><span>{% trans "Database, disk, logs, and recent activity." %}</span></a>
+    </div>
+</section>
+{% endblock %}

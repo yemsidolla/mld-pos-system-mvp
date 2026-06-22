@@ -8,12 +8,14 @@
 {% block content %}
 <section class="panel">
     <div class="action-grid">
+        <a class="action-card" href="{% url 'daily-closing-checklist' %}">{% icon "check" 20 "action-ic" %}<strong>{% trans "Daily Closing Checklist" %}</strong><span>{% trans "Owner/manager close-of-day control steps." %}</span></a>
         <a class="action-card" href="{% url 'daily-sales-report' %}">{% icon "cash" 20 "action-ic" %}<strong>{% trans "Daily Sales Report" %}</strong><span>{% trans "Sales count and totals by date." %}</span></a>
         <a class="action-card" href="{% url 'stock-summary-report' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Stock Summary Report" %}</strong><span>{% trans "Available stock by product." %}</span></a>
         <a class="action-card" href="{% url 'low-stock-report' %}">{% icon "alert" 20 "action-ic" %}<strong>{% trans "Low Stock Report" %}</strong><span>{% trans "Products at or below minimum stock." %}</span></a>
         <a class="action-card" href="{% url 'expiry-report' %}">{% icon "clock" 20 "action-ic" %}<strong>{% trans "Expiry Report" %}</strong><span>{% trans "Expired, critical, and warning batches." %}</span></a>
         <a class="action-card" href="{% url 'stock-movement-report' %}">{% icon "activity" 20 "action-ic" %}<strong>{% trans "Stock Movement Report" %}</strong><span>{% trans "Trace inventory movements." %}</span></a>
         <a class="action-card" href="{% url 'staff-sales-report' %}">{% icon "user" 20 "action-ic" %}<strong>{% trans "Staff Sales Report" %}</strong><span>{% trans "Completed sales by cashier." %}</span></a>
+        <a class="action-card" href="{% url 'promotion-report' %}">{% icon "percent" 20 "action-ic" %}<strong>{% trans "Promotion & Below-cost Report" %}</strong><span>{% trans "Discount impact and risky promoted lines." %}</span></a>
     </div>
 </section>
 {% endblock %}

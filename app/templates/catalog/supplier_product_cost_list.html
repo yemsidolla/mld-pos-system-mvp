@@ -32,7 +32,9 @@
             <tr>
                 <th>{% trans "Product" %}</th>
                 <th>{% trans "Supplier" %}</th>
-                <th>{% trans "Reference Cost" %}</th>
+                <th>{% trans "Product Default Cost" %}</th>
+                <th>{% trans "Supplier Reference Unit Cost" %}</th>
+                <th>{% trans "Notes" %}</th>
                 <th>{% trans "Status" %}</th>
                 <th>{% trans "Action" %}</th>
             </tr>
@@ -42,7 +44,9 @@
                 <tr>
                     <td>{{ cost.product.name }}<br><span class="muted">{{ cost.product.product_code }}</span></td>
                     <td>{{ cost.supplier.name }}</td>
+                    <td>{{ cost.product.default_cost_price }}</td>
                     <td>{{ cost.reference_unit_cost }}</td>
+                    <td>{% if cost.notes %}{{ cost.notes }}{% else %}<span class="muted">{% trans "No notes" %}</span>{% endif %}</td>
                     <td>
                         {% if cost.is_active %}
                             <span class="badge badge-success">{% trans "Active" %}</span>
@@ -53,7 +57,7 @@
                     <td><a class="btn" href="{% url 'supplier-product-cost-edit' cost.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="5" class="empty-cell">{% trans "No reference costs found." %}</td></tr>
+                <tr><td colspan="7" class="empty-cell">{% trans "No reference costs found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

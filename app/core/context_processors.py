@@ -44,6 +44,8 @@ def dashboard_context(request):
         nav_groups.append({"label": "Sales", "items": sales_items})
 
     user_sees_costs = bool(user and can_view_costs(user))
+    user_can_manage_inventory = bool(user and can_manage_inventory(user))
+    user_can_view_audit = bool(user and can_view_audit(user))
 
     catalog_items = []
     if user and can_manage_catalog(user):
@@ -71,7 +73,7 @@ def dashboard_context(request):
         nav_groups.append({"label": "Catalog", "items": catalog_items})
 
     inventory_items = []
-    if user and can_manage_inventory(user):
+    if user_can_manage_inventory:
         inventory_items.append({"label": "Receive Stock", "icon": "truck", "url_name": "stock-in", "href": "/dashboard/stock-in/"})
         inventory_items.append({"label": "Stock Overview", "icon": "package", "url_name": "inventory-summary", "href": "/dashboard/inventory/"})
         inventory_items.append(
@@ -84,8 +86,10 @@ def dashboard_context(request):
     if inventory_items:
         nav_groups.append({"label": "Inventory", "items": inventory_items})
 
+    user_can_view_reports = bool(user and can_view_reports(user))
+
     reports_items = []
-    if user and can_view_reports(user):
+    if user_can_view_reports:
         reports_items.append({"label": "Reports", "icon": "chart", "url_name": "reports-index", "href": "/dashboard/reports/"})
     if reports_items:
         nav_groups.append({"label": "Reports", "items": reports_items})
@@ -94,17 +98,26 @@ def dashboard_context(request):
     if user and can_manage_users(user):
         admin_items.append({"label": "Users", "icon": "user", "url_name": "user-list", "href": "/dashboard/users/"})
     if user and can_manage_settings(user):
-        admin_items.append({"label": "Settings", "icon": "settings", "url_name": "store-settings", "href": "/dashboard/settings/"})
-    if user and can_view_audit(user):
+        admin_items.append(
+            {"label": "Store Settings", "icon": "settings", "url_name": "store-settings", "href": "/dashboard/settings/"}
+        )
+    if user_can_view_audit:
         admin_items.append({"label": "Audit Logs", "icon": "shield", "url_name": "audit-log-list", "href": "/dashboard/audit-logs/"})
     if user and can_view_system(user):
         admin_items.append({"label": "System Health", "icon": "activity", "url_name": "system-health", "href": "/dashboard/system-health/"})
         admin_items.append({"label": "Live Logs", "icon": "logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
     if user and is_owner(user):
         admin_items.append({"label": "Role Permissions", "icon": "shield", "url_name": "role-matrix", "href": "/dashboard/roles/"})
-        admin_items.append({"label": "Login & Auth", "icon": "logout", "url_name": "auth-settings", "href": "/dashboard/auth-settings/"})
+        admin_items.append(
+            {
+                "label": "Login & Authentication",
+                "icon": "logout",
+                "url_name": "auth-settings",
+                "href": "/dashboard/auth-settings/",
+            }
+        )
     if is_admin:
-        admin_items.append({"label": "Styleguide", "icon": "category", "url_name": "styleguide", "href": "/dashboard/styleguide/"})
+        admin_items.append({"label": "Style Guide", "icon": "category", "url_name": "styleguide", "href": "/dashboard/styleguide/"})
     if admin_items:
         nav_groups.append({"label": "Administration", "items": admin_items})
 
@@ -140,6 +153,9 @@ def dashboard_context(request):
         "dashboard_role": role,
         "dashboard_role_label": role_label(role) if role else "",
         "dashboard_can_view_costs": user_sees_costs,
+        "dashboard_can_view_reports": user_can_view_reports,
+        "dashboard_can_manage_inventory": user_can_manage_inventory,
+        "dashboard_can_view_audit": user_can_view_audit,
         "store_setting": store_setting,
         "supported_languages": settings.LANGUAGES,
     }
