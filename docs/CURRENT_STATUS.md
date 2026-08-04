@@ -5,7 +5,7 @@ Last updated: 2026-06-16
 Melodu POS is currently a Django monolith for Melodu Pet Store. The project has
 grown beyond the original V1 MVP checklist and now includes the V1 core,
 dashboard UX, batch upload, scanner workflows, role/capability management,
-receipt/label improvements, product classification, and optional MinIO media
+receipt/label improvements, product classification, and optional Garage media
 storage.
 
 V7, V8, and V9 are complete with implementation evidence in
@@ -324,8 +324,10 @@ Latest recorded result:
 ## Known Operational Notes
 
 - Existing production files under `data/media` are not automatically migrated to
-  MinIO. After enabling MinIO, new uploads go to MinIO; old media should be
-  migrated deliberately with a backup in place.
+  Garage. After enabling Garage, new uploads go to Garage; old media should be
+  migrated deliberately with a backup in place. Existing MinIO data under
+  `data/minio` is retained for rollback; use `scripts/migrate_minio_to_garage.sh`
+  for object copy when cutting over.
 - When `USE_S3_MEDIA=True`, browser-visible media URLs must use an HTTPS
   endpoint reachable by phones and desktops.
 - Production Authentik/OIDC group claims, phone scanner behavior, physical
@@ -336,10 +338,10 @@ Latest recorded result:
 
 - Decide final production media domain, for example
   `melodu-media.khlovepet.com`.
-- Add host Nginx config for the media domain before enabling MinIO in
+- Add host Nginx config for the media domain before enabling Garage in
   production.
-- Migrate any existing `data/media` files to MinIO only after confirming backup
-  and restore.
+- Migrate any existing MinIO objects (and/or `data/media` files) to Garage only
+  after confirming backup and restore.
 - Use `docs/product/09_IMPLEMENTATION_BACKLOG.md` and `docs/TASKS.md` for the
   next approved implementation scope.
 - Use `docs/versions/VERSION_COMPLETION_TRACKER.md` before starting any future
