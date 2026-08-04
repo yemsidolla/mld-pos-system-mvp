@@ -14,34 +14,23 @@ services:
       timeout: 5s
       retries: 5
 
-  minio:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
-    command: server /data --console-address ":9001"
+  garage:
+    image: dxflrs/garage:v2.3.0
+    command: ["/garage", "server"]
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-melodu_minio}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-melodu_minio_password}
+      # Local default only — replace in .env for anything shared. Must be 64 hex chars.
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-}
     volumes:
-      - ./data/minio:/data
+      - ./docker/garage/garage.toml:/etc/garage.toml:ro
+      - ./data/garage/meta:/var/lib/garage/meta
+      - ./data/garage/data:/var/lib/garage/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      test: ["CMD", "/garage", "status"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-  minio-init:
-    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-melodu_minio}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-melodu_minio_password}
-      S3_STORAGE_BUCKET_NAME: ${S3_STORAGE_BUCKET_NAME:-melodu-media}
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
-      mc mb --ignore-existing local/$$S3_STORAGE_BUCKET_NAME
-      "
+      start_period: 5s
 
   web:
     build:
@@ -66,9 +55,9 @@ services:
       DJANGO_LOG_DIR: /vol/logs
       USE_S3_MEDIA: ${USE_S3_MEDIA:-False}
       S3_STORAGE_BUCKET_NAME: ${S3_STORAGE_BUCKET_NAME:-melodu-media}
-      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-melodu_minio}
-      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-melodu_minio_password}
-      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-melodu_garage}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-melodu_garage_password}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://garage:3900}
       S3_CUSTOM_DOMAIN: ${S3_CUSTOM_DOMAIN:-}
       S3_REGION_NAME: ${S3_REGION_NAME:-us-east-1}
       S3_QUERYSTRING_AUTH: ${S3_QUERYSTRING_AUTH:-True}
@@ -80,8 +69,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
+      garage:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)\""]
       interval: 10s

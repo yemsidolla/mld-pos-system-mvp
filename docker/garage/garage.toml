@@ -1,0 +1,27 @@
+# Garage single-node config for Melodu POS media storage.
+# Secrets are NOT stored here — pass them via environment:
+#   GARAGE_RPC_SECRET   (required, 32-byte hex from: openssl rand -hex 32)
+#   GARAGE_ADMIN_TOKEN  (optional; omit for local-only CLI via docker exec)
+#
+# Image pin: dxflrs/garage:v2.3.0 (stable release verified on Docker Hub
+# and https://garagehq.deuxfleurs.fr/_releases.html, 2026-04-16).
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+
+replication_factor = 1
+
+# Admin and RPC stay on loopback inside the container. Host publish (if any)
+# must also use 127.0.0.1 — never 0.0.0.0.
+rpc_bind_addr = "127.0.0.1:3901"
+rpc_public_addr = "127.0.0.1:3901"
+
+[s3_api]
+# Match Django S3_REGION_NAME default (us-east-1).
+s3_region = "us-east-1"
+api_bind_addr = "[::]:3900"
+root_domain = ".s3.garage.localhost"
+
+[admin]
+api_bind_addr = "127.0.0.1:3903"

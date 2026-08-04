@@ -22,11 +22,15 @@ data/media/*
 data/static/*
 data/logs/*
 data/minio/*
+data/garage/meta/*
+data/garage/data/*
 !data/postgres/.gitkeep
 !data/media/.gitkeep
 !data/static/.gitkeep
 !data/logs/.gitkeep
 !data/minio/.gitkeep
+!data/garage/meta/.gitkeep
+!data/garage/data/.gitkeep
 
 # OS/editor
 .DS_Store
