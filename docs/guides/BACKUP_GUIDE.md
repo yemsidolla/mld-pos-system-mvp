@@ -1,13 +1,13 @@
 # Backup Guide
 
-Version 1 uses local VPS backups. If MinIO media storage is enabled, back up
-`data/minio` instead of only `data/media`.
+Version 1 uses local VPS backups. If Garage media storage is enabled, back up
+`data/garage` instead of only `data/media`.
 
 ## What To Back Up
 
 - PostgreSQL database: required.
 - `data/media`: required when `USE_S3_MEDIA=False`.
-- `data/minio`: required when `USE_S3_MEDIA=True` because barcode, QR, store,
+- `data/garage`: required when `USE_S3_MEDIA=True` because barcode, QR, store,
   KHQR, and product images are stored there.
 - `data/logs`: optional for troubleshooting history.
 - `data/static`: can be regenerated with `collectstatic`.
@@ -40,16 +40,16 @@ By default the script archives `data/media`. Override the source when needed:
 MEDIA_SOURCE=data/media scripts/backup_media.sh
 ```
 
-## Create MinIO Backup
+## Create Garage Backup
 
 ```bash
-scripts/backup_minio.sh
+scripts/backup_garage.sh
 ```
 
-The script archives `data/minio` by default. Override the source when needed:
+The script archives `data/garage` by default. Override the source when needed:
 
 ```bash
-MINIO_SOURCE=data/minio scripts/backup_minio.sh
+GARAGE_SOURCE=data/garage scripts/backup_garage.sh
 ```
 
 ## Restore Database
@@ -66,15 +66,17 @@ Restore into a clean or intentionally replaceable database. Confirm the target `
 CONFIRM_RESTORE=yes scripts/restore_media.sh backups/melodu_pos_media_YYYYMMDD_HHMMSS.tar.gz
 ```
 
-## Restore MinIO
+## Restore Garage
+
+Stop the Garage container before restoring data files, then:
 
 ```bash
-CONFIRM_RESTORE=yes scripts/restore_minio.sh backups/melodu_pos_minio_YYYYMMDD_HHMMSS.tar.gz
+CONFIRM_RESTORE=yes scripts/restore_garage.sh backups/melodu_pos_garage_YYYYMMDD_HHMMSS.tar.gz
 ```
 
 ## Recommended Schedule
 
 - Database: daily.
-- Media/MinIO: weekly, and immediately after large product or stock-label updates.
+- Media/Garage: weekly, and immediately after large product or stock-label updates.
 - Restore rehearsal: monthly on a non-production copy.
 - Keep at least 7 daily database backups and 4 weekly media backups.

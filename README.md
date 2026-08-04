@@ -4,7 +4,7 @@ Melodu Store Control System — role-based POS and inventory for Melodu Pet Stor
 
 **Production:** https://melodu-pos.khlovepet.com
 
-Django monolith · PostgreSQL · Docker Compose · Gunicorn · WhiteNoise · optional MinIO · optional Authentik/OIDC
+Django monolith · PostgreSQL · Docker Compose · Gunicorn · WhiteNoise · optional Garage · optional Authentik/OIDC
 
 ## Current Status
 
@@ -75,7 +75,7 @@ Production compose: `docker-compose.prod.yml`. See `docs/guides/DEPLOYMENT_GUIDE
 ```bash
 scripts/backup_db.sh
 scripts/backup_media.sh
-scripts/backup_minio.sh
+scripts/backup_garage.sh
 ```
 
 See `docs/guides/BACKUP_GUIDE.md`.

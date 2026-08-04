@@ -154,19 +154,18 @@ systemctl reload nginx
 
 There is intentionally no Docker `nginx` service. Host Nginx proxies to Gunicorn/Django, and WhiteNoise serves collected static files from Django.
 
-## MinIO Media Storage
+## Garage Media Storage
 
-Use MinIO when uploaded/generated media should live outside the Django web
+Use Garage when uploaded/generated media should live outside the Django web
 container filesystem. Static files still use WhiteNoise.
 
 1. Set production media storage values:
 
 ```env
 USE_S3_MEDIA=True
-MINIO_ROOT_USER=melodu_minio
-MINIO_ROOT_PASSWORD=replace-with-strong-password
+GARAGE_RPC_SECRET=replace-with-64-hex-from-openssl-rand-hex-32
 S3_STORAGE_BUCKET_NAME=melodu-media
-S3_ACCESS_KEY_ID=melodu_minio
+S3_ACCESS_KEY_ID=melodu_garage
 S3_SECRET_ACCESS_KEY=replace-with-strong-password
 S3_ENDPOINT_URL=https://melodu-media.khlovepet.com
 S3_REGION_NAME=us-east-1
@@ -174,14 +173,14 @@ S3_QUERYSTRING_AUTH=True
 S3_QUERYSTRING_EXPIRE=3600
 ```
 
-2. Start or restart production compose. The `minio-init` service creates the
-   bucket automatically.
+2. Start or restart production compose, then bootstrap layout/bucket/key once:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
+COMPOSE_FILE=docker-compose.prod.yml scripts/bootstrap_garage.sh
 ```
 
-3. Proxy the MinIO API through host Nginx so browser and phone media URLs are
+3. Proxy the Garage S3 API through host Nginx so browser and phone media URLs are
    reachable over HTTPS:
 
 ```nginx
@@ -195,7 +194,7 @@ server {
     client_max_body_size 100m;
 
     location / {
-        proxy_pass http://127.0.0.1:9000;
+        proxy_pass http://127.0.0.1:3900;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -212,8 +211,8 @@ systemctl reload nginx
 docker compose -f docker-compose.prod.yml restart web
 ```
 
-See `docs/guides/MINIO_STORAGE_GUIDE.md` for backup, restore, and existing-media
-migration notes.
+See `docs/guides/GARAGE_STORAGE_GUIDE.md` for backup, restore, MinIO migration,
+and bootstrap notes.
 
 ## Backup
 
@@ -229,10 +228,10 @@ Media backup:
 scripts/backup_media.sh
 ```
 
-MinIO backup when `USE_S3_MEDIA=True`:
+Garage backup when `USE_S3_MEDIA=True`:
 
 ```bash
-scripts/backup_minio.sh
+scripts/backup_garage.sh
 ```
 
 ## Restore
@@ -268,5 +267,5 @@ docker compose -f docker-compose.prod.yml exec web python manage.py expire_batch
 - Set secure cookie options to `True` when HTTPS is enabled.
 - Use HTTPS for camera-based barcode/QR scanning.
 - Confirm `data/postgres`, `data/media`, `data/static`, and `data/logs` are backed up.
-- If MinIO is enabled, confirm `data/minio` is backed up.
+- If Garage is enabled, confirm `data/garage` is backed up.
 - Rehearse restore monthly on a non-production copy.

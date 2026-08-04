@@ -1,5 +1,24 @@
 # Development Log
 
+## 2026-08-04
+
+### Infra: Replace MinIO with Garage for S3 media
+
+- Replaced Compose `minio` / `minio-init` with a single-node `garage` service
+  pinned to `dxflrs/garage:v2.3.0` (stable tag verified on Docker Hub /
+  Deuxfleurs releases).
+- Added `docker/garage/garage.toml` (`replication_factor = 1`, S3 `:3900`,
+  admin/RPC on container loopback only).
+- Added `scripts/bootstrap_garage.sh` (layout assign/apply, bucket create, key
+  import from `S3_*` env, bucket allow) and `scripts/migrate_minio_to_garage.sh`
+  (key-preserving object copy with count/bytes verification).
+- Renamed MinIO backup/restore scripts to `backup_garage.sh` /
+  `restore_garage.sh`; kept `data/minio` for rollback (not deleted).
+- `.env.example` and settings default endpoint now point at Garage; all `S3_*`
+  variable names unchanged. No Django model/view/migration changes.
+- Docs: `MINIO_STORAGE_GUIDE.md` → `GARAGE_STORAGE_GUIDE.md`; updated deployment,
+  backup, README architecture line, and current status.
+
 ## 2026-06-17
 
 ### Product Documentation Foundation Rebuild
