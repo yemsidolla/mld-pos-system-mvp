@@ -323,11 +323,11 @@ Latest recorded result:
 
 ## Known Operational Notes
 
-- Existing production files under `data/media` are not automatically migrated to
-  Garage. After enabling Garage, new uploads go to Garage; old media should be
-  migrated deliberately with a backup in place. Existing MinIO data under
-  `data/minio` is retained for rollback; use `scripts/migrate_minio_to_garage.sh`
-  for object copy when cutting over.
+- Production has always used local filesystem media (`USE_S3_MEDIA` unset /
+  False; no MinIO). Existing files under `data/media` are not automatically
+  migrated to Garage. After enabling Garage, new uploads go to Garage; migrate
+  existing local media deliberately with a backup in place via
+  `scripts/migrate_media_to_garage.sh` (`data/media` → Garage).
 - When `USE_S3_MEDIA=True`, browser-visible media URLs must use an HTTPS
   endpoint reachable by phones and desktops.
 - Production Authentik/OIDC group claims, phone scanner behavior, physical
@@ -340,8 +340,8 @@ Latest recorded result:
   `melodu-media.khlovepet.com`.
 - Add host Nginx config for the media domain before enabling Garage in
   production.
-- Migrate any existing MinIO objects (and/or `data/media` files) to Garage only
-  after confirming backup and restore.
+- Migrate existing `data/media` files to Garage with
+  `scripts/migrate_media_to_garage.sh` only after confirming backup and restore.
 - Use `docs/product/09_IMPLEMENTATION_BACKLOG.md` and `docs/TASKS.md` for the
   next approved implementation scope.
 - Use `docs/versions/VERSION_COMPLETION_TRACKER.md` before starting any future

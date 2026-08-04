@@ -159,7 +159,45 @@ There is intentionally no Docker `nginx` service. Host Nginx proxies to Gunicorn
 Use Garage when uploaded/generated media should live outside the Django web
 container filesystem. Static files still use WhiteNoise.
 
-1. Set production media storage values:
+Production today runs with local filesystem media (`USE_S3_MEDIA=False`, files
+under `data/media`). Cutover to Garage is:
+
+```
+local filesystem media (USE_S3_MEDIA=False)  →  Garage (USE_S3_MEDIA=True)
+```
+
+### Cutover order
+
+1. Back up the database and local media:
+
+```bash
+scripts/backup_db.sh
+scripts/backup_media.sh
+```
+
+2. Start or restart production compose, then bootstrap layout/bucket/key once:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+COMPOSE_FILE=docker-compose.prod.yml scripts/bootstrap_garage.sh
+```
+
+3. Upload local media into the Garage bucket (keys = paths relative to
+   `data/media`):
+
+```bash
+GARAGE_ENDPOINT_URL=http://127.0.0.1:3900 \
+S3_ACCESS_KEY_ID=... \
+S3_SECRET_ACCESS_KEY=... \
+S3_STORAGE_BUCKET_NAME=melodu-media \
+MEDIA_ROOT=data/media \
+scripts/migrate_media_to_garage.sh
+```
+
+4. Verify the script reports matching counts and bytes. **Do not proceed on
+   failure.** An empty source exits non-zero.
+
+5. Set production media storage values in `.env`:
 
 ```env
 USE_S3_MEDIA=True
@@ -173,14 +211,7 @@ S3_QUERYSTRING_AUTH=True
 S3_QUERYSTRING_EXPIRE=3600
 ```
 
-2. Start or restart production compose, then bootstrap layout/bucket/key once:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-COMPOSE_FILE=docker-compose.prod.yml scripts/bootstrap_garage.sh
-```
-
-3. Proxy the Garage S3 API through host Nginx so browser and phone media URLs are
+6. Proxy the Garage S3 API through host Nginx so browser and phone media URLs are
    reachable over HTTPS:
 
 ```nginx
@@ -203,7 +234,8 @@ server {
 }
 ```
 
-4. Reload Nginx and restart Django:
+7. Reload Nginx, restart Django, and verify images render (catalog list, product
+   form, receipt, label with logo, KHQR on the POS page):
 
 ```bash
 nginx -t
@@ -211,7 +243,14 @@ systemctl reload nginx
 docker compose -f docker-compose.prod.yml restart web
 ```
 
-See `docs/guides/GARAGE_STORAGE_GUIDE.md` for backup, restore, MinIO migration,
+8. Leave `data/media` in place — do not delete it.
+
+### Rollback
+
+Set `USE_S3_MEDIA=False` and restart web. Local files under `data/media` are
+untouched, so rollback is near-instant.
+
+See `docs/guides/GARAGE_STORAGE_GUIDE.md` for backup, restore, cutover detail,
 and bootstrap notes.
 
 ## Backup
@@ -228,10 +267,10 @@ Media backup:
 scripts/backup_media.sh
 ```
 
-Garage backup when `USE_S3_MEDIA=True`:
+Garage backup when `USE_S3_MEDIA=True` (Garage must be stopped for consistency):
 
 ```bash
-scripts/backup_garage.sh
+GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
 ```
 
 ## Restore
@@ -246,6 +285,14 @@ Media restore:
 
 ```bash
 CONFIRM_RESTORE=yes scripts/restore_media.sh backups/melodu_pos_media_YYYYMMDD_HHMMSS.tar.gz
+```
+
+Garage restore (stop Garage first; existing `data/garage` is moved aside):
+
+```bash
+docker compose -f docker-compose.prod.yml stop garage
+CONFIRM_RESTORE=yes scripts/restore_garage.sh backups/melodu_pos_garage_YYYYMMDD_HHMMSS.tar.gz
+docker compose -f docker-compose.prod.yml start garage
 ```
 
 Expired stock maintenance:

@@ -230,8 +230,9 @@ staging batch upload, OIDC option, MinIO option.
 | Database restore | `scripts/restore_db.sh` | Current |
 | Filesystem media backup | `scripts/backup_media.sh` | Current |
 | Filesystem media restore | `scripts/restore_media.sh` | Current |
-| MinIO backup | `scripts/backup_minio.sh` | Current |
-| MinIO restore | `scripts/restore_minio.sh` | Current |
+| Garage backup | `scripts/backup_garage.sh` | Current |
+| Garage restore | `scripts/restore_garage.sh` | Current |
+| Filesystem media → Garage migration | `scripts/migrate_media_to_garage.sh` | Current |
 
 ## Test Coverage
 

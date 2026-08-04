@@ -42,16 +42,38 @@ MEDIA_SOURCE=data/media scripts/backup_media.sh
 
 ## Create Garage Backup
 
+Garage must be stopped for a consistent archive. A hot tar of `data/garage`
+while Garage is running can capture torn metadata.
+
 ```bash
-scripts/backup_garage.sh
+# Script stops Garage, archives, then restarts it
+GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
 ```
+
+Or stop/start yourself:
+
+```bash
+docker compose stop garage
+scripts/backup_garage.sh
+docker compose start garage
+```
+
+If Garage is running and `GARAGE_BACKUP_STOP` is not `yes`, the script refuses
+to run.
 
 The script archives `data/garage` by default. Override the source when needed:
 
 ```bash
-GARAGE_SOURCE=data/garage scripts/backup_garage.sh
+GARAGE_SOURCE=data/garage GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
 ```
 
+By default the script uses `docker-compose.yml`. For local or production compose
+files:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker-compose.local.yml GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
+COMPOSE_FILE=docker-compose.prod.yml GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
+```
 ## Restore Database
 
 ```bash
@@ -68,11 +90,18 @@ CONFIRM_RESTORE=yes scripts/restore_media.sh backups/melodu_pos_media_YYYYMMDD_H
 
 ## Restore Garage
 
-Stop the Garage container before restoring data files, then:
+Stop the Garage container before restoring. The restore script refuses if Garage
+is running, moves the existing `data/garage` aside (no merge into a live or
+stale directory), then extracts the archive:
 
 ```bash
+docker compose stop garage
 CONFIRM_RESTORE=yes scripts/restore_garage.sh backups/melodu_pos_garage_YYYYMMDD_HHMMSS.tar.gz
+docker compose start garage
 ```
+
+Previous data is left at `data/garage.before_restore_YYYYMMDD_HHMMSS` when a
+prior directory existed.
 
 ## Recommended Schedule
 

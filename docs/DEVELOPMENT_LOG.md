@@ -6,14 +6,16 @@
 
 - Replaced Compose `minio` / `minio-init` with a single-node `garage` service
   pinned to `dxflrs/garage:v2.3.0` (stable tag verified on Docker Hub /
-  Deuxfleurs releases).
+  Deuxfleurs releases). Note: production never ran MinIO; it stayed on local
+  filesystem media (`USE_S3_MEDIA=False`).
 - Added `docker/garage/garage.toml` (`replication_factor = 1`, S3 `:3900`,
   admin/RPC on container loopback only).
 - Added `scripts/bootstrap_garage.sh` (layout assign/apply, bucket create, key
-  import from `S3_*` env, bucket allow) and `scripts/migrate_minio_to_garage.sh`
-  (key-preserving object copy with count/bytes verification).
+  import from `S3_*` env, bucket allow). Media cutover path is local filesystem
+  → Garage via `scripts/migrate_media_to_garage.sh` (an earlier MinIO→Garage
+  helper was removed as unused; production had no MinIO data).
 - Renamed MinIO backup/restore scripts to `backup_garage.sh` /
-  `restore_garage.sh`; kept `data/minio` for rollback (not deleted).
+  `restore_garage.sh`.
 - `.env.example` and settings default endpoint now point at Garage; all `S3_*`
   variable names unchanged. No Django model/view/migration changes.
 - Docs: `MINIO_STORAGE_GUIDE.md` → `GARAGE_STORAGE_GUIDE.md`; updated deployment,
@@ -757,10 +759,12 @@
 
 ### Media Storage: MinIO
 
-- Added optional MinIO/S3-compatible media storage controlled by `USE_S3_MEDIA`.
+- Added optional MinIO/S3-compatible media storage controlled by `USE_S3_MEDIA`
+  (local/dev option; production continued on filesystem media).
 - Added `django-storages[s3]`, S3 storage settings, MinIO compose services, bucket initialization, and `data/minio` persistence.
 - Updated protected media handling to redirect authenticated `/media/...` requests to signed object URLs when S3 media is enabled.
 - Added MinIO backup/restore scripts and deployment documentation for host Nginx HTTPS proxying.
+  (Later superseded by Garage; see 2026-08-04 entry.)
 
 ### Documentation: Current Status
 

@@ -131,45 +131,78 @@ S3_CUSTOM_DOMAIN=
 
 This keeps generated media URLs reachable from desktop and phone browsers.
 
-## Migrating From MinIO
+## Cutover: Local Filesystem Media → Garage
 
-Object keys and the bucket name must stay identical so existing
-`Product.image.name` values in PostgreSQL keep resolving.
+Production historically runs with `USE_S3_MEDIA=False` and media on the local
+filesystem under `data/media`. The cutover path is:
 
-1. Keep the MinIO volume (`data/minio`) — do not delete it; rollback depends on it.
+```
+local filesystem media (USE_S3_MEDIA=False)  →  Garage (USE_S3_MEDIA=True)
+```
+
+Object keys uploaded to Garage **must equal** the path relative to the media
+root (exactly what Django stores in `Product.image.name`). Example:
+`data/media/products/foo.jpg` → key `products/foo.jpg`.
+
+### Cutover order
+
+1. Back up the database and local media (`scripts/backup_db.sh`,
+   `scripts/backup_media.sh`).
 2. Start Garage, run `scripts/bootstrap_garage.sh`.
-3. Ensure the MinIO API is temporarily reachable, then copy objects:
+3. Upload local media into the Garage bucket:
 
 ```bash
-MINIO_ENDPOINT_URL=http://127.0.0.1:9000 \
-MINIO_ACCESS_KEY_ID=... \
-MINIO_SECRET_ACCESS_KEY=... \
 GARAGE_ENDPOINT_URL=http://127.0.0.1:3900 \
 S3_ACCESS_KEY_ID=... \
 S3_SECRET_ACCESS_KEY=... \
 S3_STORAGE_BUCKET_NAME=melodu-media \
-scripts/migrate_minio_to_garage.sh
+MEDIA_ROOT=data/media \
+scripts/migrate_media_to_garage.sh
 ```
 
-The migrate script syncs keys unchanged, is safe to re-run, and verifies
-object count + total bytes at the end.
+4. Verify the script reports matching file/object counts and bytes. **Do not
+   proceed on failure.** An empty source is an error (non-zero exit), not a
+   successful no-op.
+5. Set `USE_S3_MEDIA=True` and Garage credentials in `.env`.
+6. Restart web. Verify images render: catalog list, product form, receipt,
+   label with logo, KHQR on the POS page.
+7. Leave `data/media` in place — do not delete it.
 
-Existing files under `data/media` (filesystem mode) are a separate concern —
-migrate those deliberately only when switching from filesystem to S3.
+The migrate script sets Content-Type from the file extension and Cache-Control
+from `S3_MEDIA_CACHE_CONTROL` (default `max-age=86400`), is safe to re-run, and
+never modifies source files.
+
+### Rollback
+
+Set `USE_S3_MEDIA=False` and restart web. Local files under `data/media` are
+untouched, so this is near-instant. That is the main safety property of this
+approach.
+
+> Historical note: earlier drafts assumed a MinIO→Garage object copy. Production
+> never ran MinIO; that path is obsolete. Use `migrate_media_to_garage.sh`.
 
 ## Backup
 
 Garage data lives under `data/garage` (`meta/` + `data/`) by default. Back it up
-together with the database:
+together with the database. **Garage must be stopped** for a consistent archive
+(hot tars can capture torn metadata):
 
 ```bash
-GARAGE_SOURCE=data/garage scripts/backup_garage.sh
+# Safe: script stops Garage, archives, then restarts it
+GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
+
+# Or stop/start yourself:
+# docker compose stop garage && scripts/backup_garage.sh && docker compose start garage
 ```
 
-Restore only into an intentionally replaceable environment (stop Garage first):
+Restore only into an intentionally replaceable environment. Stop Garage first;
+the restore script moves the existing `data/garage` aside (no merge), then
+extracts:
 
 ```bash
+docker compose stop garage
 CONFIRM_RESTORE=yes scripts/restore_garage.sh backups/melodu_pos_garage_YYYYMMDD_HHMMSS.tar.gz
+docker compose start garage
 ```
 
 ## Operational Notes
