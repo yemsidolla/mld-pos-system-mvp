@@ -73,10 +73,11 @@ services:
       - ./data/static:/vol/static
       - ./data/media:/vol/media
       - ./data/logs:/vol/logs
+    # Garage is intentionally NOT in depends_on: media storage must degrade
+    # (missing images) without blocking the till. django-storages connects
+    # lazily at request time; there is no startup ordering requirement.
     depends_on:
       postgres:
-        condition: service_healthy
-      garage:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)\""]
