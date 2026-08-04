@@ -1,5 +1,18 @@
 # Development Log
 
+## 2026-08-05
+
+### Feature: Product image derivatives + downscaled originals
+
+- Added `catalog.services` image pipeline for `Product.image` only: EXIF
+  orientation, no upscale, strip metadata, WebP original (1600px long edge,
+  q82) + `image_thumb` (96px, q80).
+- Additive nullable `Product.image_thumb` migration (`0005_product_image_thumb`).
+- Product form processes new uploads on save; product list prefers thumb with
+  fallback to full image.
+- Management command `backfill_product_images` (dry-run default; `--apply
+  --confirm` to write). Never touches barcode/QR/KHQR/logo.
+
 ## 2026-08-04
 
 ### Infra: Replace MinIO with Garage for S3 media

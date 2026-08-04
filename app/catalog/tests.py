@@ -9,6 +9,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.html import escape
 from PIL import Image
 
 from audit.models import AuditLog
@@ -139,7 +140,7 @@ class ProductDashboardTests(TestCase):
 
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, 'class="product-thumb"')
-            self.assertContains(response, self.product.image.url)
+            self.assertContains(response, escape(self.product.image.url))
             self.assertNotContains(response, "product-thumb-empty")
 
     def test_product_list_filters_by_search(self):
@@ -600,7 +601,9 @@ class ProductClassificationTests(TestCase):
 
             refresh = self.client.get(reverse("product-edit", kwargs={"product_id": product.pk}))
             self.assertContains(refresh, "Current image")
-            self.assertContains(refresh, product.image.url)
+            self.assertContains(refresh, escape(product.image.url))
+            self.assertTrue(product.image.name.endswith(".webp"))
+            self.assertTrue(bool(product.image_thumb))
 
     def test_product_list_filters_by_animal_type_and_tag(self):
         dental = ProductTag.objects.create(name="Dental Care")

@@ -1,9 +1,11 @@
 import re
 
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Q
 
 from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
+from .services import ProductImageError, clear_product_images, process_product_image, assign_product_images
 
 
 def animal_type_code_from_name(name):
@@ -104,10 +106,40 @@ class ProductForm(forms.ModelForm):
             AnimalTypeOption.objects.filter(animal_type_filter).distinct().order_by("name")
         )
 
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        self._processed_product_image = None
+        if not image or image is False:
+            return image
+        if not isinstance(image, UploadedFile):
+            return image
+        try:
+            self._processed_product_image = process_product_image(
+                image, source_name=getattr(image, "name", None)
+            )
+        except ProductImageError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+        if hasattr(image, "seek"):
+            try:
+                image.seek(0)
+            except Exception:
+                pass
+        return image
+
     def save(self, commit=True):
         product = super().save(commit=False)
         selected = list(self.cleaned_data.get("animal_types") or [])
         product.animal_type = selected[0].code if selected else ""
+
+        image = self.cleaned_data.get("image")
+        if isinstance(image, UploadedFile):
+            processed = getattr(self, "_processed_product_image", None)
+            if processed is None:
+                processed = process_product_image(image, source_name=getattr(image, "name", None))
+            assign_product_images(product, processed)
+        elif "image" in self.changed_data and not image:
+            clear_product_images(product)
+
         if commit:
             product.save()
             self.save_m2m()
