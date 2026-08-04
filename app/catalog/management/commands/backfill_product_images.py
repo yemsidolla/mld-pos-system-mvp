@@ -102,4 +102,15 @@ class Command(BaseCommand):
             saved = bytes_before - bytes_after
             pct = (saved / bytes_before) * 100
             self.stdout.write(f"Bytes saved: {saved} ({pct:.1f}%)")
+
+        if errors:
+            # Do not report success when images failed. An operator running this
+            # over a whole catalogue must not see green text while photos were
+            # skipped, because the run is irreversible for everything that did
+            # succeed and the failures need attention before a re-run.
+            raise CommandError(
+                f"Backfill finished with {errors} failed image(s) out of "
+                f"{len(candidates)} candidate(s). Review the FAILED lines above. "
+                f"Successfully processed images have already been replaced."
+            )
         self.stdout.write(self.style.SUCCESS("Backfill complete."))
