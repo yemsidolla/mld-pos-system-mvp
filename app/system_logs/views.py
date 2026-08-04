@@ -133,14 +133,14 @@ def system_health_view(request):
         "last_error": latest_error_lines[0] if latest_error_lines else "",
         "backup_docs": [
             "docs/guides/BACKUP_GUIDE.md",
-            "docs/guides/MINIO_STORAGE_GUIDE.md",
+            "docs/guides/GARAGE_STORAGE_GUIDE.md",
             "docs/operations/DEPLOYMENT_RUNBOOK.md",
             "docs/operations/RESET_ADMIN_RUNBOOK.md",
         ],
         "backup_commands": [
             "scripts/backup_db.sh",
             "scripts/backup_media.sh",
-            "scripts/backup_minio.sh",
+            "scripts/backup_garage.sh",
         ],
     }
     return render(request, "system_logs/system_health.html", context)

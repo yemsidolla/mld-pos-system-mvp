@@ -5,7 +5,7 @@ Last updated: 2026-06-16
 Melodu POS is currently a Django monolith for Melodu Pet Store. The project has
 grown beyond the original V1 MVP checklist and now includes the V1 core,
 dashboard UX, batch upload, scanner workflows, role/capability management,
-receipt/label improvements, product classification, and optional MinIO media
+receipt/label improvements, product classification, and optional Garage media
 storage.
 
 V7, V8, and V9 are complete with implementation evidence in
@@ -47,9 +47,9 @@ start from `docs/product/11_DOCUMENTATION_MAP.md`.
 - Static files: WhiteNoise from collected static files.
 - Media files:
   - Local filesystem mode: `USE_S3_MEDIA=False`, files under `data/media`.
-  - MinIO mode: `USE_S3_MEDIA=True`, files under `data/minio` through
+  - Garage mode: `USE_S3_MEDIA=True`, files under `data/garage` through
     S3-compatible Django storage.
-- Object storage: optional MinIO service in Docker Compose.
+- Object storage: optional Garage service in Docker Compose.
 - Auth: local Django login by default, with Authentik/OIDC support available.
 - Frontend: Django templates, shared dashboard shell, static CSS, vanilla JS.
 - Scanner: local `html5-qrcode` vendor asset plus server-side image decoding.
@@ -185,16 +185,15 @@ USE_S3_MEDIA=False
 
 Media goes to `data/media`.
 
-### MinIO
+### Garage
 
 Use this for production or larger image workflows:
 
 ```env
 USE_S3_MEDIA=True
-MINIO_ROOT_USER=melodu_minio
-MINIO_ROOT_PASSWORD=replace-with-strong-password
+GARAGE_RPC_SECRET=replace-with-64-hex-from-openssl-rand-hex-32
 S3_STORAGE_BUCKET_NAME=melodu-media
-S3_ACCESS_KEY_ID=melodu_minio
+S3_ACCESS_KEY_ID=melodu_garage
 S3_SECRET_ACCESS_KEY=replace-with-strong-password
 S3_ENDPOINT_URL=https://melodu-media.khlovepet.com
 S3_REGION_NAME=us-east-1
@@ -204,15 +203,17 @@ S3_QUERYSTRING_EXPIRE=3600
 
 Docker Compose includes:
 
-- `minio`
-- `minio-init`
+- `garage`
 - `postgres`
 - `web`
 
-Production MinIO should be exposed through host Nginx over HTTPS. Do not expose
-raw MinIO ports publicly.
+After first start, run `scripts/bootstrap_garage.sh` once to assign layout,
+create the bucket, and import the S3 key.
 
-See `docs/guides/MINIO_STORAGE_GUIDE.md`.
+Production Garage S3 should be exposed through host Nginx over HTTPS. Do not
+expose raw Garage ports publicly. Admin and RPC stay on loopback.
+
+See `docs/guides/GARAGE_STORAGE_GUIDE.md`.
 
 ## Permissions State
 
@@ -259,14 +260,14 @@ docker compose -f docker-compose.prod.yml restart web
 Host Nginx proxies:
 
 - Main app domain to `127.0.0.1:${WEB_HOST_PORT:-8001}`.
-- Optional media domain to `127.0.0.1:${MINIO_API_HOST_PORT:-9000}`.
+- Optional media domain to `127.0.0.1:${GARAGE_S3_HOST_PORT:-3900}`.
 
 Important production docs:
 
 - `docs/guides/DEPLOYMENT_GUIDE.md`
 - `docs/operations/DEPLOYMENT_RUNBOOK.md`
 - `docs/operations/PRODUCTION_CHECKLIST.md`
-- `docs/guides/MINIO_STORAGE_GUIDE.md`
+- `docs/guides/GARAGE_STORAGE_GUIDE.md`
 - `docs/guides/BACKUP_GUIDE.md`
 
 ## Backup State
@@ -283,10 +284,10 @@ Filesystem media backup when `USE_S3_MEDIA=False`:
 scripts/backup_media.sh
 ```
 
-MinIO media backup when `USE_S3_MEDIA=True`:
+Garage media backup when `USE_S3_MEDIA=True`:
 
 ```bash
-scripts/backup_minio.sh
+scripts/backup_garage.sh
 ```
 
 Restore scripts:
@@ -294,7 +295,7 @@ Restore scripts:
 ```bash
 scripts/restore_db.sh
 scripts/restore_media.sh
-scripts/restore_minio.sh
+scripts/restore_garage.sh
 ```
 
 Back up PostgreSQL and the active media storage together because product,
@@ -322,9 +323,11 @@ Latest recorded result:
 
 ## Known Operational Notes
 
-- Existing production files under `data/media` are not automatically migrated to
-  MinIO. After enabling MinIO, new uploads go to MinIO; old media should be
-  migrated deliberately with a backup in place.
+- Production has always used local filesystem media (`USE_S3_MEDIA` unset /
+  False; no MinIO). Existing files under `data/media` are not automatically
+  migrated to Garage. After enabling Garage, new uploads go to Garage; migrate
+  existing local media deliberately with a backup in place via
+  `scripts/migrate_media_to_garage.sh` (`data/media` → Garage).
 - When `USE_S3_MEDIA=True`, browser-visible media URLs must use an HTTPS
   endpoint reachable by phones and desktops.
 - Production Authentik/OIDC group claims, phone scanner behavior, physical
@@ -335,10 +338,10 @@ Latest recorded result:
 
 - Decide final production media domain, for example
   `melodu-media.khlovepet.com`.
-- Add host Nginx config for the media domain before enabling MinIO in
+- Add host Nginx config for the media domain before enabling Garage in
   production.
-- Migrate any existing `data/media` files to MinIO only after confirming backup
-  and restore.
+- Migrate existing `data/media` files to Garage with
+  `scripts/migrate_media_to_garage.sh` only after confirming backup and restore.
 - Use `docs/product/09_IMPLEMENTATION_BACKLOG.md` and `docs/TASKS.md` for the
   next approved implementation scope.
 - Use `docs/versions/VERSION_COMPLETION_TRACKER.md` before starting any future

@@ -9,7 +9,7 @@ Operator and developer how-to documentation.
 | [DASHBOARD_UX_GUIDE](DASHBOARD_UX_GUIDE.md) | Dashboard UX patterns |
 | [DEPLOYMENT_GUIDE](DEPLOYMENT_GUIDE.md) | Deployment setup |
 | [LABEL_TEMPLATE_GUIDE](LABEL_TEMPLATE_GUIDE.md) | Label templates |
-| [MINIO_STORAGE_GUIDE](MINIO_STORAGE_GUIDE.md) | MinIO media storage |
+| [GARAGE_STORAGE_GUIDE](GARAGE_STORAGE_GUIDE.md) | Garage media storage |
 | [PRINTER_RECEIPT_GUIDE](PRINTER_RECEIPT_GUIDE.md) | Receipt and printer settings |
 | [PRODUCT_CLASSIFICATION_GUIDE](PRODUCT_CLASSIFICATION_GUIDE.md) | Product classification fields |
 | [PROMOTION_LABEL_GUIDE](PROMOTION_LABEL_GUIDE.md) | Promotion label printing |

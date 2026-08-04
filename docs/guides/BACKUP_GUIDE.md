@@ -1,13 +1,13 @@
 # Backup Guide
 
-Version 1 uses local VPS backups. If MinIO media storage is enabled, back up
-`data/minio` instead of only `data/media`.
+Version 1 uses local VPS backups. If Garage media storage is enabled, back up
+`data/garage` instead of only `data/media`.
 
 ## What To Back Up
 
 - PostgreSQL database: required.
 - `data/media`: required when `USE_S3_MEDIA=False`.
-- `data/minio`: required when `USE_S3_MEDIA=True` because barcode, QR, store,
+- `data/garage`: required when `USE_S3_MEDIA=True` because barcode, QR, store,
   KHQR, and product images are stored there.
 - `data/logs`: optional for troubleshooting history.
 - `data/static`: can be regenerated with `collectstatic`.
@@ -40,18 +40,40 @@ By default the script archives `data/media`. Override the source when needed:
 MEDIA_SOURCE=data/media scripts/backup_media.sh
 ```
 
-## Create MinIO Backup
+## Create Garage Backup
+
+Garage must be stopped for a consistent archive. A hot tar of `data/garage`
+while Garage is running can capture torn metadata.
 
 ```bash
-scripts/backup_minio.sh
+# Script stops Garage, archives, then restarts it
+GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
 ```
 
-The script archives `data/minio` by default. Override the source when needed:
+Or stop/start yourself:
 
 ```bash
-MINIO_SOURCE=data/minio scripts/backup_minio.sh
+docker compose stop garage
+scripts/backup_garage.sh
+docker compose start garage
 ```
 
+If Garage is running and `GARAGE_BACKUP_STOP` is not `yes`, the script refuses
+to run.
+
+The script archives `data/garage` by default. Override the source when needed:
+
+```bash
+GARAGE_SOURCE=data/garage GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
+```
+
+By default the script uses `docker-compose.yml`. For local or production compose
+files:
+
+```bash
+COMPOSE_FILE=docker-compose.yml:docker-compose.local.yml GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
+COMPOSE_FILE=docker-compose.prod.yml GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
+```
 ## Restore Database
 
 ```bash
@@ -66,15 +88,24 @@ Restore into a clean or intentionally replaceable database. Confirm the target `
 CONFIRM_RESTORE=yes scripts/restore_media.sh backups/melodu_pos_media_YYYYMMDD_HHMMSS.tar.gz
 ```
 
-## Restore MinIO
+## Restore Garage
+
+Stop the Garage container before restoring. The restore script refuses if Garage
+is running, moves the existing `data/garage` aside (no merge into a live or
+stale directory), then extracts the archive:
 
 ```bash
-CONFIRM_RESTORE=yes scripts/restore_minio.sh backups/melodu_pos_minio_YYYYMMDD_HHMMSS.tar.gz
+docker compose stop garage
+CONFIRM_RESTORE=yes scripts/restore_garage.sh backups/melodu_pos_garage_YYYYMMDD_HHMMSS.tar.gz
+docker compose start garage
 ```
+
+Previous data is left at `data/garage.before_restore_YYYYMMDD_HHMMSS` when a
+prior directory existed.
 
 ## Recommended Schedule
 
 - Database: daily.
-- Media/MinIO: weekly, and immediately after large product or stock-label updates.
+- Media/Garage: weekly, and immediately after large product or stock-label updates.
 - Restore rehearsal: monthly on a non-production copy.
 - Keep at least 7 daily database backups and 4 weekly media backups.

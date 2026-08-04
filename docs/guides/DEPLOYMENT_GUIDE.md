@@ -154,19 +154,56 @@ systemctl reload nginx
 
 There is intentionally no Docker `nginx` service. Host Nginx proxies to Gunicorn/Django, and WhiteNoise serves collected static files from Django.
 
-## MinIO Media Storage
+## Garage Media Storage
 
-Use MinIO when uploaded/generated media should live outside the Django web
+Use Garage when uploaded/generated media should live outside the Django web
 container filesystem. Static files still use WhiteNoise.
 
-1. Set production media storage values:
+Production today runs with local filesystem media (`USE_S3_MEDIA=False`, files
+under `data/media`). Cutover to Garage is:
+
+```
+local filesystem media (USE_S3_MEDIA=False)  →  Garage (USE_S3_MEDIA=True)
+```
+
+### Cutover order
+
+1. Back up the database and local media:
+
+```bash
+scripts/backup_db.sh
+scripts/backup_media.sh
+```
+
+2. Start or restart production compose, then bootstrap layout/bucket/key once:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+COMPOSE_FILE=docker-compose.prod.yml scripts/bootstrap_garage.sh
+```
+
+3. Upload local media into the Garage bucket (keys = paths relative to
+   `data/media`):
+
+```bash
+GARAGE_ENDPOINT_URL=http://127.0.0.1:3900 \
+S3_ACCESS_KEY_ID=... \
+S3_SECRET_ACCESS_KEY=... \
+S3_STORAGE_BUCKET_NAME=melodu-media \
+MEDIA_ROOT=data/media \
+scripts/migrate_media_to_garage.sh
+```
+
+4. Verify the script reports matching counts and bytes. **Do not proceed on
+   failure.** An empty source exits non-zero.
+
+5. Set production media storage values in `.env`:
 
 ```env
 USE_S3_MEDIA=True
-MINIO_ROOT_USER=melodu_minio
-MINIO_ROOT_PASSWORD=replace-with-strong-password
+GARAGE_RPC_SECRET=replace-with-64-hex-from-openssl-rand-hex-32
 S3_STORAGE_BUCKET_NAME=melodu-media
-S3_ACCESS_KEY_ID=melodu_minio
+S3_ACCESS_KEY_ID=melodu_garage
 S3_SECRET_ACCESS_KEY=replace-with-strong-password
 S3_ENDPOINT_URL=https://melodu-media.khlovepet.com
 S3_REGION_NAME=us-east-1
@@ -174,14 +211,7 @@ S3_QUERYSTRING_AUTH=True
 S3_QUERYSTRING_EXPIRE=3600
 ```
 
-2. Start or restart production compose. The `minio-init` service creates the
-   bucket automatically.
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-3. Proxy the MinIO API through host Nginx so browser and phone media URLs are
+6. Proxy the Garage S3 API through host Nginx so browser and phone media URLs are
    reachable over HTTPS:
 
 ```nginx
@@ -195,7 +225,7 @@ server {
     client_max_body_size 100m;
 
     location / {
-        proxy_pass http://127.0.0.1:9000;
+        proxy_pass http://127.0.0.1:3900;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -204,7 +234,8 @@ server {
 }
 ```
 
-4. Reload Nginx and restart Django:
+7. Reload Nginx, restart Django, and verify images render (catalog list, product
+   form, receipt, label with logo, KHQR on the POS page):
 
 ```bash
 nginx -t
@@ -212,8 +243,15 @@ systemctl reload nginx
 docker compose -f docker-compose.prod.yml restart web
 ```
 
-See `docs/guides/MINIO_STORAGE_GUIDE.md` for backup, restore, and existing-media
-migration notes.
+8. Leave `data/media` in place — do not delete it.
+
+### Rollback
+
+Set `USE_S3_MEDIA=False` and restart web. Local files under `data/media` are
+untouched, so rollback is near-instant.
+
+See `docs/guides/GARAGE_STORAGE_GUIDE.md` for backup, restore, cutover detail,
+and bootstrap notes.
 
 ## Backup
 
@@ -229,10 +267,10 @@ Media backup:
 scripts/backup_media.sh
 ```
 
-MinIO backup when `USE_S3_MEDIA=True`:
+Garage backup when `USE_S3_MEDIA=True` (Garage must be stopped for consistency):
 
 ```bash
-scripts/backup_minio.sh
+GARAGE_BACKUP_STOP=yes scripts/backup_garage.sh
 ```
 
 ## Restore
@@ -247,6 +285,14 @@ Media restore:
 
 ```bash
 CONFIRM_RESTORE=yes scripts/restore_media.sh backups/melodu_pos_media_YYYYMMDD_HHMMSS.tar.gz
+```
+
+Garage restore (stop Garage first; existing `data/garage` is moved aside):
+
+```bash
+docker compose -f docker-compose.prod.yml stop garage
+CONFIRM_RESTORE=yes scripts/restore_garage.sh backups/melodu_pos_garage_YYYYMMDD_HHMMSS.tar.gz
+docker compose -f docker-compose.prod.yml start garage
 ```
 
 Expired stock maintenance:
@@ -268,5 +314,5 @@ docker compose -f docker-compose.prod.yml exec web python manage.py expire_batch
 - Set secure cookie options to `True` when HTTPS is enabled.
 - Use HTTPS for camera-based barcode/QR scanning.
 - Confirm `data/postgres`, `data/media`, `data/static`, and `data/logs` are backed up.
-- If MinIO is enabled, confirm `data/minio` is backed up.
+- If Garage is enabled, confirm `data/garage` is backed up.
 - Rehearse restore monthly on a non-production copy.

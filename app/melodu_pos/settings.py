@@ -189,7 +189,7 @@ if USE_S3_MEDIA:
     AWS_STORAGE_BUCKET_NAME = os.environ.get("S3_STORAGE_BUCKET_NAME", "melodu-media")
     AWS_S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID", "")
     AWS_S3_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_ACCESS_KEY", "")
-    AWS_S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "http://minio:9000")
+    AWS_S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "http://garage:3900")
     AWS_S3_REGION_NAME = os.environ.get("S3_REGION_NAME", "us-east-1")
     AWS_S3_SIGNATURE_VERSION = os.environ.get("S3_SIGNATURE_VERSION", "s3v4")
     AWS_S3_ADDRESSING_STYLE = os.environ.get("S3_ADDRESSING_STYLE", "path")

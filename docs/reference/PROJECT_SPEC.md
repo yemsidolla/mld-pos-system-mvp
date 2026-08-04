@@ -156,7 +156,11 @@ Version 1 does not include Next.js, Node.js, Redis, Celery, customer accounts, l
 - Production checklist is documented in `docs/operations/PRODUCTION_CHECKLIST.md`.
 - Database backup script is `scripts/backup_db.sh`.
 - Media backup script is `scripts/backup_media.sh`.
-- MinIO media backup script is `scripts/backup_minio.sh` when `USE_S3_MEDIA=True`.
+- Garage media backup script is `scripts/backup_garage.sh` when `USE_S3_MEDIA=True`.
+  It requires Garage to be stopped (or `GARAGE_BACKUP_STOP=yes`) for a consistent
+  archive; a hot tar of a running Garage can capture inconsistent metadata.
+- Migrating existing filesystem media into Garage uses
+  `scripts/migrate_media_to_garage.sh`.
 - Database restore script is `scripts/restore_db.sh`.
 - Generated backups are ignored by git via `backups/`.
 
