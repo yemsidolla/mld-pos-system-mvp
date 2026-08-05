@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import connection
 from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
@@ -360,6 +361,36 @@ class ProductImageBackfillTests(TestCase):
         self.assertEqual(self.product.image_thumb.name, thumb_name)
         self.assertEqual(self.product.image.size, image_size)
         self.assertEqual(self.product.image_thumb.size, thumb_size)
+
+    def test_apply_raises_when_an_image_cannot_be_processed(self):
+        """A failed image must not be reported as a successful backfill.
+
+        The rewrite is irreversible for everything that did succeed, so an
+        operator running this across the catalogue has to be told that some
+        photos were skipped rather than seeing a success message.
+        """
+        broken = Product.objects.create(product_code="BF2", name="Broken Image")
+        broken.image.save(
+            "broken.png",
+            SimpleUploadedFile("broken.png", b"not-an-image", content_type="image/png"),
+            save=True,
+        )
+        broken_name = broken.image.name
+
+        with self.assertRaises(CommandError) as ctx:
+            call_command("backfill_product_images", apply=True, confirm=True)
+
+        self.assertIn("failed image", str(ctx.exception))
+
+        # The healthy product was still processed — failures are isolated, and
+        # the successful rewrites are what the error message warns about.
+        self.product.refresh_from_db()
+        self.assertFalse(product_image_needs_processing(self.product))
+
+        # The broken source is left untouched rather than half-written.
+        broken.refresh_from_db()
+        self.assertEqual(broken.image.name, broken_name)
+        self.assertFalse(bool(broken.image_thumb))
 
 
 class ProductImageThumbMigrationTests(TransactionTestCase):
