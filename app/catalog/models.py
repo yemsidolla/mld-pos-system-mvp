@@ -151,6 +151,7 @@ class Product(TimeStampedModel):
     min_stock = models.PositiveIntegerField(default=0)
     description = models.TextField(blank=True)
     image = models.ImageField(upload_to="products/", blank=True, null=True)
+    image_thumb = models.ImageField(upload_to="products/thumbs/", blank=True, null=True)
     animal_type = models.CharField(max_length=20, choices=AnimalType.choices, blank=True)
     animal_types = models.ManyToManyField(AnimalTypeOption, blank=True, related_name="products")
     life_stage = models.CharField(max_length=20, choices=LifeStage.choices, blank=True)
