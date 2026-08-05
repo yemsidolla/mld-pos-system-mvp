@@ -7,9 +7,12 @@ from datetime import date, timedelta
 from decimal import Decimal
 from io import BytesIO
 from tempfile import TemporaryDirectory
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -18,14 +21,17 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from PIL import Image, ImageDraw
 
+from catalog.forms import ProductForm
 from catalog.models import Product, Supplier
 from catalog.services import (
     ORIGINAL_MAX_EDGE,
     THUMB_MAX_EDGE,
     ProductImageError,
+    is_safe_product_image_key,
     process_and_save_product_image,
     process_product_image,
     product_image_needs_processing,
+    safe_delete_product_image_key,
 )
 from core.models import StoreSetting
 from core.permissions import ADMIN_GROUP
@@ -53,7 +59,12 @@ def _image_upload(size, *, mode="RGB", color="red", name="photo.png", fmt="PNG",
 
 
 def _oriented_upload():
-    """Wide red|blue strip tagged Orientation=6 (rotate 90 CW for display)."""
+    """Wide red|blue strip tagged Orientation=6 (rotate 90 CW for display).
+
+    Stored pixels: left half red, right half blue, size 200x100.
+    Orientation 6 means "rotate 90 CW" for display → result 100x200 with
+    red on top and blue on bottom.
+    """
     image = Image.new("RGB", (200, 100), color="red")
     draw = ImageDraw.Draw(image)
     draw.rectangle([100, 0, 200, 100], fill="blue")
@@ -64,6 +75,23 @@ def _oriented_upload():
     return SimpleUploadedFile("rotated.jpg", buffer.getvalue(), content_type="image/jpeg")
 
 
+def _gps_upload():
+    """JPEG carrying a real GPS IFD (tag 34853), not merely orientation."""
+    image = Image.new("RGB", (64, 64), color="orange")
+    exif = Image.Exif()
+    exif[274] = 1
+    # Minimal GPS IFD — latitude/longitude refs only are enough to prove the
+    # tag is present in the source and must be absent after processing.
+    exif[34853] = {1: "N", 3: "E"}
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG", exif=exif)
+    raw = buffer.getvalue()
+    source = Image.open(BytesIO(raw))
+    if 34853 not in source.getexif():
+        raise AssertionError("test helper failed to embed GPS EXIF")
+    return SimpleUploadedFile("gps.jpg", raw, content_type="image/jpeg")
+
+
 def _file_md5(field_file) -> str:
     field_file.open("rb")
     try:
@@ -71,6 +99,12 @@ def _file_md5(field_file) -> str:
     finally:
         field_file.close()
     return digest
+
+
+def _pixel_near(image: Image.Image, xy, expected_rgb, *, tolerance=40):
+    """Assert a pixel is close to expected RGB (WebP lossy)."""
+    pixel = image.convert("RGB").getpixel(xy)
+    return all(abs(pixel[i] - expected_rgb[i]) <= tolerance for i in range(3))
 
 
 MEDIA_SETTINGS = {
@@ -112,37 +146,57 @@ class ProductImageServiceTests(TestCase):
         self.assertEqual(max(thumb.size), THUMB_MAX_EDGE)
         self.assertAlmostEqual(thumb.size[0] / thumb.size[1], 4.0, places=1)
 
-    def test_rgba_palette_cmyk_greyscale_encode(self):
+    def test_rgba_palette_cmyk_greyscale_encode_preserves_colour(self):
         cases = [
-            _image_upload((120, 80), mode="RGBA", color=(255, 0, 0, 128), name="a.png"),
-            _image_upload((120, 80), mode="P", color="green", name="p.png"),
-            _image_upload((120, 80), mode="CMYK", color=(0, 50, 50, 0), name="c.jpg", fmt="JPEG"),
-            _image_upload((120, 80), mode="L", color=128, name="g.png"),
+            (_image_upload((120, 80), mode="RGBA", color=(255, 0, 0, 128), name="a.png"), (255, 0, 0)),
+            (_image_upload((120, 80), mode="P", color="green", name="p.png"), (0, 128, 0)),
+            (_image_upload((120, 80), mode="L", color=128, name="g.png"), (128, 128, 128)),
         ]
-        for upload in cases:
+        for upload, expected in cases:
             with self.subTest(name=upload.name):
                 processed = process_product_image(upload)
                 image = Image.open(processed.original)
                 self.assertEqual(image.format, "WEBP")
                 self.assertIn(image.mode, ("RGB", "RGBA"))
-                # Not a solid black failure mode
-                extrema = image.convert("RGB").getextrema()
-                self.assertTrue(any(channel[1] > 0 for channel in extrema))
+                mid = (image.size[0] // 2, image.size[1] // 2)
+                self.assertTrue(
+                    _pixel_near(image, mid, expected),
+                    f"expected near {expected}, got {image.convert('RGB').getpixel(mid)}",
+                )
+
+        # CMYK: verify non-black and not inverted to unexpected extremes.
+        upload = _image_upload((120, 80), mode="CMYK", color=(0, 50, 50, 0), name="c.jpg", fmt="JPEG")
+        processed = process_product_image(upload)
+        image = Image.open(processed.original).convert("RGB")
+        mid = image.getpixel((image.size[0] // 2, image.size[1] // 2))
+        self.assertNotEqual(mid, (0, 0, 0))
+        self.assertNotEqual(mid, (255, 255, 255))
 
     def test_corrupt_upload_raises_clean_error(self):
         upload = SimpleUploadedFile("bad.png", b"not-an-image", content_type="image/png")
         with self.assertRaises(ProductImageError):
             process_product_image(upload)
 
-    def test_exif_orientation_is_applied(self):
+    def test_decompression_bomb_raises_clean_error(self):
+        # Temporarily lower Pillow's limit so a modest image trips the bomb guard.
+        previous = Image.MAX_IMAGE_PIXELS
+        Image.MAX_IMAGE_PIXELS = 1000
+        try:
+            upload = _image_upload((100, 100), name="bomb.png")
+            with self.assertRaises(ProductImageError):
+                process_product_image(upload)
+        finally:
+            Image.MAX_IMAGE_PIXELS = previous
+
+    def test_exif_orientation_rotates_pixels_correctly(self):
         upload = _oriented_upload()
         processed = process_product_image(upload)
         original = Image.open(processed.original)
-        # Orientation 6 rotates 90 CW: stored 200x100 becomes displayed 100x200.
+        # Orientation 6 rotates 90 CW: stored 200x100 → displayed 100x200.
         self.assertEqual(original.size, (100, 200))
-        # After transpose, left column should be red (was top of stored? Orientation 6:
-        # row 0 of stored becomes right column after CW rotate... verify not sideways 200x100.
-        self.assertLess(original.size[0], original.size[1])
+        # After 90 CW: former left (red) becomes top; former right (blue) becomes bottom.
+        self.assertTrue(_pixel_near(original, (50, 25), (255, 0, 0)), "top should be red")
+        self.assertTrue(_pixel_near(original, (50, 175), (0, 0, 255)), "bottom should be blue")
         self.assertFalse(original.getexif().get(274))
 
     def test_filenames_with_spaces_and_unicode(self):
@@ -152,16 +206,82 @@ class ProductImageServiceTests(TestCase):
         self.assertEqual(processed.thumb_name, "my photo 猫.webp")
 
     def test_exif_gps_stripped_from_output(self):
-        image = Image.new("RGB", (64, 64), color="orange")
-        exif = image.getexif()
-        exif[274] = 1
-        # GPS IFD tag 34853 — presence in source; output must not carry EXIF blob.
-        buffer = BytesIO()
-        image.save(buffer, format="JPEG", exif=exif)
-        upload = SimpleUploadedFile("gps.jpg", buffer.getvalue(), content_type="image/jpeg")
+        upload = _gps_upload()
+        # Confirm source actually carried GPS before processing.
+        upload.seek(0)
+        source = Image.open(upload)
+        self.assertIn(34853, source.getexif())
+        upload.seek(0)
+
         processed = process_product_image(upload)
         out = Image.open(processed.original)
-        self.assertEqual(dict(out.getexif()), {})
+        out_exif = dict(out.getexif())
+        self.assertEqual(out_exif, {})
+        self.assertNotIn(34853, out_exif)
+
+    def test_process_does_not_materialise_pixel_list(self):
+        """F5: getdata/putdata must not be used (exhausts memory on large photos)."""
+        upload = _image_upload((800, 600), name="mem.png")
+        with mock.patch.object(Image.Image, "getdata", side_effect=AssertionError("getdata")):
+            with mock.patch.object(Image.Image, "putdata", side_effect=AssertionError("putdata")):
+                processed = process_product_image(upload)
+        self.assertEqual(Image.open(processed.original).format, "WEBP")
+
+
+@override_settings(**MEDIA_SETTINGS)
+class ProductImageCleanupTests(TestCase):
+    def setUp(self):
+        self.media = TemporaryDirectory()
+        self.addCleanup(self.media.cleanup)
+        self.override = override_settings(MEDIA_ROOT=self.media.name, **MEDIA_SETTINGS)
+        self.override.enable()
+        self.addCleanup(self.override.disable)
+
+    def test_refuses_to_delete_barcode_qr_store_keys(self):
+        self.assertFalse(is_safe_product_image_key("barcodes/B123.png"))
+        self.assertFalse(is_safe_product_image_key("qrcodes/Q123.png"))
+        self.assertFalse(is_safe_product_image_key("store/logo.png"))
+        self.assertTrue(is_safe_product_image_key("products/photo.webp"))
+        self.assertTrue(is_safe_product_image_key("products/thumbs/photo.webp"))
+
+        storage = default_storage
+        for key in ("barcodes/B123.png", "qrcodes/Q123.png", "store/logo.png"):
+            storage.save(key, ContentFile(b"keep-me"))
+            safe_delete_product_image_key(storage, key)
+            self.assertTrue(storage.exists(key), f"must not delete {key}")
+
+    def test_skips_delete_when_another_product_shares_key(self):
+        shared_name = "products/shared.webp"
+        default_storage.save(shared_name, ContentFile(b"webp-bytes"))
+        a = Product.objects.create(product_code="SHARE-A", name="A")
+        b = Product.objects.create(product_code="SHARE-B", name="B")
+        a.image.name = shared_name
+        a.save(update_fields=["image"])
+        b.image.name = shared_name
+        b.save(update_fields=["image"])
+
+        safe_delete_product_image_key(default_storage, shared_name, exclude_product_pk=a.pk)
+        self.assertTrue(default_storage.exists(shared_name))
+
+    def test_replacement_deletes_previous_files(self):
+        product = Product.objects.create(product_code="REP1", name="Replace Me")
+        product.image = _image_upload((200, 200), name="first.png")
+        product.save()
+        process_and_save_product_image(product)
+        product.refresh_from_db()
+        first_image = product.image.name
+        first_thumb = product.image_thumb.name
+        self.assertTrue(default_storage.exists(first_image))
+        self.assertTrue(default_storage.exists(first_thumb))
+
+        process_and_save_product_image(
+            product,
+            source=_image_upload((220, 220), name="second.png"),
+        )
+        product.refresh_from_db()
+        self.assertNotEqual(product.image.name, first_image)
+        self.assertFalse(default_storage.exists(first_image))
+        self.assertFalse(default_storage.exists(first_thumb))
 
 
 @override_settings(**MEDIA_SETTINGS)
@@ -226,6 +346,22 @@ class ProductImageRegressionGuardTests(TestCase):
         self.product.save()
         call_command("backfill_product_images", apply=True, confirm=True)
         self._assert_protected_unchanged()
+
+    def test_cleanup_does_not_delete_barcode_even_if_product_image_name_points_there(self):
+        """F1: a mis-pointed Product.image must never delete a live barcode file."""
+        barcode_key = self.batch.barcode_image.name
+        before = _file_md5(self.batch.barcode_image)
+        # Mis-wire product.image to the barcode key, then clear via safe cleanup path.
+        self.product.image.name = barcode_key
+        self.product.save(update_fields=["image"])
+        safe_delete_product_image_key(
+            default_storage,
+            barcode_key,
+            exclude_product_pk=self.product.pk,
+        )
+        self.batch.refresh_from_db()
+        self.assertTrue(default_storage.exists(barcode_key))
+        self.assertEqual(_file_md5(self.batch.barcode_image), before)
 
 
 @override_settings(**MEDIA_SETTINGS)
@@ -323,6 +459,81 @@ class ProductImageUploadFormTests(TestCase):
         self.assertTrue(form.errors.get("image"))
         self.assertFalse(Product.objects.filter(product_code="UP2").exists())
 
+    def test_clear_image_keeps_db_refs_if_save_fails(self):
+        """F3: files must not be deleted before a successful DB save."""
+        product = Product.objects.create(product_code="CLR1", name="Clear Me")
+        product.image = _image_upload((80, 80), name="keep.png")
+        product.save()
+        process_and_save_product_image(product)
+        product.refresh_from_db()
+        image_name = product.image.name
+        thumb_name = product.image_thumb.name
+
+        form = ProductForm(
+            data={
+                "product_code": product.product_code,
+                "name": product.name,
+                "unit": "Unit",
+                "default_cost_price": "1.00",
+                "default_selling_price": "2.00",
+                "min_stock": "0",
+                "is_active": True,
+                "image-clear": True,
+            },
+            files={},
+            instance=product,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        with mock.patch.object(Product, "save", side_effect=RuntimeError("db down")):
+            with self.assertRaises(RuntimeError):
+                form.save()
+
+        self.assertTrue(default_storage.exists(image_name))
+        self.assertTrue(default_storage.exists(thumb_name))
+        product.refresh_from_db()
+        self.assertEqual(product.image.name, image_name)
+        self.assertEqual(product.image_thumb.name, thumb_name)
+
+    def test_replacement_via_form_deletes_previous_files(self):
+        product = Product.objects.create(product_code="FR1", name="Form Replace")
+        product.image = _image_upload((100, 100), name="old.png")
+        product.save()
+        process_and_save_product_image(product)
+        product.refresh_from_db()
+        old_image = product.image.name
+        old_thumb = product.image_thumb.name
+
+        form = ProductForm(
+            data={
+                "product_code": product.product_code,
+                "name": product.name,
+                "unit": "Unit",
+                "default_cost_price": "1.00",
+                "default_selling_price": "2.00",
+                "min_stock": "0",
+                "is_active": True,
+            },
+            files={"image": _image_upload((120, 120), name="new.png")},
+            instance=product,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        product.refresh_from_db()
+        self.assertNotEqual(product.image.name, old_image)
+        self.assertFalse(default_storage.exists(old_image))
+        self.assertFalse(default_storage.exists(old_thumb))
+
+
+@override_settings(**MEDIA_SETTINGS)
+class ProductImageAdminTests(TestCase):
+    def test_admin_uses_product_form_and_image_thumb_readonly(self):
+        from catalog.admin import ProductAdmin
+        from django.contrib.admin.sites import AdminSite
+
+        admin = ProductAdmin(Product, AdminSite())
+        self.assertIs(admin.form, ProductForm)
+        self.assertIn("image_thumb", admin.readonly_fields)
+
 
 @override_settings(**MEDIA_SETTINGS)
 class ProductImageBackfillTests(TestCase):
@@ -346,6 +557,28 @@ class ProductImageBackfillTests(TestCase):
         self.assertFalse(bool(self.product.image_thumb))
         self.assertEqual(self.product.image.size, self.original_bytes)
 
+    def test_dry_run_detects_corrupt_image_without_writing(self):
+        """F9: dry-run must decode candidates and report failures without writes."""
+        broken = Product.objects.create(product_code="BF-DRY", name="Dry Corrupt")
+        broken.image.save(
+            "broken.png",
+            SimpleUploadedFile("broken.png", b"not-an-image", content_type="image/png"),
+            save=True,
+        )
+        broken_name = broken.image.name
+        healthy_name = self.product.image.name
+
+        with self.assertRaises(CommandError) as ctx:
+            call_command("backfill_product_images")
+
+        self.assertIn("would fail", str(ctx.exception).lower())
+        broken.refresh_from_db()
+        self.product.refresh_from_db()
+        self.assertEqual(broken.image.name, broken_name)
+        self.assertFalse(bool(broken.image_thumb))
+        self.assertEqual(self.product.image.name, healthy_name)
+        self.assertFalse(bool(self.product.image_thumb))
+
     def test_apply_is_idempotent(self):
         call_command("backfill_product_images", apply=True, confirm=True)
         self.product.refresh_from_db()
@@ -361,6 +594,14 @@ class ProductImageBackfillTests(TestCase):
         self.assertEqual(self.product.image_thumb.name, thumb_name)
         self.assertEqual(self.product.image.size, image_size)
         self.assertEqual(self.product.image_thumb.size, thumb_size)
+
+    def test_backfill_does_not_bump_updated_at(self):
+        """F10: backfill must preserve updated_at."""
+        self.product.refresh_from_db()
+        before = self.product.updated_at
+        call_command("backfill_product_images", apply=True, confirm=True)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.updated_at, before)
 
     def test_apply_raises_when_an_image_cannot_be_processed(self):
         """A failed image must not be reported as a successful backfill.
@@ -391,6 +632,25 @@ class ProductImageBackfillTests(TestCase):
         broken.refresh_from_db()
         self.assertEqual(broken.image.name, broken_name)
         self.assertFalse(bool(broken.image_thumb))
+
+    def test_concurrent_edit_is_skipped_not_overwritten(self):
+        """F2: if image.name changes between load and write, skip the product."""
+        expected_name = self.product.image.name
+        # Simulate a staff upload that landed after the candidate list was built.
+        self.product.image = _image_upload((90, 90), name="newer-upload.png")
+        self.product.save()
+        new_name = self.product.image.name
+        self.assertNotEqual(new_name, expected_name)
+
+        result = process_and_save_product_image(
+            self.product,
+            expected_image_name=expected_name,
+            bump_updated_at=False,
+        )
+        self.assertIsNone(result)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.image.name, new_name)
+        self.assertFalse(bool(self.product.image_thumb))
 
 
 class ProductImageThumbMigrationTests(TransactionTestCase):
