@@ -41,37 +41,39 @@ http://localhost:8000/admin/
 3. Copy `.env.example` to `.env`.
 4. Set production values in `.env`.
 5. Point the domain DNS record to the VPS IP.
-6. Start production services. Docker runs PostgreSQL and Django only; Nginx must run on the VPS host.
+6. Build the new image, migrate the database, then start serving new code.
+   Additive nullable migrations (such as `Product.image_thumb`) are backward
+   compatible with the previously running containers, so migrating first is
+   safe. Serving new code before migrate is not: the new code selects columns
+   the old database does not have yet, and every Product query fails until
+   migrate finishes — taking the till down for any cashier scanning in that
+   window. Do not reorder these steps.
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-7. Run migrations:
-
-```bash
-docker compose -f docker-compose.prod.yml exec web python manage.py migrate
-```
-
-8. Collect static files:
+7. Collect static files:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
 ```
 
-9. Restart Django so the running process reads the latest static manifest:
+8. Restart Django so the running process reads the latest static manifest:
 
 ```bash
 docker compose -f docker-compose.prod.yml restart web
 ```
 
-10. Create the first superuser:
+9. Create the first superuser:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
 ```
 
-11. Create roles and assign the admin account:
+10. Create roles and assign the admin account:
 
 ```bash
 docker compose -f docker-compose.prod.yml exec web python manage.py setup_roles --admin-username admin
@@ -84,13 +86,13 @@ docker compose -f docker-compose.prod.yml exec web python manage.py set_user_rol
 docker compose -f docker-compose.prod.yml exec web python manage.py set_user_role USERNAME cashier
 ```
 
-12. Confirm health:
+11. Confirm health:
 
 ```bash
 curl -fsS http://your-domain.example/health/
 ```
 
-13. Enable HTTPS before using camera scanning on phones or tablets. Browser camera access works on `localhost` during development, but production device camera access requires HTTPS.
+12. Enable HTTPS before using camera scanning on phones or tablets. Browser camera access works on `localhost` during development, but production device camera access requires HTTPS.
 
 ## VPS With External Nginx
 
@@ -111,16 +113,19 @@ DJANGO_CSRF_COOKIE_SECURE=True
 WEB_HOST_PORT=8001
 ```
 
-2. Start PostgreSQL and Django:
+2. Build, migrate, then start. Same migrate-before-serve rule as VPS Production
+   Setup step 6 — additive migrations are safe with old code; new code against an
+   unmigrated database is not.
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-3. Run migrations and collect static files:
+3. Collect static files and restart so Gunicorn reads the latest static manifest:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec web python manage.py migrate
 docker compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
 docker compose -f docker-compose.prod.yml restart web
 ```
