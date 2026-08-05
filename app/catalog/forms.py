@@ -2,6 +2,7 @@ import re
 
 from django import forms
 from django.core.files.uploadedfile import UploadedFile
+from django.db import transaction
 from django.db.models import Q
 
 from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
@@ -158,17 +159,43 @@ class ProductForm(forms.ModelForm):
             clear_product_image_fields(product)
             pending_delete = [n for n in (old_image_name, old_thumb_name) if n]
 
+        self._pending_image_delete = pending_delete
+
         if commit:
             product.save()
             self.save_m2m()
-            if pending_delete:
-                cleanup_replaced_product_image_keys(
-                    pending_delete,
-                    product=product,
-                    current_image_name=product.image.name if product.image else "",
-                    current_thumb_name=product.image_thumb.name if product.image_thumb else "",
-                )
+            self._schedule_pending_image_cleanup(product)
+        else:
+            # Django Admin uses commit=False then obj.save() + form.save_m2m().
+            # Hook cleanup into save_m2m so Admin and dashboard behave alike (R4).
+            nested_save_m2m = self.save_m2m
+
+            def save_m2m():
+                nested_save_m2m()
+                self._schedule_pending_image_cleanup(product)
+
+            self.save_m2m = save_m2m
         return product
+
+    def _schedule_pending_image_cleanup(self, product) -> None:
+        pending = getattr(self, "_pending_image_delete", None) or []
+        if not pending:
+            return
+        current_image_name = product.image.name if product.image else ""
+        current_thumb_name = product.image_thumb.name if product.image_thumb else ""
+        old_names = list(pending)
+        # Clear so a second save_m2m call cannot double-delete.
+        self._pending_image_delete = []
+
+        def _cleanup():
+            cleanup_replaced_product_image_keys(
+                old_names,
+                product=product,
+                current_image_name=current_image_name,
+                current_thumb_name=current_thumb_name,
+            )
+
+        transaction.on_commit(_cleanup)
 
     class Meta:
         model = Product
