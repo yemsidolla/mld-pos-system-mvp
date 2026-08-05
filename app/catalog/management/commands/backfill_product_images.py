@@ -4,6 +4,12 @@ IRREVERSIBLE: replaces stored Product.image bytes. Never touches barcode, QR,
 KHQR, or logo images.
 
 Default mode is dry-run. Writing requires ``--apply --confirm``.
+
+Concurrency caveat (documented, not fixed): a concurrent non-image product
+edit can still write back a stale image name. The form reads image A, blocks
+on the backfill row lock, then saves all fields including stale A after
+backfill committed B and deleted A. Quiesce product create/edit while this
+command runs.
 """
 
 from django.core.management.base import BaseCommand, CommandError
@@ -21,7 +27,9 @@ from catalog.services import (
 class Command(BaseCommand):
     help = (
         "Downscale Product.image originals and generate image_thumb derivatives. "
-        "Default is dry-run. Pass --apply --confirm to write (irreversible)."
+        "Default is dry-run. Pass --apply --confirm to write (irreversible). "
+        "Quiesce product create/edit while this runs: a concurrent non-image "
+        "edit can still overwrite a backfilled image name with a stale value."
     )
 
     def add_arguments(self, parser):
@@ -44,7 +52,10 @@ class Command(BaseCommand):
             self.style.WARNING(
                 "WARNING: This command replaces stored Product.image originals with "
                 "downscaled WebP files. That rewrite is irreversible. "
-                "Barcode, QR, KHQR, and logo images are never touched."
+                "Barcode, QR, KHQR, and logo images are never touched. "
+                "Quiesce product create/edit for the duration of this run — a concurrent "
+                "non-image product edit can still write back a stale image filename "
+                "after backfill replaced and deleted the previous file."
             )
         )
 
@@ -53,23 +64,37 @@ class Command(BaseCommand):
             .exclude(image__isnull=True)
             .order_by("pk")
         )
-        candidates = [p for p in products if product_image_needs_processing(p)]
-        skipped = products.count() - len(candidates)
-
-        self.stdout.write(f"Products with images: {products.count()}")
-        self.stdout.write(f"Already processed (skip): {skipped}")
-        self.stdout.write(f"Candidates to process: {len(candidates)}")
+        # Count without retaining FieldFile handles for every row.
+        total_with_images = products.count()
+        candidate_count = 0
+        skipped = 0
 
         if not apply:
-            # Preflight: actually decode every candidate so operators learn
-            # which images would fail before any irreversible rewrite (F9).
+            # Preflight: decode each candidate lazily so operators learn which
+            # images would fail before any irreversible rewrite (F9). Close each
+            # file after decoding so a large catalogue cannot exhaust FDs (R6).
             would_fail = 0
-            for product in candidates:
+            for product in products.iterator(chunk_size=50):
+                if not product_image_needs_processing(product):
+                    skipped += 1
+                    continue
+                candidate_count += 1
                 try:
                     process_product_image(product.image, source_name=product.image.name)
                 except ProductImageError as exc:
                     would_fail += 1
                     self.stderr.write(f"  WOULD FAIL product pk={product.pk}: {exc}")
+                finally:
+                    image_field = getattr(product, "image", None)
+                    if image_field is not None and hasattr(image_field, "close"):
+                        try:
+                            image_field.close()
+                        except Exception:
+                            pass
+
+            self.stdout.write(f"Products with images: {total_with_images}")
+            self.stdout.write(f"Already processed (skip): {skipped}")
+            self.stdout.write(f"Candidates to process: {candidate_count}")
             self.stdout.write(f"Dry-run decode failures: {would_fail}")
             self.stdout.write(
                 self.style.WARNING(
@@ -89,13 +114,33 @@ class Command(BaseCommand):
                 "Replacing originals is irreversible. Pass --apply --confirm together."
             )
 
+        # Apply path: materialise candidate pks first (names only), then process
+        # one row at a time so we do not hold every FieldFile open.
+        candidate_pks: list[int] = []
+        for product in products.iterator(chunk_size=50):
+            if product_image_needs_processing(product):
+                candidate_pks.append(product.pk)
+            else:
+                skipped += 1
+            image_field = getattr(product, "image", None)
+            if image_field is not None and hasattr(image_field, "close"):
+                try:
+                    image_field.close()
+                except Exception:
+                    pass
+
+        self.stdout.write(f"Products with images: {total_with_images}")
+        self.stdout.write(f"Already processed (skip): {skipped}")
+        self.stdout.write(f"Candidates to process: {len(candidate_pks)}")
+
         processed = 0
         errors = 0
         skipped_concurrent = 0
         # F11: only count bytes for the same successful set.
         bytes_before_success = 0
         bytes_after = 0
-        for product in candidates:
+        for pk in candidate_pks:
+            product = Product.objects.get(pk=pk)
             before = field_file_size(product.image) + field_file_size(product.image_thumb)
             expected_name = product.image.name if product.image else ""
             try:
@@ -120,6 +165,13 @@ class Command(BaseCommand):
             except ProductImageError as exc:
                 errors += 1
                 self.stderr.write(f"  FAILED product pk={product.pk}: {exc}")
+            finally:
+                image_field = getattr(product, "image", None)
+                if image_field is not None and hasattr(image_field, "close"):
+                    try:
+                        image_field.close()
+                    except Exception:
+                        pass
 
         self.stdout.write(f"Processed: {processed}")
         self.stdout.write(f"Skipped (concurrent edit): {skipped_concurrent}")
@@ -138,7 +190,7 @@ class Command(BaseCommand):
             # succeed and the failures need attention before a re-run.
             raise CommandError(
                 f"Backfill finished with {errors} failed image(s) out of "
-                f"{len(candidates)} candidate(s). Review the FAILED lines above. "
+                f"{len(candidate_pks)} candidate(s). Review the FAILED lines above. "
                 f"Successfully processed images have already been replaced."
             )
         self.stdout.write(self.style.SUCCESS("Backfill complete."))
