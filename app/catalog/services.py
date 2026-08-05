@@ -6,17 +6,33 @@ Product photo processing lives here (not in views/templates). Scope is
 
 from __future__ import annotations
 
+import logging
 import os
+import posixpath
 from dataclasses import dataclass
 from io import BytesIO
 
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 ORIGINAL_MAX_EDGE = 1600
 THUMB_MAX_EDGE = 96
 ORIGINAL_WEBP_QUALITY = 82
 THUMB_WEBP_QUALITY = 80
+
+# Only keys under these prefixes may be deleted by product-image cleanup.
+# Never delete barcodes/, qrcodes/, store/, or any other media tree.
+_PRODUCT_IMAGE_PREFIXES = ("products/",)
+
+logger = logging.getLogger(__name__)
+
+try:
+    from botocore.exceptions import BotoCoreError, ClientError
+
+    _STORAGE_ERRORS: tuple[type[BaseException], ...] = (BotoCoreError, ClientError, OSError)
+except ImportError:  # pragma: no cover - botocore optional when USE_S3_MEDIA=False
+    _STORAGE_ERRORS = (OSError,)
 
 
 class ProductImageError(Exception):
@@ -54,37 +70,49 @@ def _open_image(source) -> Image.Image:
                 pass
         image = Image.open(source)
         image.load()
+        # Pixels are in memory after load(); close the underlying handle so
+        # dry-run / backfill over a large catalogue cannot exhaust FDs (R6).
+        if hasattr(source, "close"):
+            try:
+                source.close()
+            except Exception:
+                pass
         return image
     except UnidentifiedImageError as exc:
         raise ProductImageError("Could not read the uploaded image. Please upload a valid photo.") from exc
-    except OSError as exc:
+    except Image.DecompressionBombError as exc:
+        raise ProductImageError("Could not read the uploaded image. Please upload a valid photo.") from exc
+    except _STORAGE_ERRORS as exc:
         raise ProductImageError("Could not read the uploaded image. Please upload a valid photo.") from exc
 
 
 def _to_webp_compatible(image: Image.Image) -> Image.Image:
-    """Apply EXIF orientation, then convert to a WebP-safe mode without EXIF."""
+    """Apply EXIF orientation, then convert to a WebP-safe mode."""
     image = ImageOps.exif_transpose(image)
 
     if image.mode in ("RGBA", "LA"):
-        converted = image.convert("RGBA")
-    elif image.mode == "P":
+        return image.convert("RGBA")
+    if image.mode == "P":
         if "transparency" in image.info:
-            converted = image.convert("RGBA")
-        else:
-            converted = image.convert("RGB")
-    elif image.mode == "CMYK":
-        converted = image.convert("RGB")
-    elif image.mode == "L":
-        converted = image.convert("RGB")
-    elif image.mode == "RGB":
-        converted = image.copy()
-    else:
-        converted = image.convert("RGB")
+            return image.convert("RGBA")
+        return image.convert("RGB")
+    if image.mode == "CMYK":
+        return image.convert("RGB")
+    if image.mode == "L":
+        return image.convert("RGB")
+    if image.mode == "RGB":
+        return image
+    return image.convert("RGB")
 
-    # Fresh image so GPS/EXIF and other metadata are not carried into the encoder.
-    clean = Image.new(converted.mode, converted.size)
-    clean.putdata(list(converted.getdata()))
-    return clean
+
+def _strip_metadata(image: Image.Image) -> Image.Image:
+    """Drop EXIF/GPS and other ancillary metadata cheaply.
+
+    Rebuild from raw bytes after resize so any copy is of the small image.
+    Never materialise a per-pixel Python list (``getdata`` / ``putdata``).
+    Saving without ``exif=`` already omits EXIF; this also clears ``info``.
+    """
+    return Image.frombytes(image.mode, image.size, image.tobytes())
 
 
 def _fit_long_edge(image: Image.Image, max_edge: int) -> Image.Image:
@@ -99,6 +127,7 @@ def _fit_long_edge(image: Image.Image, max_edge: int) -> Image.Image:
 
 def _encode_webp(image: Image.Image, *, quality: int) -> bytes:
     buffer = BytesIO()
+    # Do not pass exif= — metadata must not land in the WebP output.
     image.save(buffer, format="WEBP", quality=quality, method=4)
     return buffer.getvalue()
 
@@ -114,8 +143,9 @@ def process_product_image(source, *, source_name: str | None = None) -> Processe
     thumb_name = f"{stem}.webp"
 
     image = _to_webp_compatible(_open_image(source))
-    original_image = _fit_long_edge(image, ORIGINAL_MAX_EDGE)
-    thumb_image = _fit_long_edge(image, THUMB_MAX_EDGE)
+    # Resize first, then strip metadata on the smaller buffers (F5).
+    original_image = _strip_metadata(_fit_long_edge(image, ORIGINAL_MAX_EDGE))
+    thumb_image = _strip_metadata(_fit_long_edge(image, THUMB_MAX_EDGE))
 
     try:
         original_bytes = _encode_webp(original_image, quality=ORIGINAL_WEBP_QUALITY)
@@ -133,18 +163,180 @@ def process_product_image(source, *, source_name: str | None = None) -> Processe
 
 def assign_product_images(product, processed: ProcessedProductImages) -> None:
     """Assign processed files to ``product.image`` and ``product.image_thumb`` (no DB save)."""
-    product.image.save(processed.original_name, processed.original, save=False)
-    product.image_thumb.save(processed.thumb_name, processed.thumb, save=False)
+    previous_image_name = product.image.name if product.image else ""
+    new_original_name = ""
+    try:
+        product.image.save(processed.original_name, processed.original, save=False)
+        new_original_name = product.image.name if product.image else ""
+        product.image_thumb.save(processed.thumb_name, processed.thumb, save=False)
+    except _STORAGE_ERRORS as exc:
+        # Original is written before thumb — delete the orphan on thumb failure (R5).
+        if new_original_name and new_original_name != previous_image_name:
+            try:
+                storage = product.image.storage if product.image is not None else default_storage
+                if storage.exists(new_original_name):
+                    storage.delete(new_original_name)
+            except Exception:
+                logger.exception(
+                    "Failed to clean up orphaned product original after thumb write failure: %s",
+                    new_original_name,
+                )
+            # Restore prior field name so the in-memory instance is not left
+            # pointing at a file we just deleted.
+            if previous_image_name:
+                product.image.name = previous_image_name
+            else:
+                product.image = None
+        raise ProductImageError("Could not store the uploaded image. Please try again.") from exc
 
 
-def clear_product_images(product) -> None:
-    """Clear both product photo fields (no DB save)."""
-    if product.image:
-        product.image.delete(save=False)
-    if product.image_thumb:
-        product.image_thumb.delete(save=False)
+def clear_product_image_fields(product) -> None:
+    """Null both product photo fields without deleting storage or saving the DB.
+
+    Callers must save the row first, then delete old keys via
+    ``safe_delete_product_image_key`` (write-then-delete ordering).
+    """
     product.image = None
     product.image_thumb = None
+
+
+# Backwards-compatible alias used by older call sites / tests.
+def clear_product_images(product) -> None:
+    """Clear image fields only (no storage delete, no DB save). Prefer ``clear_product_image_fields``."""
+    clear_product_image_fields(product)
+
+
+def _normalized_storage_key(name: str) -> str:
+    """Return a canonical relative storage key, or ``""`` when the name is unsafe.
+
+    Rejects absolute paths, empty/``.`` results, and any ``..`` segment (R1).
+    Backslashes are treated as separators before canonicalisation so mixed
+    separator traversal payloads cannot bypass the allow/deny lists.
+    """
+    raw = (name or "").replace("\\", "/")
+    if not raw or raw.startswith("/"):
+        return ""
+    # Windows-style absolute (e.g. ``C:/...``) — never a valid relative media key.
+    if len(raw) >= 2 and raw[1] == ":":
+        return ""
+    segments = raw.split("/")
+    if any(seg == ".." for seg in segments):
+        return ""
+    if any(seg == "" for seg in segments):
+        return ""
+    if any(seg == "." for seg in segments):
+        return ""
+    canonical = posixpath.normpath(raw)
+    if not canonical or canonical == "." or canonical.startswith("..") or canonical.startswith("/"):
+        return ""
+    if canonical != raw:
+        # normpath must not invent a different path when we already forbade
+        # ``..`` / ``.`` / empty segments — treat divergence as unsafe.
+        return ""
+    return canonical
+
+
+def is_safe_product_image_key(name: str) -> bool:
+    """Return True only for keys under product image prefixes (never barcodes/qrcodes/store)."""
+    key = _normalized_storage_key(name)
+    if not key:
+        return False
+    # Explicit denylist for known protected trees (defence in depth).
+    for forbidden in ("barcodes/", "qrcodes/", "store/"):
+        if key.startswith(forbidden):
+            return False
+    return any(key.startswith(prefix) for prefix in _PRODUCT_IMAGE_PREFIXES)
+
+
+def product_image_key_still_referenced(name: str, *, exclude_pk=None) -> bool:
+    """True when any media field still points at this storage key.
+
+    Checks Product photos plus protected barcode / QR / logo / KHQR fields so a
+    mis-pointed or traversal key cannot delete live protected media (R1).
+
+    Product lookups are equality filters (not ``OR`` across the whole table in
+    one expression) and only run for keys that already passed the product-image
+    allowlist — backfill never scans protected trees.
+    """
+    key = _normalized_storage_key(name)
+    if not key:
+        return False
+
+    from catalog.models import Product
+    from core.models import StoreSetting
+    from inventory.models import StockBatch
+
+    # Protected media: any hit means "still referenced" (never delete).
+    if (
+        StockBatch.objects.filter(barcode_image=key).exists()
+        or StockBatch.objects.filter(qr_image=key).exists()
+        or StoreSetting.objects.filter(logo=key).exists()
+        or StoreSetting.objects.filter(khqr_image=key).exists()
+    ):
+        return True
+
+    # Bound the Product scan: only plausible product-image keys reach here
+    # (caller already gated via is_safe_product_image_key). Two equality
+    # lookups keep each check to a single column match.
+    image_qs = Product.objects.filter(image=key)
+    thumb_qs = Product.objects.filter(image_thumb=key)
+    if exclude_pk is not None:
+        image_qs = image_qs.exclude(pk=exclude_pk)
+        thumb_qs = thumb_qs.exclude(pk=exclude_pk)
+    return image_qs.exists() or thumb_qs.exists()
+
+
+def safe_delete_product_image_key(storage, name: str, *, exclude_product_pk=None) -> None:
+    """Delete a storage key only when it is a product-image path and unreferenced.
+
+    Refuses keys outside ``products/`` (including barcodes/, qrcodes/, store/),
+    absolute paths, and any traversal payload. Logs deletion failures instead of
+    swallowing them silently.
+    """
+    key = _normalized_storage_key(name)
+    if not key:
+        logger.warning("Refusing to delete unsafe or empty storage key: %r", name)
+        return
+    if not is_safe_product_image_key(key):
+        logger.warning("Refusing to delete non-product-image storage key: %s", key)
+        return
+    if product_image_key_still_referenced(key, exclude_pk=exclude_product_pk):
+        logger.info("Skipping delete; storage key still referenced: %s", key)
+        return
+    try:
+        if storage.exists(key):
+            storage.delete(key)
+    except Exception:
+        logger.exception("Failed to delete product image storage key: %s", key)
+
+
+def _product_image_storage(product=None):
+    if product is not None and getattr(product, "image", None) is not None:
+        try:
+            return product.image.storage
+        except Exception:
+            pass
+    from catalog.models import Product
+
+    return Product._meta.get_field("image").storage or default_storage
+
+
+def cleanup_replaced_product_image_keys(
+    old_names,
+    *,
+    product,
+    current_image_name: str = "",
+    current_thumb_name: str = "",
+) -> None:
+    """Best-effort delete of previous original/thumb keys after a successful save."""
+    storage = _product_image_storage(product)
+    current = {_normalized_storage_key(current_image_name), _normalized_storage_key(current_thumb_name)}
+    current.discard("")
+    for old_name in old_names:
+        key = _normalized_storage_key(old_name)
+        if not key or key in current:
+            continue
+        safe_delete_product_image_key(storage, key, exclude_product_pk=getattr(product, "pk", None))
 
 
 def product_image_needs_processing(product) -> bool:
@@ -158,29 +350,86 @@ def product_image_needs_processing(product) -> bool:
     return not name.endswith(".webp")
 
 
-def process_and_save_product_image(product, source=None, *, source_name: str | None = None) -> ProcessedProductImages:
-    """Process ``source`` (or the product's current image) and save both fields."""
-    file_obj = source if source is not None else product.image
-    if not file_obj:
-        raise ProductImageError("No product image to process.")
-    name = source_name or getattr(file_obj, "name", None)
-    processed = process_product_image(file_obj, source_name=name)
-    # Replace stored original in place: delete old files after assigning new ones
-    # only when names differ; ImageField.save handles storage write.
-    old_image_name = product.image.name if product.image else ""
-    old_thumb_name = product.image_thumb.name if product.image_thumb else ""
-    assign_product_images(product, processed)
-    product.save(update_fields=["image", "image_thumb", "updated_at"])
-    # Best-effort cleanup of replaced objects (ignore missing).
-    storage = product.image.storage
-    for old_name in (old_image_name, old_thumb_name):
-        if old_name and old_name != product.image.name and old_name != (product.image_thumb.name if product.image_thumb else ""):
+def process_and_save_product_image(
+    product,
+    source=None,
+    *,
+    source_name: str | None = None,
+    expected_image_name: str | None = None,
+    bump_updated_at: bool = False,
+) -> ProcessedProductImages | None:
+    """Process ``source`` (or the product's current image) and save both fields.
+
+    When ``expected_image_name`` is set, re-reads the row under
+    ``select_for_update`` and skips (returns None) if ``image.name`` changed —
+    so a concurrent staff upload is not overwritten (F2).
+
+    ``bump_updated_at`` defaults False so backfill does not rewrite catalogue
+    timestamps (F10). Pass True for interactive paths that should touch
+    ``updated_at``.
+
+    Storage deletion of replaced keys is deferred with ``transaction.on_commit``
+    so a failed commit cannot leave the row pointing at deleted files (R2).
+    """
+    from django.db import transaction
+
+    from catalog.models import Product
+
+    with transaction.atomic():
+        locked = Product.objects.select_for_update().get(pk=product.pk)
+        if expected_image_name is not None:
+            current_name = locked.image.name if locked.image else ""
+            if current_name != expected_image_name:
+                logger.info(
+                    "Skipping product pk=%s: image changed since candidate load (%r -> %r)",
+                    locked.pk,
+                    expected_image_name,
+                    current_name,
+                )
+                return None
+
+        file_obj = source if source is not None else locked.image
+        if not file_obj:
+            raise ProductImageError("No product image to process.")
+        name = source_name or getattr(file_obj, "name", None)
+        processed = process_product_image(file_obj, source_name=name)
+
+        old_image_name = locked.image.name if locked.image else ""
+        old_thumb_name = locked.image_thumb.name if locked.image_thumb else ""
+        assign_product_images(locked, processed)
+
+        update_fields = ["image", "image_thumb"]
+        if bump_updated_at:
+            update_fields.append("updated_at")
+        try:
+            locked.save(update_fields=update_fields)
+        except _STORAGE_ERRORS as exc:
+            raise ProductImageError("Could not store the uploaded image. Please try again.") from exc
+
+        current_image_name = locked.image.name if locked.image else ""
+        current_thumb_name = locked.image_thumb.name if locked.image_thumb else ""
+        old_names = (old_image_name, old_thumb_name)
+        product_pk = locked.pk
+
+        def _cleanup_after_commit():
+            # Re-load a thin product shell for storage resolution; names are captured.
             try:
-                if storage.exists(old_name):
-                    storage.delete(old_name)
-            except Exception:
-                pass
-    return processed
+                owner = Product.objects.get(pk=product_pk)
+            except Product.DoesNotExist:
+                owner = locked
+            cleanup_replaced_product_image_keys(
+                old_names,
+                product=owner,
+                current_image_name=current_image_name,
+                current_thumb_name=current_thumb_name,
+            )
+
+        transaction.on_commit(_cleanup_after_commit)
+
+        # Keep caller's in-memory instance roughly in sync.
+        product.image = locked.image
+        product.image_thumb = locked.image_thumb
+        return processed
 
 
 def field_file_size(field_file) -> int:

@@ -9,8 +9,9 @@ behavior change), then flip to OIDC once Authentik is verified.
 - [ ] `git pull` on the prod host
 - [ ] Confirm `.env`: `AUTH_MODE=local`, **`DJANGO_DEBUG=False`** (was found
       True in prod on 2026-06-11 — must never ship True)
-- [ ] `docker compose -f docker-compose.prod.yml up -d --build`
-- [ ] `docker compose -f docker-compose.prod.yml exec web python manage.py migrate`
+- [ ] `docker compose -f docker-compose.prod.yml build`
+- [ ] `docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate`
+- [ ] `docker compose -f docker-compose.prod.yml up -d`
 - [ ] `docker compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput`
 - [ ] `docker compose -f docker-compose.prod.yml restart web` — **required after
       collectstatic**: WhiteNoise caches the static manifest at process start,

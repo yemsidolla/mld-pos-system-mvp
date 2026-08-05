@@ -29,6 +29,7 @@ from .forms import (
     SupplierProductCostForm,
 )
 from .models import AnimalTypeOption, Brand, Category, Product, Supplier, SupplierProductCost
+from .services import ProductImageError
 
 
 QUICK_CREATE_FORMS = {
@@ -304,29 +305,33 @@ def product_list_view(request):
 def product_create_view(request):
     form = ProductForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        product = form.save()
-        create_audit_log(
-            action=AuditLog.Action.CREATE,
-            module="catalog",
-            user=request.user,
-            request=request,
-            object_type="Product",
-            object_id=product.pk,
-            object_display=str(product),
-            new_value=_model_snapshot(product, ProductForm.Meta.fields),
-        )
-        create_audit_log(
-            action=AuditLog.Action.COST_CHANGE,
-            module="catalog",
-            user=request.user,
-            request=request,
-            object_type="Product",
-            object_id=product.pk,
-            object_display=str(product),
-            new_value={"default_cost_price": str(product.default_cost_price)},
-        )
-        messages.success(request, f"Product {product.product_code} was created.")
-        return redirect("product-list")
+        try:
+            product = form.save()
+        except ProductImageError as exc:
+            form.add_error("image", str(exc))
+        else:
+            create_audit_log(
+                action=AuditLog.Action.CREATE,
+                module="catalog",
+                user=request.user,
+                request=request,
+                object_type="Product",
+                object_id=product.pk,
+                object_display=str(product),
+                new_value=_model_snapshot(product, ProductForm.Meta.fields),
+            )
+            create_audit_log(
+                action=AuditLog.Action.COST_CHANGE,
+                module="catalog",
+                user=request.user,
+                request=request,
+                object_type="Product",
+                object_id=product.pk,
+                object_display=str(product),
+                new_value={"default_cost_price": str(product.default_cost_price)},
+            )
+            messages.success(request, f"Product {product.product_code} was created.")
+            return redirect("product-list")
 
     return render(request, "catalog/product_form.html", {"form": form, "mode": "create"})
 
@@ -345,39 +350,43 @@ def product_edit_view(request, product_id):
     form = ProductForm(request.POST or None, request.FILES or None, instance=product)
 
     if request.method == "POST" and form.is_valid():
-        product = form.save()
-        create_audit_log(
-            action=AuditLog.Action.UPDATE,
-            module="catalog",
-            user=request.user,
-            request=request,
-            object_type="Product",
-            object_id=product.pk,
-            object_display=str(product),
-            old_value=old_value,
-            new_value={
-                "product_code": product.product_code,
-                "original_barcode": product.original_barcode,
-                "name": product.name,
-                "default_cost_price": str(product.default_cost_price),
-                "default_selling_price": str(product.default_selling_price),
-                "is_active": product.is_active,
-            },
-        )
-        if old_value["default_cost_price"] != str(product.default_cost_price):
+        try:
+            product = form.save()
+        except ProductImageError as exc:
+            form.add_error("image", str(exc))
+        else:
             create_audit_log(
-                action=AuditLog.Action.COST_CHANGE,
+                action=AuditLog.Action.UPDATE,
                 module="catalog",
                 user=request.user,
                 request=request,
                 object_type="Product",
                 object_id=product.pk,
                 object_display=str(product),
-                old_value={"default_cost_price": old_value["default_cost_price"]},
-                new_value={"default_cost_price": str(product.default_cost_price)},
+                old_value=old_value,
+                new_value={
+                    "product_code": product.product_code,
+                    "original_barcode": product.original_barcode,
+                    "name": product.name,
+                    "default_cost_price": str(product.default_cost_price),
+                    "default_selling_price": str(product.default_selling_price),
+                    "is_active": product.is_active,
+                },
             )
-        messages.success(request, f"Product {product.product_code} was updated.")
-        return redirect("product-list")
+            if old_value["default_cost_price"] != str(product.default_cost_price):
+                create_audit_log(
+                    action=AuditLog.Action.COST_CHANGE,
+                    module="catalog",
+                    user=request.user,
+                    request=request,
+                    object_type="Product",
+                    object_id=product.pk,
+                    object_display=str(product),
+                    old_value={"default_cost_price": old_value["default_cost_price"]},
+                    new_value={"default_cost_price": str(product.default_cost_price)},
+                )
+            messages.success(request, f"Product {product.product_code} was updated.")
+            return redirect("product-list")
 
     return render(request, "catalog/product_form.html", {"form": form, "mode": "edit", "product": product})
 
