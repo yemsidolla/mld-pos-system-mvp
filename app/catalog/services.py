@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import logging
 import os
+import posixpath
 from dataclasses import dataclass
 from io import BytesIO
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.db.models import Q
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 ORIGINAL_MAX_EDGE = 1600
@@ -70,6 +70,13 @@ def _open_image(source) -> Image.Image:
                 pass
         image = Image.open(source)
         image.load()
+        # Pixels are in memory after load(); close the underlying handle so
+        # dry-run / backfill over a large catalogue cannot exhaust FDs (R6).
+        if hasattr(source, "close"):
+            try:
+                source.close()
+            except Exception:
+                pass
         return image
     except UnidentifiedImageError as exc:
         raise ProductImageError("Could not read the uploaded image. Please upload a valid photo.") from exc
@@ -156,10 +163,30 @@ def process_product_image(source, *, source_name: str | None = None) -> Processe
 
 def assign_product_images(product, processed: ProcessedProductImages) -> None:
     """Assign processed files to ``product.image`` and ``product.image_thumb`` (no DB save)."""
+    previous_image_name = product.image.name if product.image else ""
+    new_original_name = ""
     try:
         product.image.save(processed.original_name, processed.original, save=False)
+        new_original_name = product.image.name if product.image else ""
         product.image_thumb.save(processed.thumb_name, processed.thumb, save=False)
     except _STORAGE_ERRORS as exc:
+        # Original is written before thumb — delete the orphan on thumb failure (R5).
+        if new_original_name and new_original_name != previous_image_name:
+            try:
+                storage = product.image.storage if product.image is not None else default_storage
+                if storage.exists(new_original_name):
+                    storage.delete(new_original_name)
+            except Exception:
+                logger.exception(
+                    "Failed to clean up orphaned product original after thumb write failure: %s",
+                    new_original_name,
+                )
+            # Restore prior field name so the in-memory instance is not left
+            # pointing at a file we just deleted.
+            if previous_image_name:
+                product.image.name = previous_image_name
+            else:
+                product.image = None
         raise ProductImageError("Could not store the uploaded image. Please try again.") from exc
 
 
@@ -180,7 +207,33 @@ def clear_product_images(product) -> None:
 
 
 def _normalized_storage_key(name: str) -> str:
-    return (name or "").replace("\\", "/").lstrip("/")
+    """Return a canonical relative storage key, or ``""`` when the name is unsafe.
+
+    Rejects absolute paths, empty/``.`` results, and any ``..`` segment (R1).
+    Backslashes are treated as separators before canonicalisation so mixed
+    separator traversal payloads cannot bypass the allow/deny lists.
+    """
+    raw = (name or "").replace("\\", "/")
+    if not raw or raw.startswith("/"):
+        return ""
+    # Windows-style absolute (e.g. ``C:/...``) — never a valid relative media key.
+    if len(raw) >= 2 and raw[1] == ":":
+        return ""
+    segments = raw.split("/")
+    if any(seg == ".." for seg in segments):
+        return ""
+    if any(seg == "" for seg in segments):
+        return ""
+    if any(seg == "." for seg in segments):
+        return ""
+    canonical = posixpath.normpath(raw)
+    if not canonical or canonical == "." or canonical.startswith("..") or canonical.startswith("/"):
+        return ""
+    if canonical != raw:
+        # normpath must not invent a different path when we already forbade
+        # ``..`` / ``.`` / empty segments — treat divergence as unsafe.
+        return ""
+    return canonical
 
 
 def is_safe_product_image_key(name: str) -> bool:
@@ -196,32 +249,59 @@ def is_safe_product_image_key(name: str) -> bool:
 
 
 def product_image_key_still_referenced(name: str, *, exclude_pk=None) -> bool:
-    """True when another Product row still points at this storage key."""
-    from catalog.models import Product
+    """True when any media field still points at this storage key.
 
+    Checks Product photos plus protected barcode / QR / logo / KHQR fields so a
+    mis-pointed or traversal key cannot delete live protected media (R1).
+
+    Product lookups are equality filters (not ``OR`` across the whole table in
+    one expression) and only run for keys that already passed the product-image
+    allowlist — backfill never scans protected trees.
+    """
     key = _normalized_storage_key(name)
     if not key:
         return False
-    qs = Product.objects.filter(Q(image=key) | Q(image_thumb=key))
+
+    from catalog.models import Product
+    from core.models import StoreSetting
+    from inventory.models import StockBatch
+
+    # Protected media: any hit means "still referenced" (never delete).
+    if (
+        StockBatch.objects.filter(barcode_image=key).exists()
+        or StockBatch.objects.filter(qr_image=key).exists()
+        or StoreSetting.objects.filter(logo=key).exists()
+        or StoreSetting.objects.filter(khqr_image=key).exists()
+    ):
+        return True
+
+    # Bound the Product scan: only plausible product-image keys reach here
+    # (caller already gated via is_safe_product_image_key). Two equality
+    # lookups keep each check to a single column match.
+    image_qs = Product.objects.filter(image=key)
+    thumb_qs = Product.objects.filter(image_thumb=key)
     if exclude_pk is not None:
-        qs = qs.exclude(pk=exclude_pk)
-    return qs.exists()
+        image_qs = image_qs.exclude(pk=exclude_pk)
+        thumb_qs = thumb_qs.exclude(pk=exclude_pk)
+    return image_qs.exists() or thumb_qs.exists()
 
 
 def safe_delete_product_image_key(storage, name: str, *, exclude_product_pk=None) -> None:
     """Delete a storage key only when it is a product-image path and unreferenced.
 
-    Refuses keys outside ``products/`` (including barcodes/, qrcodes/, store/).
-    Logs deletion failures instead of swallowing them silently.
+    Refuses keys outside ``products/`` (including barcodes/, qrcodes/, store/),
+    absolute paths, and any traversal payload. Logs deletion failures instead of
+    swallowing them silently.
     """
     key = _normalized_storage_key(name)
     if not key:
+        logger.warning("Refusing to delete unsafe or empty storage key: %r", name)
         return
     if not is_safe_product_image_key(key):
         logger.warning("Refusing to delete non-product-image storage key: %s", key)
         return
     if product_image_key_still_referenced(key, exclude_pk=exclude_product_pk):
-        logger.info("Skipping delete; storage key still referenced by another product: %s", key)
+        logger.info("Skipping delete; storage key still referenced: %s", key)
         return
     try:
         if storage.exists(key):
@@ -287,6 +367,9 @@ def process_and_save_product_image(
     ``bump_updated_at`` defaults False so backfill does not rewrite catalogue
     timestamps (F10). Pass True for interactive paths that should touch
     ``updated_at``.
+
+    Storage deletion of replaced keys is deferred with ``transaction.on_commit``
+    so a failed commit cannot leave the row pointing at deleted files (R2).
     """
     from django.db import transaction
 
@@ -323,13 +406,25 @@ def process_and_save_product_image(
         except _STORAGE_ERRORS as exc:
             raise ProductImageError("Could not store the uploaded image. Please try again.") from exc
 
-        # Write-then-delete: only after DB save succeeded.
-        cleanup_replaced_product_image_keys(
-            (old_image_name, old_thumb_name),
-            product=locked,
-            current_image_name=locked.image.name if locked.image else "",
-            current_thumb_name=locked.image_thumb.name if locked.image_thumb else "",
-        )
+        current_image_name = locked.image.name if locked.image else ""
+        current_thumb_name = locked.image_thumb.name if locked.image_thumb else ""
+        old_names = (old_image_name, old_thumb_name)
+        product_pk = locked.pk
+
+        def _cleanup_after_commit():
+            # Re-load a thin product shell for storage resolution; names are captured.
+            try:
+                owner = Product.objects.get(pk=product_pk)
+            except Product.DoesNotExist:
+                owner = locked
+            cleanup_replaced_product_image_keys(
+                old_names,
+                product=owner,
+                current_image_name=current_image_name,
+                current_thumb_name=current_thumb_name,
+            )
+
+        transaction.on_commit(_cleanup_after_commit)
 
         # Keep caller's in-memory instance roughly in sync.
         product.image = locked.image
