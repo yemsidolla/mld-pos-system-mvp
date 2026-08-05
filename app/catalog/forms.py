@@ -5,7 +5,13 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Q
 
 from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
-from .services import ProductImageError, clear_product_images, process_product_image, assign_product_images
+from .services import (
+    ProductImageError,
+    assign_product_images,
+    clear_product_image_fields,
+    cleanup_replaced_product_image_keys,
+    process_product_image,
+)
 
 
 def animal_type_code_from_name(name):
@@ -90,6 +96,11 @@ class ProductForm(forms.ModelForm):
         category_filter = Q(is_active=True)
         brand_filter = Q(is_active=True)
         animal_type_filter = Q(is_active=True)
+        # Capture storage keys before is_valid()/_post_clean assigns uploads onto
+        # the instance (needed for write-then-delete cleanup after save).
+        prior = self.instance
+        self._prior_image_name = prior.image.name if prior.pk and prior.image else ""
+        self._prior_thumb_name = prior.image_thumb.name if prior.pk and prior.image_thumb else ""
         if self.instance and self.instance.pk:
             if self.instance.category_id:
                 category_filter |= Q(pk=self.instance.category_id)
@@ -131,18 +142,32 @@ class ProductForm(forms.ModelForm):
         selected = list(self.cleaned_data.get("animal_types") or [])
         product.animal_type = selected[0].code if selected else ""
 
+        old_image_name = getattr(self, "_prior_image_name", "") or ""
+        old_thumb_name = getattr(self, "_prior_thumb_name", "") or ""
+        pending_delete: list[str] = []
+
         image = self.cleaned_data.get("image")
         if isinstance(image, UploadedFile):
             processed = getattr(self, "_processed_product_image", None)
             if processed is None:
                 processed = process_product_image(image, source_name=getattr(image, "name", None))
             assign_product_images(product, processed)
+            pending_delete = [n for n in (old_image_name, old_thumb_name) if n]
         elif "image" in self.changed_data and not image:
-            clear_product_images(product)
+            # Clear fields only — storage delete happens after save succeeds (F3).
+            clear_product_image_fields(product)
+            pending_delete = [n for n in (old_image_name, old_thumb_name) if n]
 
         if commit:
             product.save()
             self.save_m2m()
+            if pending_delete:
+                cleanup_replaced_product_image_keys(
+                    pending_delete,
+                    product=product,
+                    current_image_name=product.image.name if product.image else "",
+                    current_thumb_name=product.image_thumb.name if product.image_thumb else "",
+                )
         return product
 
     class Meta:

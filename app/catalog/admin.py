@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from .forms import ProductForm
 from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
@@ -45,6 +46,8 @@ class AnimalTypeOptionAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    # Same processing path as the dashboard ProductForm (WebP original + thumb).
+    form = ProductForm
     list_display = (
         "product_code",
         "name",
@@ -59,7 +62,8 @@ class ProductAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_active", "category", "brand", "animal_types", "life_stage", "tags")
     search_fields = ("name", "product_code", "original_barcode")
-    readonly_fields = ("created_at", "updated_at")
+    # image_thumb is derived — never editable into an inconsistent state (F7).
+    readonly_fields = ("image_thumb", "created_at", "updated_at")
     autocomplete_fields = ("category", "brand")
     filter_horizontal = ("animal_types", "tags")
 
