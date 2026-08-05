@@ -274,10 +274,15 @@ class ProductImageCleanupTests(TestCase):
         self.assertTrue(default_storage.exists(first_image))
         self.assertTrue(default_storage.exists(first_thumb))
 
-        process_and_save_product_image(
-            product,
-            source=_image_upload((220, 220), name="second.png"),
-        )
+        # Cleanup is deferred to transaction.on_commit so a rolled-back save can
+        # never leave the row pointing at deleted files. TestCase wraps each test
+        # in a transaction it rolls back, so those callbacks must be run
+        # explicitly or the deletion would never happen here.
+        with self.captureOnCommitCallbacks(execute=True):
+            process_and_save_product_image(
+                product,
+                source=_image_upload((220, 220), name="second.png"),
+            )
         product.refresh_from_db()
         self.assertNotEqual(product.image.name, first_image)
         self.assertFalse(default_storage.exists(first_image))
@@ -517,7 +522,10 @@ class ProductImageUploadFormTests(TestCase):
             instance=product,
         )
         self.assertTrue(form.is_valid(), form.errors)
-        form.save()
+        # See ProductImageCleanupTests: deletion is deferred to on_commit, which
+        # TestCase never reaches on its own.
+        with self.captureOnCommitCallbacks(execute=True):
+            form.save()
         product.refresh_from_db()
         self.assertNotEqual(product.image.name, old_image)
         self.assertFalse(default_storage.exists(old_image))
