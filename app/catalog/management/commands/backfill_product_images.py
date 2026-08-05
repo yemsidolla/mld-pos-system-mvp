@@ -13,6 +13,7 @@ from catalog.services import (
     ProductImageError,
     field_file_size,
     process_and_save_product_image,
+    process_product_image,
     product_image_needs_processing,
 )
 
@@ -55,22 +56,31 @@ class Command(BaseCommand):
         candidates = [p for p in products if product_image_needs_processing(p)]
         skipped = products.count() - len(candidates)
 
-        bytes_before = 0
-        for product in candidates:
-            bytes_before += field_file_size(product.image)
-            bytes_before += field_file_size(product.image_thumb)
-
         self.stdout.write(f"Products with images: {products.count()}")
         self.stdout.write(f"Already processed (skip): {skipped}")
         self.stdout.write(f"Candidates to process: {len(candidates)}")
-        self.stdout.write(f"Candidate bytes before: {bytes_before}")
 
         if not apply:
+            # Preflight: actually decode every candidate so operators learn
+            # which images would fail before any irreversible rewrite (F9).
+            would_fail = 0
+            for product in candidates:
+                try:
+                    process_product_image(product.image, source_name=product.image.name)
+                except ProductImageError as exc:
+                    would_fail += 1
+                    self.stderr.write(f"  WOULD FAIL product pk={product.pk}: {exc}")
+            self.stdout.write(f"Dry-run decode failures: {would_fail}")
             self.stdout.write(
                 self.style.WARNING(
                     "DRY RUN — nothing was written. Re-run with --apply --confirm to execute."
                 )
             )
+            if would_fail:
+                raise CommandError(
+                    f"Dry-run found {would_fail} image(s) that would fail processing. "
+                    "Fix or remove them before running --apply --confirm."
+                )
             return
 
         if not confirm:
@@ -81,11 +91,28 @@ class Command(BaseCommand):
 
         processed = 0
         errors = 0
+        skipped_concurrent = 0
+        # F11: only count bytes for the same successful set.
+        bytes_before_success = 0
         bytes_after = 0
         for product in candidates:
+            before = field_file_size(product.image) + field_file_size(product.image_thumb)
+            expected_name = product.image.name if product.image else ""
             try:
-                process_and_save_product_image(product)
+                result = process_and_save_product_image(
+                    product,
+                    expected_image_name=expected_name,
+                    bump_updated_at=False,
+                )
+                if result is None:
+                    skipped_concurrent += 1
+                    self.stdout.write(
+                        f"  skipped product pk={product.pk} "
+                        f"(image changed since candidate load)"
+                    )
+                    continue
                 product.refresh_from_db()
+                bytes_before_success += before
                 bytes_after += field_file_size(product.image)
                 bytes_after += field_file_size(product.image_thumb)
                 processed += 1
@@ -95,12 +122,13 @@ class Command(BaseCommand):
                 self.stderr.write(f"  FAILED product pk={product.pk}: {exc}")
 
         self.stdout.write(f"Processed: {processed}")
+        self.stdout.write(f"Skipped (concurrent edit): {skipped_concurrent}")
         self.stdout.write(f"Errors: {errors}")
-        self.stdout.write(f"Bytes before: {bytes_before}")
+        self.stdout.write(f"Bytes before (successes only): {bytes_before_success}")
         self.stdout.write(f"Bytes after: {bytes_after}")
-        if bytes_before:
-            saved = bytes_before - bytes_after
-            pct = (saved / bytes_before) * 100
+        if bytes_before_success:
+            saved = bytes_before_success - bytes_after
+            pct = (saved / bytes_before_success) * 100
             self.stdout.write(f"Bytes saved: {saved} ({pct:.1f}%)")
 
         if errors:
