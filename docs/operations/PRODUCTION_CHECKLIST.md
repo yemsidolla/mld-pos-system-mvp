@@ -19,8 +19,10 @@
 
 ## Before First Launch
 
-- Run `docker compose -f docker-compose.prod.yml up -d --build`.
-- Run migrations.
+- Build, migrate, then start (migrate before serve):
+  `docker compose -f docker-compose.prod.yml build`
+  then `docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate`
+  then `docker compose -f docker-compose.prod.yml up -d`.
 - Run `collectstatic`.
 - Create or confirm the first superuser.
 - Run `setup_roles --admin-username admin`.

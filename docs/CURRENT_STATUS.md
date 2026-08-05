@@ -248,14 +248,18 @@ verified.
 
 ## Deployment State
 
-Production should use:
+Production should use build → migrate → start (migrate before serve):
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml exec web python manage.py migrate
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate
+docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
 docker compose -f docker-compose.prod.yml restart web
 ```
+
+Additive migrations are safe with old containers still serving; new code against
+an unmigrated database is not. Do not reorder to `up -d --build` then migrate.
 
 Host Nginx proxies:
 

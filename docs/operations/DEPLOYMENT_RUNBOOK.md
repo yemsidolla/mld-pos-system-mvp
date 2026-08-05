@@ -15,11 +15,12 @@ There is intentionally no internal Docker Nginx service. Production HTTPS and re
 
 ## Local Development And iPhone Testing
 
-Use the local override:
+Use the local override (build → migrate → start):
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
-docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.local.yml build
+docker compose -f docker-compose.yml -f docker-compose.local.yml run --rm web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py collectstatic --noinput
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py setup_roles --admin-username admin --password Admin123
 ```
@@ -95,9 +96,15 @@ WEB_HOST_PORT=8001
 
 ## Production Deploy
 
+Build the new image, migrate the database, then start serving new code.
+Additive nullable migrations are backward compatible with previously running
+containers, so migrating first is safe. Serving new code before migrate is
+not: the new code may select columns the old database does not have yet.
+
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml exec web python manage.py migrate
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml run --rm web python manage.py migrate
+docker compose -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.prod.yml exec web python manage.py collectstatic --noinput
 docker compose -f docker-compose.prod.yml exec web python manage.py setup_roles --admin-username admin
 ```

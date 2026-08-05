@@ -44,8 +44,9 @@ Handoff: `docs/CURRENT_STATUS.md` · System map: `docs/product/00_CURRENT_SYSTEM
 
 ```bash
 cp .env.example .env
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
-docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.local.yml build
+docker compose -f docker-compose.yml -f docker-compose.local.yml run --rm web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py setup_roles --admin-username admin --password Admin123
 ```
 

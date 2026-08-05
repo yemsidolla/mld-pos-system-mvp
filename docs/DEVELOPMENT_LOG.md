@@ -12,6 +12,9 @@
   fallback to full image.
 - Management command `backfill_product_images` (dry-run default; `--apply
   --confirm` to write). Never touches barcode/QR/KHQR/logo.
+- Operator caveat: quiesce product create/edit while backfill runs — a
+  concurrent non-image edit can still overwrite a backfilled image name with a
+  stale value (documented in the command help and `DEPLOYMENT_GUIDE.md`).
 
 ## 2026-08-04
 

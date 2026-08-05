@@ -4,31 +4,28 @@
 
 1. Copy `.env.example` to `.env`.
 2. Set `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`, and `DJANGO_ALLOWED_HOSTS`.
-3. Start PostgreSQL and Django. Use the local override when you want the app reachable from your browser or phone at port 8000:
+3. Build, migrate, then start. Use the local override when you want the app
+   reachable from your browser or phone at port 8000:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.local.yml build
+docker compose -f docker-compose.yml -f docker-compose.local.yml run --rm web python manage.py migrate
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d
 ```
 
-4. Run migrations:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py migrate
-```
-
-5. Collect static files:
+4. Collect static files:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py collectstatic --noinput
 ```
 
-6. Create or reset the development admin user:
+5. Create or reset the development admin user:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.local.yml exec web python manage.py setup_roles --admin-username admin --password Admin123
 ```
 
-7. Open Django Admin:
+6. Open Django Admin:
 
 ```text
 http://localhost:8000/admin/
@@ -182,6 +179,11 @@ scripts/backup_media.sh
 
 2. Start or restart production compose, then bootstrap layout/bucket/key once:
 
+> If this cutover also brings in new application code, apply any pending
+> migrations **before** serving it — see the migrate-before-serve sequence
+> earlier in this guide. Serving new code against an unmigrated database takes
+> the till down.
+
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 COMPOSE_FILE=docker-compose.prod.yml scripts/bootstrap_garage.sh
@@ -306,6 +308,28 @@ Expired stock maintenance:
 docker compose -f docker-compose.prod.yml exec web python manage.py expire_batches --username admin --dry-run
 docker compose -f docker-compose.prod.yml exec web python manage.py expire_batches --username admin
 ```
+
+## Product image backfill
+
+After deploying the `Product.image_thumb` migration, existing catalogue photos
+can be rewritten with:
+
+```bash
+docker compose -f docker-compose.prod.yml exec web \
+  python manage.py backfill_product_images
+docker compose -f docker-compose.prod.yml exec web \
+  python manage.py backfill_product_images --apply --confirm
+```
+
+Default mode is dry-run. Writing requires `--apply --confirm` and is
+irreversible for every image that succeeds. Barcode, QR, KHQR, and logo files
+are never touched.
+
+**Quiesce product create/edit while the backfill runs.** A concurrent
+non-image product edit can still write back a stale image filename: the form
+reads image A, blocks on the backfill row lock, then saves all fields including
+stale A after backfill committed B and deleted A. Cashiers on POS are
+unaffected; only catalogue product forms need to be idle for the run.
 
 ## Production Checklist
 
