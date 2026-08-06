@@ -5,105 +5,141 @@
 {% block page_title %}{% trans "Promotion & Below-cost Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Promotion impact and risky below-cost activity from completed sale-item snapshots." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
-    <a class="btn" href="{% url 'promotion-list' %}">{% trans "Manage Promotions" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-list' %}">{% trans "Manage Promotions" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Report Definition" %}</h2>
-            <p>{% trans "This report uses sale-item snapshots saved at checkout. It does not recalculate old sales from current promotion rules." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Report Definition" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "This report uses sale-item snapshots saved at checkout. It does not recalculate old sales from current promotion rules." %}</p>
         </div>
     </header>
 </section>
 
-<section class="metric-grid">
-    <article class="metric-card"><span>{% trans "Promotions Used" %}</span><strong>{{ summary.promotion_count }}</strong></article>
-    <article class="metric-card"><span>{% trans "Lines" %}</span><strong>{{ summary.line_count }}</strong></article>
-    <article class="metric-card"><span>{% trans "Units" %}</span><strong>{{ summary.quantity }}</strong></article>
-    <article class="metric-card"><span>{% trans "Discounts" %}</span><strong>{{ summary.discount_amount }}</strong></article>
-    <article class="metric-card"><span>{% trans "Final Sales" %}</span><strong>{{ summary.final_amount }}</strong></article>
-    <article class="metric-card {% if summary.below_cost_count %}kpi-danger{% endif %}"><span>{% trans "Below Cost Lines" %}</span><strong>{{ summary.below_cost_count }}</strong></article>
-    <article class="metric-card {% if summary.override_count %}kpi-danger{% endif %}"><span>{% trans "Overrides" %}</span><strong>{{ summary.override_count }}</strong></article>
+<section class="mb-4 mt-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+    {% trans "Promotions Used" as lbl_promos %}
+    {% include "reports/_metric_card.html" with label=lbl_promos value=summary.promotion_count %}
+    {% trans "Lines" as lbl_lines %}
+    {% include "reports/_metric_card.html" with label=lbl_lines value=summary.line_count %}
+    {% trans "Units" as lbl_units %}
+    {% include "reports/_metric_card.html" with label=lbl_units value=summary.quantity %}
+    {% trans "Discounts" as lbl_discounts %}
+    {% include "reports/_metric_card.html" with label=lbl_discounts value=summary.discount_amount %}
+    {% trans "Final Sales" as lbl_final %}
+    {% include "reports/_metric_card.html" with label=lbl_final value=summary.final_amount %}
+    {% trans "Below Cost Lines" as lbl_below %}
+    {% include "reports/_metric_card.html" with label=lbl_below value=summary.below_cost_count tone=summary.below_cost_count|yesno:"danger," %}
+    {% trans "Overrides" as lbl_overrides %}
+    {% include "reports/_metric_card.html" with label=lbl_overrides value=summary.override_count tone=summary.override_count|yesno:"danger," %}
     {% if user_can_view_costs %}
-        <article class="metric-card"><span>{% trans "Cost of Goods" %}</span><strong>{{ summary.total_cost }}</strong></article>
-        <article class="metric-card"><span>{% trans "Gross Margin" %}</span><strong>{{ summary.gross_margin }}</strong></article>
+        {% trans "Cost of Goods" as lbl_cogs %}
+        {% include "reports/_metric_card.html" with label=lbl_cogs value=summary.total_cost %}
+        {% trans "Gross Margin" as lbl_margin %}
+        {% include "reports/_metric_card.html" with label=lbl_margin value=summary.gross_margin %}
     {% endif %}
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Promotion Impact" %}</h2>
-            <p>{% trans "Grouped by the promotion name captured on the sale item." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Promotion Impact" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Grouped by the promotion name captured on the sale item." %}</p>
         </div>
     </header>
-    <div class="table-scroll">
-    <table class="data-table">
+    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+    <table class="w-full min-w-[720px] border-collapse">
         <thead>
             <tr>
-                <th>{% trans "Promotion" %}</th>
-                <th>{% trans "Lines" %}</th>
-                <th>{% trans "Units" %}</th>
-                <th>{% trans "Gross" %}</th>
-                <th>{% trans "Discount" %}</th>
-                <th>{% trans "Final" %}</th>
-                <th>{% trans "Below Cost" %}</th>
-                <th>{% trans "Overrides" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Promotion" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Lines" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Units" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Gross" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Discount" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Final" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Below Cost" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Overrides" %}</th>
                 {% if user_can_view_costs %}
-                    <th>{% trans "Cost" %}</th>
-                    <th>{% trans "Margin" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cost" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Margin" %}</th>
                 {% endif %}
             </tr>
         </thead>
         <tbody>
         {% for row in rows %}
-            <tr>
-                <td>{{ row.promotion_name }}</td>
-                <td>{{ row.line_count }}</td>
-                <td>{{ row.quantity }}</td>
-                <td>{{ row.gross_amount }}</td>
-                <td>{{ row.discount_amount }}</td>
-                <td>{{ row.final_amount }}</td>
-                <td><span class="badge {% if row.below_cost_count %}badge-danger{% endif %}">{{ row.below_cost_count }}</span></td>
-                <td><span class="badge {% if row.override_count %}badge-danger{% endif %}">{{ row.override_count }}</span></td>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.promotion_name }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.line_count }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.quantity }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.gross_amount }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.discount_amount }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.final_amount }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    {% if row.below_cost_count %}
+                        {% include "catalog/_status_pill.html" with tone="danger" label=row.below_cost_count %}
+                    {% else %}
+                        {% include "catalog/_status_pill.html" with tone="neutral" label=row.below_cost_count %}
+                    {% endif %}
+                </td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    {% if row.override_count %}
+                        {% include "catalog/_status_pill.html" with tone="danger" label=row.override_count %}
+                    {% else %}
+                        {% include "catalog/_status_pill.html" with tone="neutral" label=row.override_count %}
+                    {% endif %}
+                </td>
                 {% if user_can_view_costs %}
-                    <td>{{ row.total_cost }}</td>
-                    <td>{{ row.gross_margin }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.total_cost }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.gross_margin }}</td>
                 {% endif %}
             </tr>
         {% empty %}
-            <tr><td colspan="{% if user_can_view_costs %}10{% else %}8{% endif %}" class="empty-cell">{% trans "No promotion sale items found." %}</td></tr>
+            <tr><td colspan="{% if user_can_view_costs %}10{% else %}8{% endif %}" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No promotion sale items found." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>
     </div>
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Below-cost Review" %}</h2>
-            <p>{% trans "Most recent promoted lines where final unit price was below the saved cost basis." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Below-cost Review" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Most recent promoted lines where final unit price was below the saved cost basis." %}</p>
         </div>
     </header>
-    <div class="table-scroll">
-    <table class="data-table">
-        <thead><tr><th>{% trans "Sale" %}</th><th>{% trans "Product" %}</th><th>{% trans "Promotion" %}</th><th>{% trans "Final Unit" %}</th>{% if user_can_view_costs %}<th>{% trans "Cost Basis" %}</th>{% endif %}<th>{% trans "Override" %}</th></tr></thead>
+    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+    <table class="w-full min-w-[720px] border-collapse">
+        <thead><tr>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Sale" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Promotion" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Final Unit" %}</th>
+            {% if user_can_view_costs %}<th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cost Basis" %}</th>{% endif %}
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Override" %}</th>
+        </tr></thead>
         <tbody>
         {% for item in below_cost_items %}
-            <tr>
-                <td><a href="{% url 'sale-detail' item.sale.id %}">{{ item.sale.sale_no }}</a></td>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.promotion_name_at_sale }}</td>
-                <td>{{ item.final_unit_price }}</td>
-                {% if user_can_view_costs %}<td>{{ item.cost_basis_at_sale }}</td>{% endif %}
-                <td>{% if item.override_by_id %}<span class="badge badge-danger">{% trans "Override" %}</span>{% else %}<span class="badge badge-warning">{% trans "Promotion allowed" %}</span>{% endif %}</td>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-[9px] py-2.5 align-middle"><a href="{% url 'sale-detail' item.sale.id %}">{{ item.sale.sale_no }}</a></td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.product.name }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.promotion_name_at_sale }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.final_unit_price }}</td>
+                {% if user_can_view_costs %}<td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.cost_basis_at_sale }}</td>{% endif %}
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    {% if item.override_by_id %}
+                        {% trans "Override" as override_lbl %}
+                        {% include "catalog/_status_pill.html" with tone="danger" label=override_lbl %}
+                    {% else %}
+                        {% trans "Promotion allowed" as promo_allowed_lbl %}
+                        {% include "catalog/_status_pill.html" with tone="warning" label=promo_allowed_lbl %}
+                    {% endif %}
+                </td>
             </tr>
         {% empty %}
-            <tr><td colspan="{% if user_can_view_costs %}6{% else %}5{% endif %}" class="empty-cell">{% trans "No promoted below-cost lines found." %}</td></tr>
+            <tr><td colspan="{% if user_can_view_costs %}6{% else %}5{% endif %}" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No promoted below-cost lines found." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>
