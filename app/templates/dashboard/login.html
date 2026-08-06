@@ -5,28 +5,31 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% trans "Login" %} | Melodu POS</title>
-    <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/cascade.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/tailwind.css' %}">
 </head>
-<body class="auth-page">
-<div class="auth-backdrop" aria-hidden="true"></div>
-<main class="auth-shell">
-    <section class="auth-panel">
-        <p class="terminal-line" aria-hidden="true">
-            <span class="terminal-dot"></span>MELODU-POS // {% trans "STAFF ACCESS TERMINAL" %}
+<body class="relative grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(900px_500px_at_80%_-10%,rgba(34,211,238,0.16),transparent_60%),radial-gradient(700px_420px_at_8%_110%,rgba(99,102,241,0.18),transparent_55%),var(--color-auth-bg)] p-[18px] text-auth-fg max-[640px]:content-start max-[640px]:overflow-auto">
+<div class="pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(148,184,220,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(148,184,220,0.07)_1px,transparent_1px)] bg-size-[44px_44px] [mask-image:radial-gradient(ellipse_90%_80%_at_50%_40%,black_35%,transparent_100%)]" aria-hidden="true">
+    <div class="absolute inset-0 animate-auth-sweep bg-[linear-gradient(180deg,transparent_0%,rgba(34,211,238,0.05)_50%,transparent_100%)]"></div>
+</div>
+<main class="relative z-[1] w-[min(420px,100%)] max-[640px]:mx-auto max-[640px]:w-[min(100%,430px)]">
+    <section class="rounded-[14px] border border-auth-panel-border bg-auth-panel px-[26px] pb-5 pt-[26px] shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_18px_60px_rgba(2,6,16,0.7),inset_0_1px_0_rgba(160,200,255,0.10)] backdrop-blur-[10px]">
+        <p class="mb-4 mt-0 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-auth-terminal" aria-hidden="true">
+            <span class="size-2 animate-terminal-pulse rounded-full bg-current shadow-[0_0_8px_currentColor]"></span>MELODU-POS // {% trans "STAFF ACCESS TERMINAL" %}
         </p>
 
-        <div class="auth-brand">
-            <span class="brand-mark glow">M</span>
+        <div class="mb-[18px] flex items-center gap-3">
+            <span class="inline-grid size-9 place-items-center rounded-md border border-auth-mark-border bg-[linear-gradient(145deg,var(--color-auth-mark-from),var(--color-auth-mark-to))] text-[15px] font-extrabold text-auth-mark-fg shadow-[0_0_18px_rgba(34,211,238,0.35)]">M</span>
             <div>
-                <p class="eyebrow">{% trans "Melodu Pet Store" %}</p>
-                <h1>{% trans "Dashboard Login" %}</h1>
+                <p class="m-0 text-xs font-[750] uppercase tracking-normal text-accent-bright">{% trans "Melodu Pet Store" %}</p>
+                <h1 class="mt-0.5 mb-0 text-2xl leading-[1.15] tracking-[0.01em] text-auth-heading">{% trans "Dashboard Login" %}</h1>
             </div>
         </div>
 
         {% if messages %}
-            <section class="message-stack" aria-live="polite">
+            <section class="mb-4 grid gap-2" aria-live="polite">
                 {% for message in messages %}
-                    <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-success{% endif %}">
+                    <div class="rounded-md border bg-auth-alert-bg px-3 py-2.5 text-auth-alert-fg {% if message.tags == 'error' %}border-auth-alert-danger-border text-auth-alert-danger-fg{% elif message.tags == 'warning' %}border-auth-alert-warning-border text-auth-alert-warning-fg{% elif message.tags == 'success' %}border-auth-alert-success-border text-auth-alert-success-fg{% else %}border-auth-alert-border{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -34,28 +37,32 @@
         {% endif %}
 
         {% if oidc_enabled %}
-            <div class="sso-block">
-                <a class="btn btn-primary btn-sso full-width" href="{{ oidc_login_url }}">
+            <div class="my-1 mb-1">
+                <a class="inline-flex w-full min-h-[38px] cursor-pointer items-center justify-center gap-2.5 whitespace-nowrap rounded-md border border-auth-btn-border bg-[linear-gradient(135deg,var(--color-auth-btn-from),var(--color-auth-btn-to))] px-4 py-3 font-sans text-[15px] font-[750] text-auth-btn-fg no-underline shadow-[0_0_22px_rgba(37,99,235,0.35)] hover:bg-[linear-gradient(135deg,var(--color-auth-btn-hover-from),var(--color-auth-btn-hover-to))] hover:no-underline hover:shadow-[0_0_30px_rgba(56,189,248,0.5)]" href="{{ oidc_login_url }}">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6l8-4z"/>
                         <path d="M9 12l2 2 4-4"/>
                     </svg>
                     {% trans "Continue with Melodu Staff Login" %}
                 </a>
-                <p class="sso-hint">{% trans "You will be redirected to the Melodu staff identity service." %}</p>
+                <p class="mt-2.5 mb-0 ml-0.5 text-xs text-auth-muted">{% trans "You will be redirected to the Melodu staff identity service." %}</p>
             </div>
         {% endif %}
 
         {% if show_local_form %}
             {% if oidc_enabled %}
-                <div class="divider"><span>{% trans "Emergency local login" %}</span></div>
+                <div class="my-5 mb-3.5 flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.12em] text-auth-dim">
+                    <span class="h-px flex-1 bg-[linear-gradient(90deg,transparent,rgba(125,165,210,0.4),transparent)]" aria-hidden="true"></span>
+                    <span>{% trans "Emergency local login" %}</span>
+                    <span class="h-px flex-1 bg-[linear-gradient(90deg,transparent,rgba(125,165,210,0.4),transparent)]" aria-hidden="true"></span>
+                </div>
             {% endif %}
-            <form class="form-stack" method="post" novalidate>
+            <form class="grid gap-3.5 [&_label]:text-xs [&_label]:tracking-[0.04em] [&_label]:text-auth-label [&_input[type=text]]:w-full [&_input[type=text]]:rounded-md [&_input[type=text]]:border [&_input[type=text]]:border-auth-input-border [&_input[type=text]]:bg-auth-input-bg [&_input[type=text]]:px-3 [&_input[type=text]]:py-2.5 [&_input[type=text]]:text-sm [&_input[type=text]]:text-auth-input-text [&_input[type=text]]:outline-none focus:[&_input[type=text]]:border-auth-focus focus:[&_input[type=text]]:shadow-[0_0_0_3px_rgba(34,211,238,0.18)] [&_input[type=password]]:w-full [&_input[type=password]]:rounded-md [&_input[type=password]]:border [&_input[type=password]]:border-auth-input-border [&_input[type=password]]:bg-auth-input-bg [&_input[type=password]]:px-3 [&_input[type=password]]:py-2.5 [&_input[type=password]]:text-sm [&_input[type=password]]:text-auth-input-text [&_input[type=password]]:outline-none focus:[&_input[type=password]]:border-auth-focus focus:[&_input[type=password]]:shadow-[0_0_0_3px_rgba(34,211,238,0.18)]" method="post" novalidate>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{{ next }}">
                 {% if oidc_enabled %}<input type="hidden" name="local_login" value="1">{% endif %}
                 {% if form.non_field_errors %}
-                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                    <div class="rounded-md border border-auth-alert-danger-border bg-auth-alert-bg px-3 py-2.5 text-auth-alert-danger-fg">{{ form.non_field_errors }}</div>
                 {% endif %}
                 <div>
                     {{ form.username.label_tag }}
@@ -67,13 +74,13 @@
                     {{ form.password }}
                     {{ form.password.errors }}
                 </div>
-                <button class="btn btn-primary full-width" type="submit">{% trans "Log In" %}</button>
+                <button class="inline-flex w-full min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-auth-btn-border bg-[linear-gradient(135deg,var(--color-auth-btn-from),var(--color-auth-btn-to))] px-[13px] py-[9px] font-sans text-sm font-[750] text-auth-btn-fg shadow-[0_0_22px_rgba(37,99,235,0.35)] hover:bg-[linear-gradient(135deg,var(--color-auth-btn-hover-from),var(--color-auth-btn-hover-to))] hover:no-underline hover:shadow-[0_0_30px_rgba(56,189,248,0.5)]" type="submit">{% trans "Log In" %}</button>
             </form>
         {% endif %}
 
-        <p class="auth-meta" aria-hidden="true">
-            <span>SECURE&nbsp;CHANNEL</span><span class="meta-sep">·</span>
-            <span>AUDIT&nbsp;ENABLED</span><span class="meta-sep">·</span>
+        <p class="mt-[22px] mb-0 flex justify-center gap-2 font-mono text-[10px] tracking-[0.16em] text-ink-text-dim" aria-hidden="true">
+            <span>SECURE&nbsp;CHANNEL</span><span class="text-auth-meta-sep">·</span>
+            <span>AUDIT&nbsp;ENABLED</span><span class="text-auth-meta-sep">·</span>
             <span>v{{ app_version }}</span>
         </p>
     </section>
