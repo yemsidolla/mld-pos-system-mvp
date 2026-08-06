@@ -5,87 +5,87 @@
 {% block page_title %}{% trans "Barcode / QR Print" %}{% endblock %}
 {% block page_subtitle %}{% trans "Quick label for a single batch's barcode and QR code. For custom layouts or multiple batches, use Print Labels." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn no-print" href="{% url 'label-print' %}">{% trans "Print Labels (templates)" %}</a>
-    <button class="btn btn-primary no-print" type="button" data-scan-target="#label-batch-code" data-scan-select-target="#id_stock_batch" data-scan-select-match="stock_batch" data-scan-context="barcode_print">{% trans "Scan Batch" %}</button>
+    <a class="no-print inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-print' %}">{% trans "Print Labels (templates)" %}</a>
+    <button class="no-print inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="button" data-scan-target="#label-batch-code" data-scan-select-target="#id_stock_batch" data-scan-select-match="stock_batch" data-scan-context="barcode_print">{% trans "Scan Batch" %}</button>
 {% endblock %}
 
 {% block content %}
-<section class="panel no-print">
-    <header class="panel-header">
+<section class="no-print rounded border border-border bg-surface p-[18px] shadow-panel print:hidden">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Label Setup" %}</h2>
-            <p>{% trans "Scan a Melodu code or choose a stock batch." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Label Setup" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Scan a Melodu code or choose a stock batch." %}</p>
         </div>
     </header>
-    <div class="alert alert-warning">
+    <div class="rounded-r-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">
         {% trans "Use the Melodu custom code for exact batch labels. Original product barcodes identify the product first, then staff must choose the correct batch." %}
     </div>
-    <div class="form-stack scan-lookup">
+    <div class="scan-lookup mb-3.5 mt-3.5 grid gap-3.5">
         <div>
             <label for="label-batch-code">{% trans "Scan Batch Code" %}</label>
-            <div class="input-row">
+            <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
                 <input id="label-batch-code" type="text" autocomplete="off">
-                <button class="btn" type="button" data-scan-target="#label-batch-code" data-scan-select-target="#id_stock_batch" data-scan-select-match="stock_batch" data-scan-context="barcode_print">{% trans "Scan" %}</button>
+                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#label-batch-code" data-scan-select-target="#id_stock_batch" data-scan-select-match="stock_batch" data-scan-context="barcode_print">{% trans "Scan" %}</button>
             </div>
         </div>
     </div>
-    <form class="form-stack" method="post">
+    <form class="grid gap-3.5" method="post">
         {% csrf_token %}
-        <div class="form-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
-                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                    {% if field.help_text %}<p class="m-0 text-text-soft">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
-            <button class="btn btn-success" type="submit" name="action" value="print">{% trans "Record Print" %}</button>
+        <div class="flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit" name="action" value="print">{% trans "Record Print" %}</button>
         </div>
     </form>
 </section>
 
 {% if stock_batch %}
-    <section class="panel no-print">
-        <header class="panel-header">
+    <section class="no-print mt-4 rounded border border-border bg-surface p-[18px] shadow-panel print:hidden">
+        <header class="mb-3.5 flex items-start justify-between gap-3.5">
             <div>
-                <h2>{% trans "Selected Batch Check" %}</h2>
-                <p>{% trans "Confirm product, supplier, expiry, and generated code assets before printing." %}</p>
+                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Selected Batch Check" %}</h2>
+                <p class="m-0 text-text-soft">{% trans "Confirm product, supplier, expiry, and generated code assets before printing." %}</p>
             </div>
-            <div class="table-actions">
-                <a class="btn" href="{% url 'stock-batch-detail' stock_batch.pk %}">{% trans "Open Batch" %}</a>
-                <a class="btn" href="{% url 'label-print' %}?batch={{ stock_batch.pk }}">{% trans "Template Label" %}</a>
+            <div class="flex flex-wrap items-center gap-2">
+                <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-batch-detail' stock_batch.pk %}">{% trans "Open Batch" %}</a>
+                <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-print' %}?batch={{ stock_batch.pk }}">{% trans "Template Label" %}</a>
             </div>
         </header>
-        <div class="form-grid">
-            <div><strong>{% trans "Product" %}</strong><br>{{ stock_batch.product.name }}<br><span class="muted">{{ stock_batch.product.product_code }}</span></div>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
+            <div><strong>{% trans "Product" %}</strong><br>{{ stock_batch.product.name }}<br><span class="text-text-soft">{{ stock_batch.product.product_code }}</span></div>
             <div><strong>{% trans "Supplier" %}</strong><br>{{ stock_batch.supplier.name }}</div>
             <div><strong>{% trans "Batch" %}</strong><br>{{ stock_batch.batch_no }}</div>
             <div><strong>{% trans "Expiry" %}</strong><br>{{ stock_batch.expiry_date }}</div>
             <div><strong>{% trans "Original Barcode" %}</strong><br>{{ stock_batch.product.original_barcode|default:"-" }}</div>
             <div><strong>{% trans "Melodu Custom Code" %}</strong><br>{{ stock_batch.custom_code }}</div>
-            <div><strong>{% trans "Barcode Image" %}</strong><br>{% if stock_batch.barcode_image %}<span class="badge badge-success">{% trans "Generated" %}</span>{% else %}<span class="badge badge-warning">{% trans "Missing" %}</span>{% endif %}</div>
-            <div><strong>{% trans "QR Image" %}</strong><br>{% if stock_batch.qr_image %}<span class="badge badge-success">{% trans "Generated" %}</span>{% else %}<span class="badge badge-warning">{% trans "Missing" %}</span>{% endif %}</div>
+            <div><strong>{% trans "Barcode Image" %}</strong><br>{% if stock_batch.barcode_image %}{% include "catalog/_status_pill.html" with tone="success" label=_("Generated") %}{% else %}{% include "catalog/_status_pill.html" with tone="warning" label=_("Missing") %}{% endif %}</div>
+            <div><strong>{% trans "QR Image" %}</strong><br>{% if stock_batch.qr_image %}{% include "catalog/_status_pill.html" with tone="success" label=_("Generated") %}{% else %}{% include "catalog/_status_pill.html" with tone="warning" label=_("Missing") %}{% endif %}</div>
         </div>
     </section>
-    <section class="panel">
-        <div class="label-sheet">
+    <section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel print:border-0 print:p-0 print:shadow-none">
+        <div class="label-sheet grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3 print:grid-cols-3 print:gap-2">
             {% for _ in labels %}
-                <article class="print-label">
-                    <div class="store">{{ store_setting.store_name|default:"Melodu Pet Store" }}</div>
-                    <div class="product">{{ stock_batch.product.name }}</div>
+                <article class="print-label grid min-h-[220px] break-inside-avoid content-start gap-1.5 rounded-md border border-text p-2.5">
+                    <div class="store text-center font-extrabold">{{ store_setting.store_name|default:"Melodu Pet Store" }}</div>
+                    <div class="product font-extrabold">{{ stock_batch.product.name }}</div>
                     <div>{% trans "Price" %}: {{ stock_batch.selling_price }}</div>
                     <div>{% trans "Expiry Date" %}: {{ stock_batch.expiry_date }}</div>
                     <div>{% trans "Batch Number" %}: {{ stock_batch.batch_no }}</div>
-                    <div class="codes">
+                    <div class="codes grid grid-cols-[1fr_72px] items-center gap-2">
                         {% if stock_batch.barcode_image %}
-                            <img class="barcode" src="{{ stock_batch.barcode_image.url }}" alt="Barcode {{ stock_batch.batch_no }}">
+                            <img class="barcode max-h-[72px] w-full object-contain" src="{{ stock_batch.barcode_image.url }}" alt="Barcode {{ stock_batch.batch_no }}">
                         {% endif %}
                         {% if stock_batch.qr_image %}
-                            <img class="qr" src="{{ stock_batch.qr_image.url }}" alt="QR {{ stock_batch.batch_no }}">
+                            <img class="qr size-[72px] object-contain" src="{{ stock_batch.qr_image.url }}" alt="QR {{ stock_batch.batch_no }}">
                         {% endif %}
                     </div>
                     <div>{{ stock_batch.custom_code }}</div>
