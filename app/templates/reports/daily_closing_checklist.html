@@ -5,55 +5,72 @@
 {% block page_title %}{% trans "Daily Closing Checklist" %}{% endblock %}
 {% block page_subtitle %}{% trans "Read-only owner/manager control checklist for closing the day." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
-    <a class="btn btn-primary" href="{% url 'daily-sales-report' %}">{% trans "Daily Sales" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'daily-sales-report' %}">{% trans "Daily Sales" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Operating Rule" %}</h2>
-            <p>{% trans "This is an operational checklist, not accounting, tax filing, payroll, or a final financial close." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Operating Rule" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "This is an operational checklist, not accounting, tax filing, payroll, or a final financial close." %}</p>
         </div>
     </header>
-    <div class="alert alert-info">
+    <div class="rounded-r-md border border-border border-l-[3px] border-l-border bg-surface px-3 py-2.5">
         {% trans "Use the links below to review evidence. Do not change historical sales to force a closing total." %}
     </div>
 </section>
 
-<section class="dashboard-grid">
+<section class="mt-4 grid grid-cols-1 gap-4">
     {% for section in checklist_sections %}
-        <article class="panel">
-            <header class="panel-header">
+        <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
+            <header class="mb-3.5 flex items-start justify-between gap-3.5">
                 <div>
-                    <h2>{{ section.title }}</h2>
-                    <p>{% trans "Mark this complete outside the system after reviewing the evidence." %}</p>
+                    <h2 class="m-0 mb-1 text-base font-semibold text-text">{{ section.title }}</h2>
+                    <p class="m-0 text-text-soft">{% trans "Mark this complete outside the system after reviewing the evidence." %}</p>
                 </div>
             </header>
-            <ul class="checklist-list">
+            <ul class="m-0 grid list-none gap-2.5 p-0">
                 {% for item in section.items %}
-                    <li>{% trans item %}</li>
+                    <li class="relative py-0 pl-7 leading-[1.45] text-text before:absolute before:left-0 before:top-[0.3em] before:size-[14px] before:rounded-[4px] before:border-2 before:border-border-strong before:bg-surface before:content-['']">{% trans item %}</li>
                 {% endfor %}
             </ul>
         </article>
     {% endfor %}
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Evidence Links" %}</h2>
-            <p>{% trans "Open these pages during closing review." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Evidence Links" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Open these pages during closing review." %}</p>
         </div>
     </header>
-    <div class="action-grid">
-        <a class="action-card" href="{% url 'daily-sales-report' %}"><strong>{% trans "Daily Sales" %}</strong><span>{% trans "Revenue, payment breakdown, discounts, and cancellations." %}</span></a>
-        <a class="action-card" href="{% url 'staff-sales-report' %}"><strong>{% trans "Staff Sales" %}</strong><span>{% trans "Cashier totals, reprints, cancellations, and overrides." %}</span></a>
-        <a class="action-card" href="{% url 'promotion-report' %}"><strong>{% trans "Promotion & Below-cost" %}</strong><span>{% trans "Discount impact and risky promoted lines." %}</span></a>
-        <a class="action-card" href="{% url 'low-stock-report' %}"><strong>{% trans "Low Stock" %}</strong><span>{% trans "Reorder gaps and urgent replenishment." %}</span></a>
-        <a class="action-card" href="{% url 'expiry-report' %}"><strong>{% trans "Expiry" %}</strong><span>{% trans "Expired, critical, and warning batches." %}</span></a>
-        <a class="action-card" href="{% url 'system-health' %}"><strong>{% trans "System Health" %}</strong><span>{% trans "Database, disk, logs, and recent activity." %}</span></a>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5">
+        {% trans "Daily Sales" as t1 %}{% trans "Revenue, payment breakdown, discounts, and cancellations." as d1 %}
+        {% url 'daily-sales-report' as u1 %}
+        {% include "reports/_action_card.html" with href=u1 title=t1 description=d1 %}
+
+        {% trans "Staff Sales" as t2 %}{% trans "Cashier totals, reprints, cancellations, and overrides." as d2 %}
+        {% url 'staff-sales-report' as u2 %}
+        {% include "reports/_action_card.html" with href=u2 title=t2 description=d2 %}
+
+        {% trans "Promotion & Below-cost" as t3 %}{% trans "Discount impact and risky promoted lines." as d3 %}
+        {% url 'promotion-report' as u3 %}
+        {% include "reports/_action_card.html" with href=u3 title=t3 description=d3 %}
+
+        {% trans "Low Stock" as t4 %}{% trans "Reorder gaps and urgent replenishment." as d4 %}
+        {% url 'low-stock-report' as u4 %}
+        {% include "reports/_action_card.html" with href=u4 title=t4 description=d4 %}
+
+        {% trans "Expiry" as t5 %}{% trans "Expired, critical, and warning batches." as d5 %}
+        {% url 'expiry-report' as u5 %}
+        {% include "reports/_action_card.html" with href=u5 title=t5 description=d5 %}
+
+        {% trans "System Health" as t6 %}{% trans "Database, disk, logs, and recent activity." as d6 %}
+        {% url 'system-health' as u6 %}
+        {% include "reports/_action_card.html" with href=u6 title=t6 description=d6 %}
     </div>
 </section>
 {% endblock %}
