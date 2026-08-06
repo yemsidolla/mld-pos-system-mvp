@@ -5,80 +5,92 @@
 {% block page_title %}{% trans "Promotions" %}{% endblock %}
 {% block page_subtitle %}{% trans "Simple automatic discounts for products or categories." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'promotion-label-print' %}">{% trans "Promotion Labels" %}</a>
-    <a class="btn btn-primary" href="{% url 'promotion-create' %}">{% trans "New Promotion" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-label-print' %}">{% trans "Promotion Labels" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'promotion-create' %}">{% trans "New Promotion" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="metric-grid">
-    <article class="metric-card"><span>{% trans "Promotions" %}</span><strong>{{ promotion_count }}</strong></article>
-    <article class="metric-card kpi-success"><span>{% trans "Running" %}</span><strong>{{ lifecycle_counts.running }}</strong></article>
-    <article class="metric-card kpi-warning"><span>{% trans "Upcoming" %}</span><strong>{{ lifecycle_counts.upcoming }}</strong></article>
-    <article class="metric-card"><span>{% trans "Ended" %}</span><strong>{{ lifecycle_counts.ended }}</strong></article>
+<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Promotions" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ promotion_count }}</strong>
+    </article>
+    <article class="rounded-md border border-alert-success-border bg-surface p-4 [&_span]:text-success [&_strong]:text-success">
+        <span class="block text-text-soft">{% trans "Running" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ lifecycle_counts.running }}</strong>
+    </article>
+    <article class="rounded-md border border-alert-warning-border bg-surface p-4 [&_span]:text-warning [&_strong]:text-warning">
+        <span class="block text-text-soft">{% trans "Upcoming" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ lifecycle_counts.upcoming }}</strong>
+    </article>
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Ended" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ lifecycle_counts.ended }}</strong>
+    </article>
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Find Promotions" %}</h2>
-            <p>{% blocktrans count count=promotion_count %}{{ count }} promotion found.{% plural %}{{ count }} promotions found.{% endblocktrans %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Find Promotions" %}</h2>
+            <p class="m-0 text-text-soft">{% blocktrans count count=promotion_count %}{{ count }} promotion found.{% plural %}{{ count }} promotions found.{% endblocktrans %}</p>
         </div>
     </header>
-    <form class="form-stack" method="get">
-        <div class="input-row">
+    <form class="grid gap-3.5" method="get">
+        <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
             <input type="search" name="q" value="{{ query }}" placeholder="{% trans 'Search promotion, product, or category' %}">
-            <button class="btn btn-primary" type="submit">{% trans "Search" %}</button>
-            <a class="btn" href="{% url 'promotion-list' %}">{% trans "Reset" %}</a>
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Search" %}</button>
+            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-list' %}">{% trans "Reset" %}</a>
         </div>
     </form>
 </section>
 
-<section class="panel">
-    <div class="table-scroll">
-        <table class="data-table">
+<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table class="w-full min-w-[720px] border-collapse">
             <thead>
             <tr>
-                <th>{% trans "Promotion" %}</th>
-                <th>{% trans "Discount" %}</th>
-                <th>{% trans "Dates" %}</th>
-                <th>{% trans "Timeline" %}</th>
-                <th>{% trans "Applies To" %}</th>
-                <th>{% trans "Below Cost" %}</th>
-                <th>{% trans "Status" %}</th>
-                <th>{% trans "Action" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Promotion" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Discount" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Dates" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Timeline" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Applies To" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Below Cost" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for promotion in promotions %}
-                <tr>
-                    <td>{{ promotion.name }}</td>
-                    <td>{{ promotion.get_discount_type_display }}<br><span class="muted">{{ promotion.discount_label }}</span></td>
-                    <td>{{ promotion.start_date }} - {{ promotion.end_date }}</td>
-                    <td>
+                <tr class="hover:bg-surface-subtle">
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ promotion.name }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ promotion.get_discount_type_display }}<br><span class="text-text-soft">{{ promotion.discount_label }}</span></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ promotion.start_date }} - {{ promotion.end_date }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
                         {% if promotion.timeline_status == "running" %}
-                            <span class="badge badge-success">{% trans "Running" %}</span>
+                            {% trans "Running" as timeline_running %}{% include "catalog/_status_pill.html" with tone="success" label=timeline_running %}
                         {% elif promotion.timeline_status == "upcoming" %}
-                            <span class="badge badge-warning">{% trans "Upcoming" %}</span>
+                            {% trans "Upcoming" as timeline_upcoming %}{% include "catalog/_status_pill.html" with tone="warning" label=timeline_upcoming %}
                         {% elif promotion.timeline_status == "ended" %}
-                            <span class="badge">{% trans "Ended" %}</span>
+                            {% trans "Ended" as timeline_ended %}{% include "catalog/_status_pill.html" with tone="neutral" label=timeline_ended %}
                         {% else %}
-                            <span class="badge badge-danger">{% trans "Inactive" %}</span>
+                            {% trans "Inactive" as timeline_inactive %}{% include "catalog/_status_pill.html" with tone="danger" label=timeline_inactive %}
                         {% endif %}
-                        <br><span class="muted">{{ promotion.timeline_detail }}</span>
+                        <br><span class="text-text-soft">{{ promotion.timeline_detail }}</span>
                     </td>
-                    <td>{{ promotion.scope_label }}</td>
-                    <td>{% if promotion.allow_below_cost %}<span class="badge badge-warning">{% trans "Allowed" %}</span>{% else %}<span class="badge badge-success">{% trans "Blocked" %}</span>{% endif %}</td>
-                    <td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ promotion.scope_label }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% if promotion.allow_below_cost %}{% trans "Allowed" as below_allowed %}{% include "catalog/_status_pill.html" with tone="warning" label=below_allowed %}{% else %}{% trans "Blocked" as below_blocked %}{% include "catalog/_status_pill.html" with tone="success" label=below_blocked %}{% endif %}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
                         {% if promotion.is_active %}
-                            <span class="badge badge-success">{% trans "Active" %}</span>
+                            {% include "catalog/_status_pill.html" with tone="success" label=_("Active") %}
                         {% else %}
-                            <span class="badge badge-danger">{% trans "Inactive" %}</span>
+                            {% include "catalog/_status_pill.html" with tone="danger" label=_("Inactive") %}
                         {% endif %}
                     </td>
-                    <td><a class="btn" href="{% url 'promotion-edit' promotion.id %}">{% trans "Edit" %}</a></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-edit' promotion.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
-                <tr><td colspan="8" class="empty-cell">{% trans "No promotions found." %}</td></tr>
+                <tr><td colspan="8" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No promotions found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
