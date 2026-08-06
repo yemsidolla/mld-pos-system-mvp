@@ -116,6 +116,10 @@
   --color-filter-bar-label: #0e5566;
   --color-filter-chip-text: #0c4a56;
 
+  /* ---- Log console (dashboard.css .log-block) ---- */
+  --color-log-bg: #202223;
+  --color-log-error-bg: #2f1518;
+
   /* ---- Radius / shadow / fonts (verbatim from dashboard.css :root) ---- */
   --radius-DEFAULT: 10px;
   --radius-sm: 6px;
