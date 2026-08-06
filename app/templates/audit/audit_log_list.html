@@ -6,107 +6,107 @@
 {% block page_subtitle %}{% trans "Read-only record of sensitive actions. Audit entries cannot be edited or deleted." %}{% endblock %}
 
 {% block content %}
-<section class="metric-grid">
-    <article class="metric-card">
-        <span>{% trans "Entries" %}</span>
-        <strong>{{ summary.total_count }}</strong>
+<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Entries" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.total_count }}</strong>
     </article>
-    <article class="metric-card {% if summary.risk_count %}kpi-warning{% endif %}">
-        <span>{% trans "Risk Events" %}</span>
-        <strong>{{ summary.risk_count }}</strong>
+    <article class="rounded-md border bg-surface p-4 {% if summary.risk_count %}border-alert-warning-border text-warning [&_span]:text-warning [&_strong]:text-warning{% else %}border-border{% endif %}">
+        <span class="block text-text-soft">{% trans "Risk Events" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.risk_count }}</strong>
     </article>
-    <article class="metric-card">
-        <span>{% trans "Modules" %}</span>
-        <strong>{{ summary.module_count }}</strong>
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Modules" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.module_count }}</strong>
     </article>
-    <article class="metric-card">
-        <span>{% trans "Users" %}</span>
-        <strong>{{ summary.user_count }}</strong>
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Users" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.user_count }}</strong>
     </article>
-    <article class="metric-card">
-        <span>{% trans "Mode" %}</span>
-        <strong class="small-value">{% trans "Read-only" %}</strong>
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Mode" %}</span>
+        <strong class="mt-1.5 block text-lg">{% trans "Read-only" %}</strong>
     </article>
-    <article class="metric-card">
-        <span>{% trans "Order" %}</span>
-        <strong class="small-value">{% trans "Newest first" %}</strong>
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Order" %}</span>
+        <strong class="mt-1.5 block text-lg">{% trans "Newest first" %}</strong>
     </article>
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Filters" %}</h2>
-            <p>{% blocktrans count count=summary.total_count %}{{ count }} entry found.{% plural %}{{ count }} entries found.{% endblocktrans %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Filters" %}</h2>
+            <p class="m-0 text-text-soft">{% blocktrans count count=summary.total_count %}{{ count }} entry found.{% plural %}{{ count }} entries found.{% endblocktrans %}</p>
         </div>
     </header>
     {% include "dashboard/_list_filter.html" %}
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Activity" %}</h2>
-            <p>{% trans "Most recent actions first." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Activity" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Most recent actions first." %}</p>
         </div>
     </header>
-    <div class="table-scroll">
-        <table class="data-table">
+    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table class="w-full min-w-[720px] border-collapse">
             <thead>
                 <tr>
-                    <th>{% trans "Time" %}</th>
-                    <th>{% trans "User" %}</th>
-                    <th>{% trans "Action" %}</th>
-                    <th>{% trans "Module" %}</th>
-                    <th>{% trans "Risk" %}</th>
-                    <th>{% trans "Object" %}</th>
-                    <th>{% trans "IP" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Time" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "User" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Module" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Risk" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Object" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "IP" %}</th>
                 </tr>
             </thead>
             <tbody>
             {% for log in page_obj %}
-                <tr>
-                    <td class="mono">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
-                    <td>{{ log.user.username|default:"—" }}</td>
-                    <td><span class="badge {% if log.is_risk_action %}badge-warning{% endif %}">{{ log.get_action_display }}</span></td>
-                    <td>{{ log.module }}</td>
-                    <td>{% if log.is_risk_action %}<span class="badge badge-warning">{% trans "Review" %}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
-                    <td>
+                <tr class="hover:bg-surface-subtle">
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ log.user.username|default:"—" }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% if log.is_risk_action %}{% include "catalog/_status_pill.html" with tone="warning" label=log.get_action_display %}{% else %}{% include "catalog/_status_pill.html" with tone="neutral" label=log.get_action_display %}{% endif %}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ log.module }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% if log.is_risk_action %}{% include "catalog/_status_pill.html" with tone="warning" label=_("Review") %}{% else %}<span class="text-text-soft">-</span>{% endif %}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
                         {% if log.object_display or log.object_type %}
                             {{ log.object_display|default:log.object_type }}
                             {% if log.object_type or log.object_id %}
-                                <br><span class="muted mono">{{ log.object_type|default:"Object" }}{% if log.object_id %} #{{ log.object_id }}{% endif %}</span>
+                                <br><span class="font-mono text-text-soft">{{ log.object_type|default:"Object" }}{% if log.object_id %} #{{ log.object_id }}{% endif %}</span>
                             {% endif %}
                             {% if log.old_value or log.new_value %}
                                 <details>
-                                    <summary class="muted">{% trans "Details" %}</summary>
+                                    <summary class="text-text-soft">{% trans "Details" %}</summary>
                                     {% with rows=log|change_rows %}
                                     {% if rows %}
-                                        <table class="diff-table">
+                                        <table class="diff-table mt-1.5 border-collapse text-xs">
                                             {% for row in rows %}
                                                 <tr class="{% if row.changed %}diff-changed{% endif %}">
-                                                    <td class="mono diff-key">{{ row.key }}</td>
-                                                    <td class="diff-before">{{ row.before|default:"—" }}</td>
-                                                    <td class="diff-arrow">→</td>
-                                                    <td class="diff-after">{{ row.after|default:"—" }}</td>
+                                                    <td class="diff-key border-0 py-0.5 pr-2 align-top font-mono text-text-soft">{{ row.key }}</td>
+                                                    <td class="diff-before border-0 py-0.5 pr-2 align-top {% if row.changed %}text-danger{% else %}text-text-soft{% endif %}">{{ row.before|default:"—" }}</td>
+                                                    <td class="diff-arrow border-0 py-0.5 pr-2 align-top text-text-soft">→</td>
+                                                    <td class="diff-after border-0 py-0.5 pr-2 align-top {% if row.changed %}text-success{% else %}text-text-soft{% endif %}">{{ row.after|default:"—" }}</td>
                                                 </tr>
                                             {% endfor %}
                                         </table>
                                     {% else %}
-                                        {% if log.old_value %}<div class="muted"><strong>{% trans "Before" %}:</strong> {{ log.old_value }}</div>{% endif %}
-                                        {% if log.new_value %}<div class="muted"><strong>{% trans "After" %}:</strong> {{ log.new_value }}</div>{% endif %}
+                                        {% if log.old_value %}<div class="text-text-soft"><strong>{% trans "Before" %}:</strong> {{ log.old_value }}</div>{% endif %}
+                                        {% if log.new_value %}<div class="text-text-soft"><strong>{% trans "After" %}:</strong> {{ log.new_value }}</div>{% endif %}
                                     {% endif %}
                                     {% endwith %}
                                 </details>
                             {% endif %}
                         {% else %}
-                            <span class="muted">—</span>
+                            <span class="text-text-soft">—</span>
                         {% endif %}
                     </td>
-                    <td class="muted mono">{{ log.ip_address|default:"—" }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-text-soft">{{ log.ip_address|default:"—" }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="7" class="empty-cell">{% trans "No audit entries found." %}</td></tr>
+                <tr><td colspan="7" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No audit entries found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
