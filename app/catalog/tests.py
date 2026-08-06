@@ -139,7 +139,8 @@ class ProductDashboardTests(TestCase):
             response = self.client.get(reverse("product-list"))
 
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, 'class="product-thumb"')
+            # Hook class kept alongside Tailwind utilities (same pattern as base.html).
+            self.assertContains(response, "product-thumb")
             self.assertContains(response, escape(self.product.image.url))
             self.assertNotContains(response, "product-thumb-empty")
 
