@@ -7,53 +7,55 @@
 {% block page_subtitle %}{% trans "How staff sign in to Melodu." %}{% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Authentication mode" %}</h2>
-            <p>{% trans "Set in the server environment; changing it needs a restart." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Authentication mode" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Set in the server environment; changing it needs a restart." %}</p>
         </div>
     </header>
-    <div class="form-grid">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
         <div>
             <label>{% trans "Current mode" %}</label>
             <p>
                 {% if oidc_enabled %}
-                    <span class="pill pill-info">{% trans "Authentik / OIDC" %}</span>
+                    {% trans "Authentik / OIDC" as oidc_label %}
+                    {% include "catalog/_status_pill.html" with tone="info" label=oidc_label %}
                 {% else %}
-                    <span class="pill pill-neutral">{% trans "Local username & password" %}</span>
+                    {% trans "Local username & password" as local_label %}
+                    {% include "catalog/_status_pill.html" with tone="neutral" label=local_label %}
                 {% endif %}
             </p>
-            <small class="muted">{% trans "Controlled by AUTH_MODE in the .env file." %}</small>
+            <small class="text-xs text-text-soft">{% trans "Controlled by AUTH_MODE in the .env file." %}</small>
         </div>
     </div>
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Login options" %}</h2>
-            <p>{% trans "Runtime settings you can change here." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Login options" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Runtime settings you can change here." %}</p>
         </div>
     </header>
-    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
     {% if not oidc_enabled %}
-        <p class="alert alert-warning">{% icon "alert" 15 %} {% trans "Authentik is off, so local login stays on no matter what — it is the only way in." %}</p>
+        <p class="rounded-r-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">{% icon "alert" 15 %} {% trans "Authentik is off, so local login stays on no matter what — it is the only way in." %}</p>
     {% endif %}
-    <form class="form-stack" method="post">
+    <form class="grid gap-3.5" method="post">
         {% csrf_token %}
-        <div class="form-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text [&_small]:text-xs [&_small]:text-text-soft">
             {% for field in form %}
                 <div>
                     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
-                    {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+                    {% if field.help_text %}<small class="text-xs text-text-soft">{{ field.help_text }}</small>{% endif %}
                     {{ field.errors }}
                 </div>
             {% endfor %}
         </div>
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% trans "Save Settings" %}</button>
+        <div class="flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% icon "check" 16 %} {% trans "Save Settings" %}</button>
         </div>
     </form>
 </section>
