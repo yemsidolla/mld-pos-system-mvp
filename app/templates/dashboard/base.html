@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% trans "Dashboard" %}{% endblock %} | Melodu POS</title>
     <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/tailwind.css' %}">
     <script>if (localStorage.getItem("melodu-sidebar") === "collapsed") document.documentElement.classList.add("sidebar-collapsed");</script>
     {% block extra_head %}{% endblock %}
 </head>
