@@ -71,6 +71,24 @@
   --color-white: #ffffff;
   --color-transparent: transparent;
 
+  /* ---- Role badge ramp (DESIGN_SYSTEM §4.3) ----
+   * These values were already hardcoded in dashboard.css .role-* rules. Naming
+   * them here keeps the colour in one place: the badge partial references the
+   * token instead of repeating the hex, so the two cannot drift apart. */
+  --color-role-owner: #6d28d9;
+  --color-role-owner-bg: #ede9fe;
+  --color-role-owner-border: rgba(109, 40, 217, 0.25);
+  --color-role-manager: #0369a1;
+  --color-role-manager-bg: #e0f2fe;
+  --color-role-manager-border: rgba(3, 105, 161, 0.25);
+  --color-role-inventory: #92400e;
+  --color-role-inventory-bg: #fef3c7;
+  --color-role-inventory-border: rgba(146, 64, 14, 0.25);
+  --color-role-cashier-bg: #e8f3ee;
+  --color-role-viewer: #475569;
+  --color-role-viewer-bg: #f1f5f9;
+  --color-role-viewer-border: rgba(71, 85, 105, 0.25);
+
   /* ---- Radius / shadow / fonts (verbatim from dashboard.css :root) ---- */
   --radius-DEFAULT: 10px;
   --radius-sm: 6px;
