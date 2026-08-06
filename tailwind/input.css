@@ -1,5 +1,5 @@
 /*
- * Melodu Tailwind input (Phase 1).
+ * Melodu Tailwind input (Phase 2).
  *
  * Tailwind v4.3.3 — CSS-first config (@theme). No tailwind.config.js.
  * Preflight is intentionally omitted so dashboard.css keeps owning global
@@ -9,16 +9,22 @@
  * Tailwind theme namespaces use --color-*, --font-*, --radius-*, --shadow-*
  * so utilities exist (bg-bg, font-sans, rounded, shadow). See DESIGN_SYSTEM
  * for the mapping table.
+ *
+ * Cascade: dashboard.css loads via cascade.css in layer(legacy). Utilities
+ * are layered (no !important) so they beat legacy and still override each
+ * other by source order / specificity as normal.
  */
 
-@layer theme, base, components, utilities;
+@layer legacy, theme, base, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
-/* important: beat unlayered dashboard.css on elements we restyle with utilities */
-@import "tailwindcss/utilities.css" layer(utilities) important;
+@import "tailwindcss/utilities.css" layer(utilities);
 
-/* Scan Django templates for class names (phase 1: styleguide; later: all). */
+/* Scan Django templates for class names. */
 @source "../app/templates";
+
+/* html.sidebar-collapsed … → sidebar-collapsed:* utilities on descendants. */
+@custom-variant sidebar-collapsed (.sidebar-collapsed &);
 
 @theme {
   /* Drop Tailwind's default palette — Melodu tokens only. */

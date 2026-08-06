@@ -1,6 +1,6 @@
 # Tailwind CSS workflow (Melodu POS)
 
-Phase 1 foundation: Tailwind **standalone CLI** builds CSS at image build time.
+Tailwind **standalone CLI** builds CSS at image build time.
 **No Node, no npm, no `package.json`.** The runtime Docker image is Python-only.
 
 Pinned version: **v4.3.3** (verified via GitHub Releases API
@@ -8,13 +8,19 @@ Pinned version: **v4.3.3** (verified via GitHub Releases API
 checksums from that release’s `sha256sums.txt`). Configuration is CSS-first
 (`@theme` in `input.css`) — there is no `tailwind.config.js`.
 
-## Files
+## Cascade layers (important)
+
+`dashboard.css` is **not** linked directly. `cascade.css` imports it into
+`@layer legacy`, declared before Tailwind’s `utilities` layer. Utilities therefore
+win without a global `important` on every utility. Do not re-add
+`@import "tailwindcss/utilities.css" … important`.
 
 | Path | Role |
 | --- | --- |
+| `app/core/static/core/css/cascade.css` | `@layer` order + `@import` of `dashboard.css` into `legacy` |
 | `tailwind/input.css` | Source: `@theme` Melodu tokens + imports (not collected as static) |
 | `app/core/static/core/css/tailwind.css` | Generated utilities (committed; Docker rebuilds) |
-| `app/core/static/core/css/dashboard.css` | Existing design system CSS — **do not edit** for Tailwind work |
+| `app/core/static/core/css/dashboard.css` | Legacy design-system CSS (still required for unmigrated screens) |
 | `scripts/build_tailwind.sh` | Local download (pinned) + build / watch |
 | `docker/django/Dockerfile` | Multi-stage: build CSS, copy into Python image |
 
@@ -22,7 +28,7 @@ Token → utility mapping: `docs/DESIGN_SYSTEM.md` §2.0.
 
 ## Local development (watch mode)
 
-While editing templates (currently the styleguide):
+While editing templates:
 
 ```bash
 ./scripts/build_tailwind.sh --watch
@@ -46,9 +52,10 @@ TAILWIND_VERSION=4.3.3 ./scripts/build_tailwind.sh
 ## Before committing
 
 1. Run `./scripts/build_tailwind.sh` so `tailwind.css` matches `input.css` + templates.
-2. Confirm `dashboard.css` was not modified.
-3. Spot-check `/dashboard/styleguide/` (owner/manager) after `collectstatic` /
-   container rebuild so hashed static files refresh.
+2. Remove from `dashboard.css` only rules that are fully migrated to utilities.
+3. Spot-check `/dashboard/styleguide/`, `/dashboard/`, and `/dashboard/users/`
+   (owner/manager) after `collectstatic` / container rebuild so hashed static
+   files refresh.
 
 ## Docker
 
@@ -68,5 +75,6 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml exec web \
 
 ## Scope reminder
 
-Phase 1 converts **only** `app/templates/core/styleguide.html`. Do not migrate
-other templates until a later approved phase.
+Migrated to utilities (phase 2): dashboard shell (`base.html`), home KPI cards,
+role badges (shared include), and matching styleguide samples. Do not migrate
+POS/till, receipts, or labels until a later approved phase.
