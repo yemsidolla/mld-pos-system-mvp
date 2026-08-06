@@ -212,6 +212,10 @@
   --radius-md: 8px;
   --radius-full: 999px;
 
+  /* Same DEFAULT-suffix trap as --radius above: Tailwind v4 generates the bare
+   * `shadow` utility from `--shadow`, not `--shadow-DEFAULT`. Without this the
+   * profile dropdown and scanner modal render with no drop shadow at all. */
+  --shadow: 0 1px 2px rgba(17, 24, 39, 0.08), 0 8px 24px rgba(17, 24, 39, 0.06);
   --shadow-DEFAULT: 0 1px 2px rgba(17, 24, 39, 0.08), 0 8px 24px rgba(17, 24, 39, 0.06);
   --shadow-panel: 0 1px 0 rgba(17, 24, 39, 0.03);
 
