@@ -74,6 +74,52 @@ All values live in `:root` in `app/core/static/core/css/dashboard.css`.
 **Use the variable, never the raw value.** Raw hex in a template or new CSS rule
 is a defect (see the Debt register, §10, for existing violations being retired).
 
+### 2.0 Tailwind mapping (Phase 1)
+
+Tailwind CSS **v4.3.3** (standalone CLI, no Node) is available alongside
+`dashboard.css`. Both stylesheets load on every dashboard page. Preflight is
+**off** so Tailwind does not reset global element styles.
+
+- **Input:** `tailwind/input.css` (CSS-first `@theme`, no `tailwind.config.js`;
+  kept outside `static/` so WhiteNoise does not resolve CLI `@import`s)
+- **Output:** `app/core/static/core/css/tailwind.css` (built at image build time
+  and by `scripts/build_tailwind.sh`)
+- **Local workflow:** `docs/guides/TAILWIND_WORKFLOW.md`
+
+`:root` custom properties in `dashboard.css` remain the authoritative token
+names. The Tailwind `@theme` block mirrors the same values into Tailwind
+namespaces so utilities exist. **Do not use Tailwind's default palette.**
+
+| DESIGN_SYSTEM token | Tailwind theme variable | Example utilities |
+|---|---|---|
+| `--bg` | `--color-bg` | `bg-bg` |
+| `--surface` | `--color-surface` | `bg-surface` |
+| `--surface-subtle` | `--color-surface-subtle` | `bg-surface-subtle`, `hover:bg-surface-subtle` |
+| `--text` | `--color-text` | `text-text` |
+| `--text-soft` | `--color-text-soft` | `text-text-soft` |
+| `--border` | `--color-border` | `border-border` |
+| `--border-strong` | `--color-border-strong` | `border-border-strong` |
+| `--primary` | `--color-primary` | `bg-primary`, `border-primary` |
+| `--primary-hover` | `--color-primary-hover` | `hover:bg-primary-hover` |
+| `--success` | `--color-success` | `bg-success`, `text-success` |
+| `--danger` | `--color-danger` | `bg-danger`, `text-danger` |
+| `--warning` | `--color-warning` | `bg-warning`, `text-warning` |
+| `--focus` | `--color-focus` | `bg-focus`, `outline-focus` |
+| `--ink` | `--color-ink` | `bg-ink` |
+| `--ink-soft` | `--color-ink-soft` | `bg-ink-soft` |
+| `--ink-border` | `--color-ink-border` | `border-ink-border` |
+| `--ink-text` | `--color-ink-text` | `text-ink-text` |
+| `--ink-text-dim` | `--color-ink-text-dim` | `text-ink-text-dim` |
+| `--accent` | `--color-accent` | `bg-accent`, `text-accent`, `accent-accent` |
+| `--accent-bright` | `--color-accent-bright` | `bg-accent-bright` |
+| `--radius` | `--radius-DEFAULT` | `rounded` |
+| `--shadow` | `--shadow-DEFAULT` | `shadow` |
+| `--font-sans` | `--font-sans` | `font-sans` (includes Noto Sans Khmer) |
+| `--font-mono` | `--font-mono` | `font-mono` |
+
+Phase 1 converts only `/dashboard/styleguide/` to utilities. All other templates
+still use `dashboard.css` component classes.
+
 ### 2.1 Light working surface
 
 | Token | Value | Use |
@@ -508,3 +554,6 @@ Append one line per design-system task (the only thing that may edit this file).
   feature task.
 - 2026-06-13 — Added permission-matrix component (§4.16) for the authorization
   editor; CSS + styleguide demo. Consumed by the Authz Phase 2 role-matrix page.
+- 2026-08-06 — Tailwind Phase 1: standalone CLI v4.3.3 (CSS-first `@theme`, no
+  Node in runtime), Melodu 24-token theme mapped in §2.0, styleguide converted
+  to utilities; `dashboard.css` unchanged and still loaded for all other pages.

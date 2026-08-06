@@ -774,8 +774,12 @@ class StyleguideAccessTests(TestCase):
         response = self.client.get(reverse("styleguide"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Living Style Guide")
-        self.assertContains(response, "role-badge")
-        self.assertContains(response, "kpi-card")
+        self.assertContains(response, "Color tokens")
+        self.assertContains(response, 'id="tokens"')
+        self.assertContains(response, 'id="buttons"')
+        self.assertContains(response, 'id="pills"')
+        self.assertContains(response, "bg-primary")
+        self.assertContains(response, "--bg")
 
     def test_cashier_cannot_open_styleguide(self):
         self.client.force_login(self.cashier)
