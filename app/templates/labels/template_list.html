@@ -5,64 +5,73 @@
 {% block page_title %}{% trans "Label Templates" %}{% endblock %}
 {% block page_subtitle %}{% trans "Configurable label layouts for products, shelves, and promotions." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'label-print' %}">{% trans "Print Labels" %}</a>
-    <a class="btn" href="{% url 'promotion-label-print' %}">{% trans "Promotion Labels" %}</a>
-    <a class="btn btn-primary" href="{% url 'label-template-create' %}">{% trans "New Template" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-print' %}">{% trans "Print Labels" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-label-print' %}">{% trans "Promotion Labels" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'label-template-create' %}">{% trans "New Template" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="metric-grid">
-    <article class="metric-card"><span>{% trans "Templates" %}</span><strong>{{ template_count }}</strong></article>
-    <article class="metric-card"><span>{% trans "Defaults" %}</span><strong>{{ default_count }}</strong></article>
-    <article class="metric-card"><span>{% trans "Inactive" %}</span><strong>{{ inactive_count }}</strong></article>
+<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+    {% trans "Templates" as lbl_templates %}
+    {% include "reports/_metric_card.html" with label=lbl_templates value=template_count %}
+    {% trans "Defaults" as lbl_defaults %}
+    {% include "reports/_metric_card.html" with label=lbl_defaults value=default_count %}
+    {% trans "Inactive" as lbl_inactive %}
+    {% include "reports/_metric_card.html" with label=lbl_inactive value=inactive_count %}
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Templates" %}</h2>
-            <p>{% blocktrans count count=templates|length %}{{ count }} template.{% plural %}{{ count }} templates.{% endblocktrans %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Templates" %}</h2>
+            <p class="m-0 text-text-soft">{% blocktrans count count=templates|length %}{{ count }} template.{% plural %}{{ count }} templates.{% endblocktrans %}</p>
         </div>
     </header>
-    <div class="table-scroll">
-        <table class="data-table">
+    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table class="w-full min-w-[720px] border-collapse">
             <thead>
                 <tr>
-                    <th>{% trans "Name" %}</th>
-                    <th>{% trans "Type" %}</th>
-                    <th>{% trans "Size (mm)" %}</th>
-                    <th>{% trans "Orientation / Font" %}</th>
-                    <th>{% trans "Fields Shown" %}</th>
-                    <th>{% trans "Default" %}</th>
-                    <th>{% trans "Status" %}</th>
-                    <th>{% trans "Action" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Name" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Type" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Size (mm)" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Orientation / Font" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Fields Shown" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Default" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
                 </tr>
             </thead>
             <tbody>
             {% for template in templates %}
-                <tr>
-                    <td><strong>{{ template.name }}</strong></td>
-                    <td>{{ template.get_template_type_display }}</td>
-                    <td>{{ template.paper_width_mm }} × {{ template.paper_height_mm }}</td>
-                    <td>{{ template.get_orientation_display }}<br><span class="muted">{{ template.font_size_px }}px</span></td>
-                    <td>
+                <tr class="hover:bg-surface-subtle">
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><strong>{{ template.name }}</strong></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ template.get_template_type_display }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ template.paper_width_mm }} × {{ template.paper_height_mm }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ template.get_orientation_display }}<br><span class="text-text-soft">{{ template.font_size_px }}px</span></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
                         {% for label in template.enabled_field_labels %}
-                            <span class="badge">{{ label }}</span>
+                            {% include "catalog/_status_pill.html" with tone="neutral" label=label %}
                         {% empty %}
-                            <span class="muted">{% trans "No fields selected" %}</span>
+                            <span class="text-text-soft">{% trans "No fields selected" %}</span>
                         {% endfor %}
                     </td>
-                    <td>{% if template.is_default %}<span class="badge badge-success">{% trans "Default" %}</span>{% else %}-{% endif %}</td>
-                    <td>{% if template.is_active %}<span class="badge badge-success">{% trans "Active" %}</span>{% else %}<span class="badge badge-danger">{% trans "Inactive" %}</span>{% endif %}</td>
-                    <td><a class="btn" href="{% url 'label-template-edit' template.id %}">{% trans "Edit" %}</a></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% if template.is_default %}{% trans "Default" as default_label %}{% include "catalog/_status_pill.html" with tone="success" label=default_label %}{% else %}-{% endif %}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                        {% if template.is_active %}
+                            {% include "catalog/_status_pill.html" with tone="success" label=_("Active") %}
+                        {% else %}
+                            {% include "catalog/_status_pill.html" with tone="danger" label=_("Inactive") %}
+                        {% endif %}
+                    </td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-template-edit' template.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="8" class="empty-cell">
-                        <div class="empty-state">
-                            <strong>{% trans "No templates yet." %}</strong>
-                            <span>{% trans "Create a template before printing product, shelf, or promotion labels." %}</span>
-                            <a class="btn" href="{% url 'label-template-create' %}">{% trans "New Template" %}</a>
+                    <td colspan="8" class="border-b border-border px-[9px] py-6 text-center text-text-soft">
+                        <div class="grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft">
+                            <strong class="text-sm text-text">{% trans "No templates yet." %}</strong>
+                            <span class="max-w-[420px]">{% trans "Create a template before printing product, shelf, or promotion labels." %}</span>
+                            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-template-create' %}">{% trans "New Template" %}</a>
                         </div>
                     </td>
                 </tr>
