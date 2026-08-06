@@ -7,16 +7,16 @@
 {% block page_subtitle %}{% trans "Name the role and choose what it can do." %}{% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% if mode == "edit" %}{{ role.name }}{% else %}{% trans "Role details" %}{% endif %}</h2>
-            {% if role.is_owner %}<p>{% trans "The Owner role always holds every capability; only the name can change." %}</p>{% endif %}
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% if mode == "edit" %}{{ role.name }}{% else %}{% trans "Role details" %}{% endif %}</h2>
+            {% if role.is_owner %}<p class="m-0 text-text-soft">{% trans "The Owner role always holds every capability; only the name can change." %}</p>{% endif %}
         </div>
-        <a class="btn" href="{% url 'role-matrix' %}">{% trans "Back" %}</a>
+        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'role-matrix' %}">{% trans "Back" %}</a>
     </header>
-    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-    <form class="form-stack" method="post">
+    {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="grid gap-3.5" method="post">
         {% csrf_token %}
         <div>
             <label for="{{ form.name.id_for_label }}">{% trans "Role name" %}</label>
@@ -26,13 +26,13 @@
         {% if not role.is_owner %}
         <div>
             <label>{% trans "Capabilities" %}</label>
-            <div class="cap-checklist">
+            <div class="mt-1 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-x-4 gap-y-1 [&_label]:flex [&_label]:items-center [&_label]:gap-2 [&_label]:text-[13px] [&_label]:font-normal [&_label]:text-text">
                 {% for choice in form.capabilities %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
             </div>
         </div>
         {% endif %}
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% trans "Save Role" %}</button>
+        <div class="flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% icon "check" 16 %} {% trans "Save Role" %}</button>
         </div>
     </form>
 </section>
