@@ -136,6 +136,61 @@
   --color-alert-warning-bg: #fff6df;
   --color-alert-warning-border: #f1d99a;
 
+  /* ---- Dashboard home KPI tones (dashboard.css .kpi-warning / .kpi-danger) ----
+   * Distinct from alert/metric borders — home KPI cards used these exact hexes. */
+  --color-kpi-warning: #854f0b;
+  --color-kpi-warning-border: #f0c9a4;
+  --color-kpi-danger: #a32d2d;
+  --color-kpi-danger-border: #f0b5b5;
+
+  /* ---- Modal backdrop (scanner / quick-create) ---- */
+  --color-modal-backdrop: rgba(32, 34, 35, 0.42);
+
+  /* ---- Auth surfaces (login / error pages; dashboard.css body.auth-page) ---- */
+  --color-auth-bg: #070b15;
+  --color-auth-fg: #dbe7f3;
+  --color-auth-panel: rgba(13, 20, 34, 0.88);
+  --color-auth-panel-border: rgba(94, 140, 190, 0.35);
+  --color-auth-terminal: #67e8f9;
+  --color-auth-terminal-alert: #fda4af;
+  --color-auth-heading: #f1f7ff;
+  --color-auth-muted: #8fb0cc;
+  --color-auth-dim: #6f8fae;
+  --color-auth-label: #a9c4dd;
+  --color-auth-input-bg: rgba(7, 12, 22, 0.85);
+  --color-auth-input-border: rgba(94, 140, 190, 0.4);
+  --color-auth-input-text: #e8f3fd;
+  --color-auth-meta-sep: #2dd4bf;
+  --color-auth-ghost-border: rgba(125, 165, 210, 0.4);
+  --color-auth-ghost-text: #bcd6ee;
+  --color-auth-message: #b8d0e6;
+  --color-auth-hint: #9fbed8;
+  --color-auth-step-border: rgba(125, 165, 210, 0.28);
+  --color-auth-step-bg: rgba(7, 12, 22, 0.38);
+  --color-auth-alert-border: rgba(125, 165, 210, 0.3);
+  --color-auth-alert-bg: rgba(15, 23, 40, 0.9);
+  --color-auth-alert-fg: #d7e6f5;
+  --color-auth-alert-danger-border: rgba(248, 113, 113, 0.5);
+  --color-auth-alert-danger-fg: #fecaca;
+  --color-auth-alert-warning-border: rgba(251, 191, 36, 0.5);
+  --color-auth-alert-warning-fg: #fde68a;
+  --color-auth-alert-success-border: rgba(52, 211, 153, 0.5);
+  --color-auth-alert-success-fg: #a7f3d0;
+  --color-auth-mark-from: #0e7490;
+  --color-auth-mark-to: #155e75;
+  --color-auth-mark-fg: #cffafe;
+  --color-auth-mark-border: rgba(103, 232, 249, 0.5);
+  --color-auth-btn-from: #0891b2;
+  --color-auth-btn-to: #2563eb;
+  --color-auth-btn-fg: #f0fbff;
+  --color-auth-btn-border: rgba(125, 211, 252, 0.55);
+  --color-auth-btn-hover-from: #06a6cf;
+  --color-auth-btn-hover-to: #2f6ef2;
+  --color-auth-focus: #22d3ee;
+
+  --animate-auth-sweep: auth-sweep 9s linear infinite;
+  --animate-terminal-pulse: terminal-pulse 2s ease-in-out infinite;
+
   /* ---- Active-filter bar (DESIGN_SYSTEM §4.15) ---- */
   --color-filter-bar: #f0fafc;
   --color-filter-bar-border: #bae3ec;
@@ -159,6 +214,16 @@
     BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
     "Liberation Mono", monospace;
+}
+
+@keyframes auth-sweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes terminal-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
 }
 
 /* :root token names (--bg, etc.) remain defined in dashboard.css only.

@@ -6,160 +6,188 @@
 {% block page_subtitle %}{% trans "A calm control room for sales, inventory, receiving, and reports." %}{% endblock %}
 {% block header_actions %}
     {% if caps.can_pos %}
-        <a class="btn btn-primary" href="{% url 'pos-sale' %}">{% icon "cart" 16 %} {% trans "Open POS" %}</a>
+        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'pos-sale' %}">{% icon "cart" 16 %} {% trans "Open POS" %}</a>
     {% endif %}
     {% if caps.can_inventory %}
-        <a class="btn" href="{% url 'stock-in' %}">{% icon "truck" 16 %} {% trans "Receive Stock" %}</a>
+        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-in' %}">{% icon "truck" 16 %} {% trans "Receive Stock" %}</a>
     {% endif %}
 {% endblock %}
 
 {% block content %}
-<section class="kpi-grid">
+<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2.5 max-[640px]:grid-cols-1">
     {% if caps.can_sales_history %}
-        <article class="kpi-card">
-            <span class="kpi-label">{% icon "cash" 15 %}{% trans "Sales Today" %}</span>
-            <strong class="kpi-value">{{ stats.today_sales }}</strong>
-            <span class="kpi-hint">{% trans "store-wide" %}</span>
+        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+            <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "cash" 15 %}{% trans "Sales Today" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.today_sales }}</strong>
+            <span class="text-xs text-text-soft">{% trans "store-wide" %}</span>
         </article>
     {% elif caps.can_pos %}
-        <article class="kpi-card">
-            <span class="kpi-label">{% icon "cash" 15 %}{% trans "Your Sales Today" %}</span>
-            <strong class="kpi-value">{{ stats.today_sales }}</strong>
-            <span class="kpi-hint">{% trans "completed by you" %}</span>
+        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+            <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "cash" 15 %}{% trans "Your Sales Today" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.today_sales }}</strong>
+            <span class="text-xs text-text-soft">{% trans "completed by you" %}</span>
         </article>
-        <article class="kpi-card">
-            <span class="kpi-label">{% icon "check" 15 %}{% trans "POS Ready" %}</span>
-            <strong class="kpi-value">{% trans "Yes" %}</strong>
-            <span class="kpi-hint">{% trans "scanner & cart online" %}</span>
+        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+            <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "check" 15 %}{% trans "POS Ready" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{% trans "Yes" %}</strong>
+            <span class="text-xs text-text-soft">{% trans "scanner & cart online" %}</span>
         </article>
     {% endif %}
     {% if caps.can_inventory %}
-        <article class="kpi-card">
-            <span class="kpi-label">{% icon "package" 15 %}{% trans "Active Products" %}</span>
-            <strong class="kpi-value">{{ stats.products }}</strong>
-            <span class="kpi-hint">{{ stats.active_batches }} {% trans "active batches" %}</span>
+        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+            <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "package" 15 %}{% trans "Active Products" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.products }}</strong>
+            <span class="text-xs text-text-soft">{{ stats.active_batches }} {% trans "active batches" %}</span>
         </article>
-        <article class="kpi-card {% if stats.low_stock_products %}kpi-warning{% endif %}">
-            <span class="kpi-label">{% icon "alert" 15 %}{% trans "Low Stock" %}</span>
-            <strong class="kpi-value">{{ stats.low_stock_products }}</strong>
-            <span class="kpi-hint">{% trans "at or below minimum" %}</span>
+        <article class="grid gap-1 rounded bg-surface px-4 py-3.5 {% if stats.low_stock_products %}border border-kpi-warning-border text-kpi-warning [&_span]:text-kpi-warning [&_strong]:text-kpi-warning{% else %}border border-border{% endif %}">
+            <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "alert" 15 %}{% trans "Low Stock" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.low_stock_products }}</strong>
+            <span class="text-xs text-text-soft">{% trans "at or below minimum" %}</span>
         </article>
-        <article class="kpi-card {% if stats.expiring_batches %}kpi-danger{% endif %}">
-            <span class="kpi-label">{% icon "clock" 15 %}{% trans "Expiring ≤30d" %}</span>
-            <strong class="kpi-value">{{ stats.expiring_batches }}</strong>
-            <span class="kpi-hint">{% trans "active batches" %}</span>
+        <article class="grid gap-1 rounded bg-surface px-4 py-3.5 {% if stats.expiring_batches %}border border-kpi-danger-border text-kpi-danger [&_span]:text-kpi-danger [&_strong]:text-kpi-danger{% else %}border border-border{% endif %}">
+            <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "clock" 15 %}{% trans "Expiring ≤30d" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.expiring_batches }}</strong>
+            <span class="text-xs text-text-soft">{% trans "active batches" %}</span>
         </article>
     {% endif %}
 </section>
 
-<section class="dashboard-grid">
-    <article class="panel">
-        <header class="panel-header">
+<section class="grid grid-cols-1 gap-4">
+    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
+        <header class="mb-3.5 flex items-start justify-between gap-3.5">
             <div>
-                <h2>{% trans "Quick Actions" %}</h2>
-                <p>{% trans "Frequent workflows for today." %}</p>
+                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Quick Actions" %}</h2>
+                <p class="m-0 text-text-soft">{% trans "Frequent workflows for today." %}</p>
             </div>
         </header>
-        <div class="action-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5 max-[640px]:grid-cols-1">
             {% if caps.can_pos %}
-                <a class="action-card" href="{% url 'pos-sale' %}">{% icon "cart" 20 "action-ic" %}<strong>{% trans "Open POS" %}</strong><span>{% trans "Scan, select batch, and checkout." %}</span></a>
+                {% trans "Open POS" as t_pos %}{% trans "Scan, select batch, and checkout." as d_pos %}
+                {% url 'pos-sale' as u_pos %}
+                {% include "reports/_action_card.html" with href=u_pos icon="cart" title=t_pos description=d_pos %}
             {% endif %}
             {% if caps.can_inventory %}
-                <a class="action-card" href="{% url 'stock-in' %}">{% icon "truck" 20 "action-ic" %}<strong>{% trans "Receive Stock" %}</strong><span>{% trans "Receive stock into new batches." %}</span></a>
-                <a class="action-card" href="{% url 'inventory-summary' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Stock Overview" %}</strong><span>{% trans "Batches, expiry, and stock levels." %}</span></a>
-                <a class="action-card" href="{% url 'label-print' %}">{% icon "printer" 20 "action-ic" %}<strong>{% trans "Print Labels" %}</strong><span>{% trans "Prepare labels from stock batches." %}</span></a>
+                {% trans "Receive Stock" as t_recv %}{% trans "Receive stock into new batches." as d_recv %}
+                {% url 'stock-in' as u_recv %}
+                {% include "reports/_action_card.html" with href=u_recv icon="truck" title=t_recv description=d_recv %}
+                {% trans "Stock Overview" as t_stock %}{% trans "Batches, expiry, and stock levels." as d_stock %}
+                {% url 'inventory-summary' as u_stock %}
+                {% include "reports/_action_card.html" with href=u_stock icon="package" title=t_stock description=d_stock %}
+                {% trans "Print Labels" as t_lbl %}{% trans "Prepare labels from stock batches." as d_lbl %}
+                {% url 'label-print' as u_lbl %}
+                {% include "reports/_action_card.html" with href=u_lbl icon="printer" title=t_lbl description=d_lbl %}
             {% endif %}
             {% if caps.can_catalog %}
-                <a class="action-card" href="{% url 'product-list' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Products" %}</strong><span>{% trans "Search and update master data." %}</span></a>
-                <a class="action-card" href="{% url 'batch-upload' %}">{% icon "upload" 20 "action-ic" %}<strong>{% trans "Batch Upload" %}</strong><span>{% trans "Preview and commit CSV or XLSX rows." %}</span></a>
+                {% trans "Products" as t_prod %}{% trans "Search and update master data." as d_prod %}
+                {% url 'product-list' as u_prod %}
+                {% include "reports/_action_card.html" with href=u_prod icon="package" title=t_prod description=d_prod %}
+                {% trans "Batch Upload" as t_up %}{% trans "Preview and commit CSV or XLSX rows." as d_up %}
+                {% url 'batch-upload' as u_up %}
+                {% include "reports/_action_card.html" with href=u_up icon="upload" title=t_up description=d_up %}
             {% endif %}
             {% if caps.can_sales_history %}
-                <a class="action-card" href="{% url 'sales-history' %}">{% icon "receipt" 20 "action-ic" %}<strong>{% trans "Sales History" %}</strong><span>{% trans "Filter and inspect completed sales." %}</span></a>
+                {% trans "Sales History" as t_hist %}{% trans "Filter and inspect completed sales." as d_hist %}
+                {% url 'sales-history' as u_hist %}
+                {% include "reports/_action_card.html" with href=u_hist icon="receipt" title=t_hist description=d_hist %}
             {% endif %}
             {% if caps.can_reports %}
-                <a class="action-card" href="{% url 'reports-index' %}">{% icon "chart" 20 "action-ic" %}<strong>{% trans "Reports" %}</strong><span>{% trans "Daily sales, stock, and expiry." %}</span></a>
+                {% trans "Reports" as t_rep %}{% trans "Daily sales, stock, and expiry." as d_rep %}
+                {% url 'reports-index' as u_rep %}
+                {% include "reports/_action_card.html" with href=u_rep icon="chart" title=t_rep description=d_rep %}
             {% endif %}
         </div>
     </article>
 
     {% if caps.can_inventory %}
-    <article class="panel">
-        <header class="panel-header">
+    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
+        <header class="mb-3.5 flex items-start justify-between gap-3.5">
             <div>
-                <h2>{% trans "Needs Attention" %}</h2>
-                <p>{% trans "Low stock and batches expiring soon." %}</p>
+                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Needs Attention" %}</h2>
+                <p class="m-0 text-text-soft">{% trans "Low stock and batches expiring soon." %}</p>
             </div>
         </header>
         {% if low_stock_list or expiring_list %}
-            <div class="attention-list">
+            <div class="grid gap-2 text-[13px]">
                 {% for product in low_stock_list %}
-                    <div class="attention-row warn">
+                    <div class="flex items-center justify-between gap-2.5 text-text [&_.icon]:text-kpi-warning">
                         <span>{% icon "alert" 15 %} {{ product.name }}</span>
-                        <span class="attention-metric">{{ product.total_available }} {% trans "left" %}</span>
+                        <span class="whitespace-nowrap font-mono text-kpi-warning">{{ product.total_available }} {% trans "left" %}</span>
                     </div>
                 {% endfor %}
                 {% for batch in expiring_list %}
-                    <div class="attention-row crit">
-                        <span>{% icon "clock" 15 %} {{ batch.product.name }} · <span class="mono">{{ batch.batch_no }}</span></span>
-                        <span class="attention-metric">{% trans "exp" %} {{ batch.expiry_date }}</span>
+                    <div class="flex items-center justify-between gap-2.5 text-text [&_.icon]:text-kpi-danger">
+                        <span>{% icon "clock" 15 %} {{ batch.product.name }} · <span class="font-mono">{{ batch.batch_no }}</span></span>
+                        <span class="whitespace-nowrap font-mono text-kpi-danger">{% trans "exp" %} {{ batch.expiry_date }}</span>
                     </div>
                 {% endfor %}
             </div>
         {% else %}
-            <p class="empty-state">{% icon "check" 16 %} {% trans "All clear — nothing needs attention." %}</p>
+            <p class="px-3 py-[26px] text-center text-[13px] text-text-soft">{% icon "check" 16 %} {% trans "All clear — nothing needs attention." %}</p>
         {% endif %}
     </article>
     {% endif %}
 
     {% if caps.can_sales_history or caps.can_pos %}
-    <article class="panel">
-        <header class="panel-header">
+    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
+        <header class="mb-3.5 flex items-start justify-between gap-3.5">
             <div>
-                <h2>{% trans "Recent Sales" %}</h2>
-                <p>{% trans "Latest completed sales." %}</p>
+                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Recent Sales" %}</h2>
+                <p class="m-0 text-text-soft">{% trans "Latest completed sales." %}</p>
             </div>
             {% if caps.can_sales_history %}<a href="{% url 'sales-history' %}">{% trans "View all" %}</a>{% endif %}
         </header>
-        <table class="data-table">
-            <thead><tr><th>{% trans "Sale" %}</th><th>{% trans "Cashier" %}</th><th>{% trans "Total" %}</th></tr></thead>
-            <tbody>
-            {% for sale in recent_sales %}
-                <tr>
-                    <td class="mono">{{ sale.sale_no }}</td>
-                    <td>{{ sale.cashier.username }}</td>
-                    <td class="mono">{{ sale.final_amount }}</td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="3" class="empty-cell">{% trans "No recent sales yet." %}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <table class="w-full min-w-[720px] border-collapse">
+                <thead><tr>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Sale" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cashier" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Total" %}</th>
+                </tr></thead>
+                <tbody>
+                {% for sale in recent_sales %}
+                    <tr class="hover:bg-surface-subtle">
+                        <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ sale.sale_no }}</td>
+                        <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ sale.cashier.username }}</td>
+                        <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ sale.final_amount }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No recent sales yet." %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </article>
     {% endif %}
 
     {% if caps.can_catalog %}
-    <article class="panel">
-        <header class="panel-header">
+    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
+        <header class="mb-3.5 flex items-start justify-between gap-3.5">
             <div>
-                <h2>{% trans "Recent Uploads" %}</h2>
-                <p>{% trans "Latest batch upload previews and commits." %}</p>
+                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Recent Uploads" %}</h2>
+                <p class="m-0 text-text-soft">{% trans "Latest batch upload previews and commits." %}</p>
             </div>
             <a href="{% url 'batch-upload' %}">{% trans "Open" %}</a>
         </header>
-        <table class="data-table">
-            <thead><tr><th>{% trans "Target" %}</th><th>{% trans "Status" %}</th><th>{% trans "File" %}</th></tr></thead>
-            <tbody>
-            {% for job in recent_uploads %}
-                <tr>
-                    <td>{{ job.get_target_display }}</td>
-                    <td><span class="pill pill-info">{{ job.status }}</span></td>
-                    <td class="mono">{{ job.original_filename }}</td>
-                </tr>
-            {% empty %}
-                <tr><td colspan="3" class="empty-cell">{% trans "No upload jobs yet." %}</td></tr>
-            {% endfor %}
-            </tbody>
-        </table>
+        <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <table class="w-full min-w-[720px] border-collapse">
+                <thead><tr>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Target" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "File" %}</th>
+                </tr></thead>
+                <tbody>
+                {% for job in recent_uploads %}
+                    <tr class="hover:bg-surface-subtle">
+                        <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ job.get_target_display }}</td>
+                        <td class="border-b border-border px-[9px] py-2.5 align-middle">{% include "catalog/_status_pill.html" with tone="info" label=job.status %}</td>
+                        <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ job.original_filename }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="3" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No upload jobs yet." %}</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </article>
     {% endif %}
 </section>
