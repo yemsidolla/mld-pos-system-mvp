@@ -201,7 +201,12 @@
   --color-log-bg: #202223;
   --color-log-error-bg: #2f1518;
 
-  /* ---- Radius / shadow / fonts (verbatim from dashboard.css :root) ---- */
+  /* ---- Radius / shadow / fonts (verbatim from dashboard.css :root) ----
+   * `--radius` (no suffix) is what generates the bare `rounded` utility in
+   * Tailwind v4. `--radius-DEFAULT` alone does not; with `--*: initial` the
+   * default radius namespace is cleared and `rounded` would emit no CSS.
+   * dashboard.css defines `--radius: 10px` — mirror that here. */
+  --radius: 10px;
   --radius-DEFAULT: 10px;
   --radius-sm: 6px;
   --radius-md: 8px;
