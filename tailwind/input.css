@@ -54,6 +54,13 @@
    * --font-weight-* values that font-bold / font-semibold / font-medium are
    * generated from. Without these, those utilities emit NO CSS and text
    * silently renders at normal weight. Values match dashboard.css usage. */
+  /* Letter spacing. Also cleared by `--*: initial`. tracking-normal is used to
+   * RESET inherited spacing inside table-header popovers (dashboard.css did this
+   * with letter-spacing: 0), so without it those popovers inherit 0.07em. */
+  --tracking-normal: 0em;
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.14em;
+
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
