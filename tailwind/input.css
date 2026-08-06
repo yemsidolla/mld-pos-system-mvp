@@ -92,6 +92,17 @@
   --color-ink-text-dim: #5c7f9f;
   --color-accent: #0e7490;
   --color-accent-bright: #7dd3fc;
+  /* POS cart / payment accents (from dashboard.css .pos-cart-panel / .payment-*) */
+  --color-accent-hover: #0d8aab;
+  --color-accent-fg: #e0f7fa;
+  --color-ink-danger: #5c1d1d;
+  --color-ink-danger-border: #7a2a2a;
+  --color-ink-row-border: rgba(30, 58, 95, 0.55);
+  --color-ink-focus-ring: rgba(125, 211, 252, 0.15);
+  --color-payment-backdrop: rgba(7, 12, 22, 0.65);
+  /* POS quick-key promo (dashboard.css .quick-key-promo / .promo-tag) */
+  --color-promo-key: #fffaf2;
+  --color-promo-tag: #ba7517;
 
   /* Neutrals needed by components (not Melodu tokens; keep minimal). */
   --color-white: #ffffff;
@@ -210,6 +221,7 @@
   --radius-DEFAULT: 10px;
   --radius-sm: 6px;
   --radius-md: 8px;
+  --radius-lg: 14px;
   --radius-full: 999px;
 
   /* Same DEFAULT-suffix trap as --radius above: Tailwind v4 generates the bare
