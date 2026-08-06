@@ -89,6 +89,33 @@
   --color-role-viewer-bg: #f1f5f9;
   --color-role-viewer-border: rgba(71, 85, 105, 0.25);
 
+  /* ---- Status pill ramp (DESIGN_SYSTEM §2.4) ----
+   * Pastel bg / dark text — separate from semantic action colours. */
+  --color-pill-neutral: #f1efe8;
+  --color-pill-neutral-fg: #444441;
+  --color-pill-success: #e1f5ee;
+  --color-pill-success-fg: #085041;
+  --color-pill-warning: #faeeda;
+  --color-pill-warning-fg: #633806;
+  --color-pill-danger: #fcebeb;
+  --color-pill-danger-fg: #791f1f;
+  --color-pill-info: #e6f1fb;
+  --color-pill-info-fg: #0c447c;
+
+  /* ---- Alert surfaces (dashboard.css .alert-*) ---- */
+  --color-alert-danger-bg: #fdecec;
+  --color-alert-danger-border: #f3b3ad;
+  --color-alert-success-bg: #e8f3ee;
+  --color-alert-success-border: #b9ddcf;
+  --color-alert-warning-bg: #fff6df;
+  --color-alert-warning-border: #f1d99a;
+
+  /* ---- Active-filter bar (DESIGN_SYSTEM §4.15) ---- */
+  --color-filter-bar: #f0fafc;
+  --color-filter-bar-border: #bae3ec;
+  --color-filter-bar-label: #0e5566;
+  --color-filter-chip-text: #0c4a56;
+
   /* ---- Radius / shadow / fonts (verbatim from dashboard.css :root) ---- */
   --radius-DEFAULT: 10px;
   --radius-sm: 6px;

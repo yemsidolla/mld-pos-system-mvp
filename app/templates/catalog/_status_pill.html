@@ -1,0 +1,7 @@
+{% comment %}
+Status pill / badge (DESIGN_SYSTEM §2.4). V7 unified .pill and .badge to the
+same pastel ramp — this partial is the single Tailwind markup for both.
+
+Expects: tone (success|danger|warning|info|neutral), label (display text).
+{% endcomment %}
+<span class="inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] {% if tone == 'success' %}bg-pill-success text-pill-success-fg{% elif tone == 'danger' %}bg-pill-danger text-pill-danger-fg{% elif tone == 'warning' %}bg-pill-warning text-pill-warning-fg{% elif tone == 'info' %}bg-pill-info text-pill-info-fg{% else %}bg-pill-neutral text-pill-neutral-fg{% endif %}">{{ label }}</span>
