@@ -5,142 +5,142 @@
 {% block page_title %}{% if mode == "create" %}{% trans "New Product" %}{% else %}{% trans "Edit Product" %}{% endif %}{% endblock %}
 {% block page_subtitle %}{% trans "Maintain product master data. Stock quantity remains controlled by batches." %}{% endblock %}
 {% block header_actions %}
-    <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan barcode" %}</button>
-    <a class="btn" href="{% url 'product-list' %}">{% trans "Back to products" %}</a>
+    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan barcode" %}</button>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-list' %}">{% trans "Back to products" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% if mode == "create" %}{% trans "Create Product" %}{% else %}{{ product.name }}{% endif %}</h2>
-            <p>{% trans "Use product code as the stable identifier. Original barcode must be unique when provided." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% if mode == "create" %}{% trans "Create Product" %}{% else %}{{ product.name }}{% endif %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Use product code as the stable identifier. Original barcode must be unique when provided." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        <div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>
     {% endif %}
-    <form class="form-stack" method="post" enctype="multipart/form-data">
+    <form class="grid gap-3.5" method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <p class="section-label">{% trans "Identity" %}</p>
-        <div class="form-grid">
+        <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Identity" %}</p>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
             <div>
                 {{ form.product_code.label_tag }}
                 {{ form.product_code }}
                 {{ form.product_code.errors }}
-                {% if form.product_code.help_text %}<p class="muted">{{ form.product_code.help_text }}</p>{% endif %}
+                {% if form.product_code.help_text %}<p class="m-0 text-text-soft">{{ form.product_code.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.original_barcode.label_tag }}
-                <div class="input-row">
+                <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
                     {{ form.original_barcode }}
-                    <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
+                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
                 </div>
                 {{ form.original_barcode.errors }}
-                {% if form.original_barcode.help_text %}<p class="muted">{{ form.original_barcode.help_text }}</p>{% endif %}
+                {% if form.original_barcode.help_text %}<p class="m-0 text-text-soft">{{ form.original_barcode.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.name.label_tag }}
                 {{ form.name }}
                 {{ form.name.errors }}
-                {% if form.name.help_text %}<p class="muted">{{ form.name.help_text }}</p>{% endif %}
+                {% if form.name.help_text %}<p class="m-0 text-text-soft">{{ form.name.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.image.label_tag }}
                 {% if product.image %}
-                    <div class="media-preview">
-                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
-                        <span class="muted">{% trans "Current image" %}</span>
+                    <div class="my-1.5 mb-2 flex items-center gap-2.5">
+                        <img class="size-[72px] rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image.url }}" alt="{{ product.name }}">
+                        <span class="text-text-soft">{% trans "Current image" %}</span>
                     </div>
                 {% endif %}
                 {{ form.image }}
                 {{ form.image.errors }}
-                {% if form.image.help_text %}<p class="muted">{{ form.image.help_text }}</p>{% endif %}
+                {% if form.image.help_text %}<p class="m-0 text-text-soft">{{ form.image.help_text }}</p>{% endif %}
             </div>
         </div>
 
-        <p class="section-label">{% trans "Classification" %}</p>
-        <div class="form-grid">
+        <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Classification" %}</p>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
             <div>
                 {{ form.category.label_tag }}
-                <div class="input-row">
+                <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
                     {{ form.category }}
-                    <button class="btn" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% icon "plus" 16 %} {% trans "New category" %}</button>
+                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% icon "plus" 16 %} {% trans "New category" %}</button>
                 </div>
                 {{ form.category.errors }}
-                {% if form.category.help_text %}<p class="muted">{{ form.category.help_text }}</p>{% endif %}
+                {% if form.category.help_text %}<p class="m-0 text-text-soft">{{ form.category.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.brand.label_tag }}
-                <div class="input-row">
+                <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
                     {{ form.brand }}
-                    <button class="btn" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% icon "plus" 16 %} {% trans "New brand" %}</button>
+                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% icon "plus" 16 %} {% trans "New brand" %}</button>
                 </div>
                 {{ form.brand.errors }}
-                {% if form.brand.help_text %}<p class="muted">{{ form.brand.help_text }}</p>{% endif %}
+                {% if form.brand.help_text %}<p class="m-0 text-text-soft">{{ form.brand.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.animal_types.label_tag }}
                 {{ form.animal_types }}
-                <button class="btn" type="button" data-quick-create data-quick-create-type="animal_type" data-quick-create-target="#id_animal_types" data-quick-create-field-name="animal_types">{% icon "plus" 16 %} {% trans "New animal type" %}</button>
+                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create data-quick-create-type="animal_type" data-quick-create-target="#id_animal_types" data-quick-create-field-name="animal_types">{% icon "plus" 16 %} {% trans "New animal type" %}</button>
                 {{ form.animal_types.errors }}
-                {% if form.animal_types.help_text %}<p class="muted">{{ form.animal_types.help_text }}</p>{% endif %}
+                {% if form.animal_types.help_text %}<p class="m-0 text-text-soft">{{ form.animal_types.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.life_stage.label_tag }}
                 {{ form.life_stage }}
                 {{ form.life_stage.errors }}
-                {% if form.life_stage.help_text %}<p class="muted">{{ form.life_stage.help_text }}</p>{% endif %}
+                {% if form.life_stage.help_text %}<p class="m-0 text-text-soft">{{ form.life_stage.help_text }}</p>{% endif %}
             </div>
-            <div class="form-span-full">
+            <div class="col-span-full">
                 {{ form.tags.label_tag }}
                 {{ form.tags }}
                 {{ form.tags.errors }}
-                {% if form.tags.help_text %}<p class="muted">{{ form.tags.help_text }}</p>{% endif %}
+                {% if form.tags.help_text %}<p class="m-0 text-text-soft">{{ form.tags.help_text }}</p>{% endif %}
             </div>
         </div>
 
-        <p class="section-label">{% trans "Pricing and controls" %}</p>
-        <div class="form-grid">
+        <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Pricing and controls" %}</p>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
             <div>
                 {{ form.unit.label_tag }}
                 {{ form.unit }}
                 {{ form.unit.errors }}
-                {% if form.unit.help_text %}<p class="muted">{{ form.unit.help_text }}</p>{% endif %}
+                {% if form.unit.help_text %}<p class="m-0 text-text-soft">{{ form.unit.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.default_cost_price.label_tag }}
                 {{ form.default_cost_price }}
                 {{ form.default_cost_price.errors }}
-                {% if form.default_cost_price.help_text %}<p class="muted">{{ form.default_cost_price.help_text }}</p>{% endif %}
+                {% if form.default_cost_price.help_text %}<p class="m-0 text-text-soft">{{ form.default_cost_price.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.default_selling_price.label_tag }}
                 {{ form.default_selling_price }}
                 {{ form.default_selling_price.errors }}
-                {% if form.default_selling_price.help_text %}<p class="muted">{{ form.default_selling_price.help_text }}</p>{% endif %}
+                {% if form.default_selling_price.help_text %}<p class="m-0 text-text-soft">{{ form.default_selling_price.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.min_stock.label_tag }}
                 {{ form.min_stock }}
                 {{ form.min_stock.errors }}
-                {% if form.min_stock.help_text %}<p class="muted">{{ form.min_stock.help_text }}</p>{% endif %}
+                {% if form.min_stock.help_text %}<p class="m-0 text-text-soft">{{ form.min_stock.help_text }}</p>{% endif %}
             </div>
             <div>
                 <label for="{{ form.is_active.id_for_label }}">{{ form.is_active }} {% trans "Active" %}</label>
                 {{ form.is_active.errors }}
-                {% if form.is_active.help_text %}<p class="muted">{{ form.is_active.help_text }}</p>{% endif %}
+                {% if form.is_active.help_text %}<p class="m-0 text-text-soft">{{ form.is_active.help_text }}</p>{% endif %}
             </div>
-            <div class="form-span-full">
+            <div class="col-span-full">
                 {{ form.description.label_tag }}
                 {{ form.description }}
                 {{ form.description.errors }}
-                {% if form.description.help_text %}<p class="muted">{{ form.description.help_text }}</p>{% endif %}
+                {% if form.description.help_text %}<p class="m-0 text-text-soft">{{ form.description.help_text }}</p>{% endif %}
             </div>
         </div>
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% if mode == "create" %}{% trans "Create product" %}{% else %}{% trans "Save product" %}{% endif %}</button>
-            <a class="btn" href="{% url 'product-list' %}">{% trans "Cancel" %}</a>
+        <div class="flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% icon "check" 16 %} {% if mode == "create" %}{% trans "Create product" %}{% else %}{% trans "Save product" %}{% endif %}</button>
+            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-list' %}">{% trans "Cancel" %}</a>
         </div>
     </form>
 </section>

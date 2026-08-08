@@ -5,8 +5,8 @@ Shared filter form for list pages. Expects:
   reset_url  — optional URL for the Reset link (defaults to the current path)
 Renders a consistent filter grid with Filter + Reset actions.
 {% endcomment %}
-<form class="form-stack" method="get">
-    <div class="form-grid">
+<form class="grid gap-3.5" method="get">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
         {% for field in form %}
             <div>
                 {{ field.label_tag }}
@@ -15,8 +15,8 @@ Renders a consistent filter grid with Filter + Reset actions.
             </div>
         {% endfor %}
     </div>
-    <div class="form-actions">
-        <button class="btn btn-primary" type="submit">{% trans "Filter" %}</button>
-        <a class="btn" href="{{ reset_url|default:request.path }}">{% trans "Reset" %}</a>
+    <div class="flex flex-wrap items-center gap-2">
+        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Filter" %}</button>
+        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ reset_url|default:request.path }}">{% trans "Reset" %}</a>
     </div>
 </form>

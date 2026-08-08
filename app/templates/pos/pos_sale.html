@@ -5,71 +5,71 @@
 {% block page_title %}{% trans "POS Sale" %}{% endblock %}
 {% block page_subtitle %}{% trans "Scan a barcode or QR code, choose the correct stock batch, and complete checkout." %}{% endblock %}
 {% block header_actions %}
-    <button class="btn btn-primary" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% icon "camera" 16 %} {% trans "Scan With Camera" %}</button>
+    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline max-[640px]:min-h-[42px]" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% icon "camera" 16 %} {% trans "Scan With Camera" %}</button>
 {% endblock %}
 
 {% block content %}
 {% if carts_summary|length > 1 %}
-<div class="pos-tabs">
+<div class="mb-2.5 flex flex-wrap items-center gap-1.5 [&_form]:m-0">
     {% for c in carts_summary %}
         {% if c.active %}
-            <span class="pos-tab active">{% trans "Sale" %} {{ c.id }} · {{ c.count }}</span>
+            <span class="active inline-flex cursor-pointer items-center gap-[5px] rounded-md border border-ink bg-ink px-3.5 py-[7px] text-[12.5px] font-semibold text-accent-bright">{% trans "Sale" %} {{ c.id }} · {{ c.count }}</span>
         {% else %}
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="cart_id" value="{{ c.id }}">
-                <button class="pos-tab" type="submit" name="action" value="resume">{% trans "Held" %} {{ c.id }} · {{ c.count }}</button>
+                <button class="inline-flex cursor-pointer items-center gap-[5px] rounded-md border border-border bg-surface px-3.5 py-[7px] text-[12.5px] font-semibold text-text-soft hover:border-accent hover:text-text" type="submit" name="action" value="resume">{% trans "Held" %} {{ c.id }} · {{ c.count }}</button>
             </form>
         {% endif %}
     {% endfor %}
 </div>
 {% endif %}
-<div class="pos-layout">
-    <section class="panel pos-scan-panel">
-        <form class="form-stack" method="post">
+<div class="pos-layout grid grid-cols-1 items-start gap-4 max-[860px]:grid-cols-1 min-[861px]:flex-1 min-[861px]:min-h-0 min-[861px]:grid-cols-[minmax(0,1fr)_clamp(330px,30vw,480px)] min-[861px]:items-stretch max-[1100px]:min-[861px]:grid-cols-[minmax(0,1fr)_320px] [&>*]:mt-0">
+    <section class="min-h-[calc(100vh-97px)] rounded border border-border bg-surface p-[18px] shadow-panel max-[860px]:min-h-0 min-[861px]:h-auto min-[861px]:min-h-0 min-[861px]:overflow-y-auto min-[861px]:[scrollbar-width:thin]">
+        <form class="mt-0.5 grid gap-3.5" method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="scan" data-pos-scan-form>
             <div>
                 {{ scan_form.scan_value.label_tag }}
-                <div class="input-row">
+                <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
                     {{ scan_form.scan_value }}
-                    <button class="btn" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% icon "scan" 16 %} {% trans "Scan" %}</button>
+                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline max-[640px]:min-h-[42px]" type="button" data-scan-target="#id_scan_value" data-scan-context="pos" data-scan-submit="true">{% icon "scan" 16 %} {% trans "Scan" %}</button>
                 </div>
                 {{ scan_form.scan_value.errors }}
             </div>
-            <div class="form-actions">
-                <button class="btn btn-primary" type="submit">{% trans "Lookup" %}</button>
+            <div class="flex flex-wrap items-center gap-2">
+                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline max-[640px]:min-h-[42px]" type="submit">{% trans "Lookup" %}</button>
             </div>
         </form>
         {% if quick_keys or promo_keys %}
-        <div class="quick-keys">
+        <div class="mt-3.5">
             {% if promo_keys %}
-                <p class="quick-keys-title">{% icon "percent" 13 %} {% trans "Promotions" %}</p>
-                <div class="quick-key-grid">
+                <p class="mb-1.5 mt-3 flex items-center gap-[5px] text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% icon "percent" 13 %} {% trans "Promotions" %}</p>
+                <div class="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-1.5 min-[1500px]:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] [&_form]:m-0 [&_form]:contents">
                     {% for key in promo_keys %}
                         <form method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="scan">
                             <input type="hidden" name="scan_value" value="{{ key.product.original_barcode }}">
-                            <button class="quick-key quick-key-promo" type="submit">
-                                <strong>{{ key.product.name }}</strong>
-                                <span class="mono">{{ key.product.default_selling_price }} <em class="promo-tag">{{ key.tag }}</em></span>
+                            <button class="grid min-h-14 cursor-pointer gap-0.5 rounded-md border border-kpi-warning-border bg-promo-key px-2 py-2.5 text-center text-text hover:border-promo-tag" type="submit">
+                                <strong class="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold">{{ key.product.name }}</strong>
+                                <span class="font-mono text-[11.5px] tracking-[-0.01em] text-text-soft">{{ key.product.default_selling_price }} <em class="not-italic font-bold text-promo-tag">{{ key.tag }}</em></span>
                             </button>
                         </form>
                     {% endfor %}
                 </div>
             {% endif %}
             {% if quick_keys %}
-                <p class="quick-keys-title">{% icon "cart" 13 %} {% trans "Quick Keys" %}</p>
-                <div class="quick-key-grid">
+                <p class="mb-1.5 mt-3 flex items-center gap-[5px] text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% icon "cart" 13 %} {% trans "Quick Keys" %}</p>
+                <div class="grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-1.5 min-[1500px]:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] [&_form]:m-0 [&_form]:contents">
                     {% for product in quick_keys %}
                         <form method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="scan">
                             <input type="hidden" name="scan_value" value="{{ product.original_barcode }}">
-                            <button class="quick-key" type="submit">
-                                <strong>{{ product.name }}</strong>
-                                <span class="mono">{{ product.default_selling_price }}</span>
+                            <button class="grid min-h-14 cursor-pointer gap-0.5 rounded-md border border-border bg-surface-subtle px-2 py-2.5 text-center text-text hover:border-accent hover:bg-filter-bar" type="submit">
+                                <strong class="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold">{{ product.name }}</strong>
+                                <span class="font-mono text-[11.5px] tracking-[-0.01em] text-text-soft">{{ product.default_selling_price }}</span>
                             </button>
                         </form>
                     {% endfor %}
@@ -78,7 +78,7 @@
         </div>
         {% endif %}
 
-        <div class="pos-status" aria-live="polite">
+        <div class="mt-3 rounded-md border border-border bg-surface-subtle px-3 py-2.5 text-text-soft" aria-live="polite">
             {% if scanned_product %}
                 {% trans "Product found. Choose the stock batch and quantity to add." %}
             {% else %}
@@ -87,75 +87,75 @@
         </div>
 
         {% if scanned_product %}
-            <section class="panel panel-spaced">
-                <header class="panel-header">
+            <section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+                <header class="mb-3.5 flex items-start justify-between gap-3.5">
                     <div>
-                        <h2>{{ scanned_product.name }}</h2>
-                        <p>{{ scanned_product.product_code }} · {{ scanned_product.original_barcode }}</p>
+                        <h2 class="m-0 mb-1 text-base font-semibold text-text">{{ scanned_product.name }}</h2>
+                        <p class="m-0 text-text-soft">{{ scanned_product.product_code }} · {{ scanned_product.original_barcode }}</p>
                     </div>
                 </header>
-                <div class="table-scroll">
-                    <table class="data-table">
+                <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+                    <table class="w-full min-w-[720px] border-collapse">
                         <thead>
                         <tr>
-                            <th>{% trans "Batch" %}</th>
-                            <th>{% trans "Expiry" %}</th>
-                            <th>{% trans "Available" %}</th>
-                            <th>{% trans "Price" %}</th>
-                            <th>{% trans "Quantity" %}</th>
-                            <th></th>
+                            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Batch" %}</th>
+                            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Expiry" %}</th>
+                            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Available" %}</th>
+                            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Price" %}</th>
+                            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Quantity" %}</th>
+                            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft"></th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for batch in available_batches %}
-                            <tr>
-                                <td><span class="mono">{{ batch.batch_no }}</span>{% if forloop.first and available_batches|length > 1 %} <span class="pill pill-warning">{% trans "Sell first" %}</span>{% endif %}</td>
-                                <td class="mono">{{ batch.expiry_date }}</td>
-                                <td class="mono">{{ batch.quantity_available }}</td>
-                                <td class="mono">{{ batch.selling_price }}</td>
-                                <td colspan="2">
-                                    <form class="input-row" method="post">
+                            <tr class="hover:bg-surface-subtle">
+                                <td class="border-b border-border px-[9px] py-2.5 align-middle"><span class="font-mono text-[0.95em] tracking-[-0.01em]">{{ batch.batch_no }}</span>{% if forloop.first and available_batches|length > 1 %} <span class="inline-block whitespace-nowrap rounded-full bg-pill-warning px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-pill-warning-fg">{% trans "Sell first" %}</span>{% endif %}</td>
+                                <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ batch.expiry_date }}</td>
+                                <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ batch.quantity_available }}</td>
+                                <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ batch.selling_price }}</td>
+                                <td class="border-b border-border px-[9px] py-2.5 align-middle" colspan="2">
+                                    <form class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px]" method="post">
                                         {% csrf_token %}
                                         <input type="hidden" name="stock_batch_id" value="{{ batch.id }}">
-                                        <button class="quantity-stepper" type="button" data-quantity-step="-1" aria-label="{% trans 'Decrease quantity' %}" title="{% trans 'Decrease quantity' %}">-</button>
+                                        <button class="inline-flex size-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface p-0 text-lg leading-none text-text hover:bg-surface-subtle max-[640px]:min-h-[42px] max-[640px]:min-w-[42px]" type="button" data-quantity-step="-1" aria-label="{% trans 'Decrease quantity' %}" title="{% trans 'Decrease quantity' %}">-</button>
                                         <input type="number" name="quantity" min="1" max="{{ batch.quantity_available }}" value="1" aria-label="{% trans 'Quantity' %}" data-quantity-input>
-                                        <button class="quantity-stepper" type="button" data-quantity-step="1" aria-label="{% trans 'Increase quantity' %}" title="{% trans 'Increase quantity' %}">+</button>
-                                        <button class="btn btn-primary" type="submit" name="action" value="add_batch">{% trans "Add" %}</button>
+                                        <button class="inline-flex size-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface p-0 text-lg leading-none text-text hover:bg-surface-subtle max-[640px]:min-h-[42px] max-[640px]:min-w-[42px]" type="button" data-quantity-step="1" aria-label="{% trans 'Increase quantity' %}" title="{% trans 'Increase quantity' %}">+</button>
+                                        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline max-[640px]:min-h-[42px]" type="submit" name="action" value="add_batch">{% trans "Add" %}</button>
                                     </form>
                                 </td>
                             </tr>
                         {% empty %}
-                            <tr><td colspan="6" class="empty-cell">{% trans "No sellable batches are available. Check stock, damage, or expiry before selling." %}</td></tr>
+                            <tr><td colspan="6" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No sellable batches are available. Check stock, damage, or expiry before selling." %}</td></tr>
                         {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </section>
         {% else %}
-            <div class="pos-empty-state">
+            <div class="mt-4 rounded-md border border-dashed border-border-strong bg-surface-subtle p-[18px] text-center text-text-soft">
                 {% trans "Scan or type a product code to begin the sale." %}
             </div>
         {% endif %}
     </section>
 
-    <aside class="panel pos-cart-panel">
-        <header class="panel-header cart-header">
+    <aside class="flex h-[calc(100vh-97px)] flex-col sticky top-[81px] self-start rounded border border-ink-border bg-ink p-[18px] text-ink-text shadow-panel max-[860px]:static max-[860px]:h-auto min-[861px]:static min-[861px]:h-auto min-[861px]:min-h-0 min-[861px]:self-stretch [&_label]:text-ink-text [&_input]:border-ink-border [&_input]:bg-auth-input-bg [&_input]:text-auth-input-text [&_select]:border-ink-border [&_select]:bg-auth-input-bg [&_select]:text-auth-input-text [&_textarea]:border-ink-border [&_textarea]:bg-auth-input-bg [&_textarea]:text-auth-input-text focus:[&_input]:border-accent-bright focus:[&_input]:shadow-[0_0_0_3px_var(--color-ink-focus-ring)] focus:[&_select]:border-accent-bright focus:[&_select]:shadow-[0_0_0_3px_var(--color-ink-focus-ring)]">
+        <header class="mb-3.5 flex shrink-0 items-start justify-between gap-2.5">
             <div>
-                <h2>{% trans "Cart" %}</h2>
-                <p>{% trans "Batch-level sale items." %}</p>
+                <h2 class="m-0 mb-1 text-base font-semibold text-auth-heading">{% trans "Cart" %}</h2>
+                <p class="m-0 text-ink-text-dim">{% trans "Batch-level sale items." %}</p>
             </div>
-            <form method="post">
+            <form class="m-0" method="post">
                 {% csrf_token %}
-                <button class="btn btn-hold" type="submit" name="action" value="hold" title="{% trans 'Hold this sale and start a new one' %}" {% if not cart_rows %}disabled{% endif %}>{% icon "hold" 14 %} {% trans "Hold" %}</button>
+                <button class="inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-dashed border-ink-border bg-transparent px-3 py-1.5 font-sans text-xs font-[750] text-ink-text hover:border-accent-bright hover:text-accent-bright hover:no-underline disabled:cursor-not-allowed disabled:opacity-45" type="submit" name="action" value="hold" title="{% trans 'Hold this sale and start a new one' %}" {% if not cart_rows %}disabled{% endif %}>{% icon "hold" 14 %} {% trans "Hold" %}</button>
             </form>
         </header>
         {% if cart_has_promotions %}
-            <div class="alert alert-success">
-                {% trans "Promotion discount in cart" %}: <span class="mono">{{ cart_promotion_discount_total }}</span>
+            <div class="alert-success mb-2 rounded-md border border-alert-success-border bg-alert-success-bg px-3 py-2.5 text-success">
+                {% trans "Promotion discount in cart" %}: <span class="font-mono text-[0.95em] tracking-[-0.01em]">{{ cart_promotion_discount_total }}</span>
             </div>
         {% endif %}
         {% if cart_has_below_cost_warning %}
-            <div class="alert alert-danger">
+            <div class="mb-2 rounded-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">
                 {% if dashboard_is_admin %}
                     {% trans "One or more items are below cost. Enter an override reason before completing the sale." %}
                 {% else %}
@@ -163,127 +163,129 @@
                 {% endif %}
             </div>
         {% elif cart_has_allowed_below_cost_promotion %}
-            <div class="alert alert-warning">{% trans "A promotion is allowed to sell below cost for this cart." %}</div>
+            <div class="mb-2 rounded-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">{% trans "A promotion is allowed to sell below cost for this cart." %}</div>
         {% endif %}
-        <div class="table-scroll pos-cart-scroll">
-            <table class="data-table" aria-live="polite">
+        <div class="min-h-0 flex-1 overflow-auto max-[860px]:max-h-[38vh] min-[861px]:max-h-none">
+            <table class="w-full border-collapse" aria-live="polite">
                 <thead>
                 <tr>
-                    <th>{% trans "Item" %}</th>
-                    <th>{% trans "Qty" %}</th>
-                    <th>{% trans "Promo" %}</th>
-                    <th>{% trans "Subtotal" %}</th>
-                    <th>{% trans "Action" %}</th>
+                    <th class="border-b border-ink-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-text-dim">{% trans "Item" %}</th>
+                    <th class="border-b border-ink-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-text-dim">{% trans "Qty" %}</th>
+                    <th class="border-b border-ink-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-text-dim">{% trans "Promo" %}</th>
+                    <th class="border-b border-ink-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-text-dim">{% trans "Subtotal" %}</th>
+                    <th class="border-b border-ink-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-text-dim">{% trans "Action" %}</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for row in cart_rows %}
                     <tr>
-                        <td>
+                        <td class="border-b border-ink-row-border px-[9px] py-2.5 align-middle text-ink-text">
                             {{ row.stock_batch.product.name }}
                             {% if row.below_cost %}
-                                {% if dashboard_is_admin %}<span class="pill pill-danger">{% trans "Below cost" %}</span>{% else %}<span class="pill pill-danger">{% trans "Manager approval" %}</span>{% endif %}
+                                {% if dashboard_is_admin %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-danger px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-pill-danger-fg">{% trans "Below cost" %}</span>{% else %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-danger px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-pill-danger-fg">{% trans "Manager approval" %}</span>{% endif %}
                             {% elif row.below_cost_allowed_by_promotion %}
-                                <span class="pill pill-warning">{% trans "Below cost allowed" %}</span>
+                                <span class="inline-block whitespace-nowrap rounded-full bg-pill-warning px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-pill-warning-fg">{% trans "Below cost allowed" %}</span>
                             {% endif %}<br>
-                            <span class="muted mono">{{ row.stock_batch.batch_no }}</span>
+                            <span class="font-mono text-[0.95em] tracking-[-0.01em] text-ink-text-dim">{{ row.stock_batch.batch_no }}</span>
                             {% if row.promotion_name %}
-                                <br><span class="muted">{% trans "Was" %}: {{ row.original_unit_price }} · {% trans "Now" %}: {{ row.final_unit_price }}</span>
+                                <br><span class="text-ink-text-dim">{% trans "Was" %}: {{ row.original_unit_price }} · {% trans "Now" %}: {{ row.final_unit_price }}</span>
                             {% elif row.final_unit_price != row.original_unit_price %}
-                                <br><span class="muted">{% trans "Unit" %}: {{ row.final_unit_price }}</span>
+                                <br><span class="text-ink-text-dim">{% trans "Unit" %}: {{ row.final_unit_price }}</span>
                             {% endif %}
                         </td>
-                        <td>
-                            <form class="input-row compact-row" method="post">
+                        <td class="border-b border-ink-row-border px-[9px] py-2.5 align-middle text-ink-text">
+                            <form class="flex flex-wrap items-stretch gap-2 [&_input]:min-w-0" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
-                                <button class="quantity-stepper" type="button" data-quantity-step="-1" aria-label="{% trans 'Decrease quantity' %}" title="{% trans 'Decrease quantity' %}">-</button>
-                                <input class="quantity-input" type="number" name="quantity" min="1" max="{{ row.stock_batch.quantity_available }}" value="{{ row.quantity }}" aria-label="{% trans 'Quantity' %}" data-quantity-input>
-                                <button class="quantity-stepper" type="button" data-quantity-step="1" aria-label="{% trans 'Increase quantity' %}" title="{% trans 'Increase quantity' %}">+</button>
-                                <button class="btn" type="submit" name="action" value="update_item">{% trans "Update" %}</button>
+                                <button class="inline-flex size-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border border-ink-border bg-ink-soft p-0 text-lg leading-none text-ink-text max-[640px]:min-h-[42px] max-[640px]:min-w-[42px]" type="button" data-quantity-step="-1" aria-label="{% trans 'Decrease quantity' %}" title="{% trans 'Decrease quantity' %}">-</button>
+                                <input class="w-[70px] flex-none text-center" type="number" name="quantity" min="1" max="{{ row.stock_batch.quantity_available }}" value="{{ row.quantity }}" aria-label="{% trans 'Quantity' %}" data-quantity-input>
+                                <button class="inline-flex size-[38px] shrink-0 cursor-pointer items-center justify-center rounded-md border border-ink-border bg-ink-soft p-0 text-lg leading-none text-ink-text max-[640px]:min-h-[42px] max-[640px]:min-w-[42px]" type="button" data-quantity-step="1" aria-label="{% trans 'Increase quantity' %}" title="{% trans 'Increase quantity' %}">+</button>
+                                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-ink-border bg-ink-soft px-[13px] py-[9px] font-sans text-sm font-[750] text-ink-text hover:no-underline max-[640px]:min-h-[42px]" type="submit" name="action" value="update_item">{% trans "Update" %}</button>
                             </form>
                         </td>
-                        <td>
+                        <td class="border-b border-ink-row-border px-[9px] py-2.5 align-middle text-ink-text">
                             {% if row.promotion_name %}
-                                <span class="badge badge-success">{{ row.promotion_name }}</span>
-                                <br><span class="muted">{% trans "Save" %}: {{ row.discount_amount }}</span>
+                                <span class="inline-block whitespace-nowrap rounded-full bg-pill-success px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-pill-success-fg">{{ row.promotion_name }}</span>
+                                <br><span class="text-ink-text-dim">{% trans "Save" %}: {{ row.discount_amount }}</span>
                             {% else %}
-                                <span class="muted">-</span>
+                                <span class="text-ink-text-dim">-</span>
                             {% endif %}
                         </td>
-                        <td class="mono">{{ row.subtotal }}</td>
-                        <td>
+                        <td class="border-b border-ink-row-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em] text-ink-text">{{ row.subtotal }}</td>
+                        <td class="border-b border-ink-row-border px-[9px] py-2.5 align-middle text-ink-text">
                             <form method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="stock_batch_id" value="{{ row.stock_batch.id }}">
-                                <button class="btn btn-danger" type="submit" name="action" value="remove_item" data-confirm-message="{% trans 'Remove this item from the cart?' %}">{% trans "Remove" %}</button>
+                                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-ink-danger-border bg-ink-danger px-[13px] py-[9px] font-sans text-sm font-[750] text-auth-alert-danger-fg hover:no-underline max-[640px]:min-h-[42px]" type="submit" name="action" value="remove_item" data-confirm-message="{% trans 'Remove this item from the cart?' %}">{% trans "Remove" %}</button>
                             </form>
                         </td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="5" class="empty-cell">{% trans "Cart is empty. Add a sellable batch before checkout." %}</td></tr>
+                    <tr><td colspan="5" class="border-b border-ink-row-border px-[9px] py-6 text-center text-ink-text-dim">{% trans "Cart is empty. Add a sellable batch before checkout." %}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="cart-total"><span>{% trans "Cart Total" %}</span><span class="mono cart-total-amount" data-cart-total="{{ cart_total }}">{{ cart_total }}</span></div>
+        <div class="mt-3 mb-3 flex shrink-0 items-baseline justify-between border-t border-ink-border pt-3 text-[13px] text-ink-text-dim"><span class="block text-xs font-bold uppercase tracking-normal text-ink-text-dim">{% trans "Cart Total" %}</span><span class="font-mono text-[26px] font-semibold tracking-[-0.01em] text-auth-heading" data-cart-total="{{ cart_total }}">{{ cart_total }}</span></div>
         {% if store_setting and store_setting.khr_exchange_rate %}
-            <div class="cart-total-khr"><span>≈ {% trans "Riel" %}</span><span class="mono">៛ {{ cart_total|khr:store_setting.khr_exchange_rate }}</span></div>
+            <div class="-mt-2 mb-3 flex shrink-0 justify-between text-xs text-ink-text-dim"><span>≈ {% trans "Riel" %}</span><span class="font-mono tracking-[-0.01em]">៛ {{ cart_total|khr:store_setting.khr_exchange_rate }}</span></div>
         {% endif %}
-        <form class="form-stack" method="post" data-disable-on-submit data-full-submit>
+        <form class="grid shrink-0 gap-3.5" method="post" data-disable-on-submit data-full-submit>
             {% csrf_token %}
             <input type="hidden" name="payment_method" value="CASH" data-payment-method>
-            <details class="cart-adjust">
-                <summary>{% icon "percent" 14 %} {% trans "Adjustments" %}<span class="adjust-caret" aria-hidden="true">▾</span></summary>
-                <div class="adjust-block">
+            <details class="mb-3 open:[&_.adjust-caret]:rotate-180">
+                <summary class="flex cursor-pointer list-none items-center gap-[7px] rounded-md border border-dashed border-ink-border px-3 py-2 text-[12.5px] font-semibold text-ink-text hover:border-accent-bright hover:text-accent-bright [&::-webkit-details-marker]:hidden">{% icon "percent" 14 %} {% trans "Adjustments" %}<span class="adjust-caret ml-auto text-[10px] text-ink-text-dim" aria-hidden="true">▾</span></summary>
+                <div class="grid gap-[5px] px-1 pb-1 pt-3">
                     <label for="{{ confirm_form.discount_amount.id_for_label }}">{% trans "Cart discount" %}</label>
                     {{ confirm_form.discount_amount }}
-                    <p class="muted">{% trans "Money off the whole cart. Allocated across items at checkout." %}</p>
+                    <p class="m-0 text-[11.5px] text-ink-text-dim">{% trans "Money off the whole cart. Allocated across items at checkout." %}</p>
                 </div>
                 {% if dashboard_is_admin %}
-                <div class="adjust-block">
+                <div class="mt-2 grid gap-[5px] border-t border-ink-border px-1 pb-1 pt-3">
                     <label for="{{ confirm_form.override_reason.id_for_label }}">{% trans "Below-cost override reason" %}</label>
                     {{ confirm_form.override_reason }}
-                    <p class="muted">{% trans "Not a discount: a written justification, required only when approving a sale below cost." %}</p>
+                    <p class="m-0 text-[11.5px] text-ink-text-dim">{% trans "Not a discount: a written justification, required only when approving a sale below cost." %}</p>
                 </div>
                 {% endif %}
             </details>
-            <div class="form-actions">
-                <button class="btn btn-success btn-charge" type="button" data-open-payment data-shortcut="F9" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
-                <button class="btn" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}" data-confirm-message="{% trans 'Clear the whole cart?' %}">{% trans "Clear Cart" %}</button>
+            <div class="flex flex-wrap items-center gap-2">
+                <button class="inline-flex w-full min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-accent bg-accent px-[18px] py-[11px] font-sans text-[15px] font-[750] text-accent-fg hover:bg-accent-hover hover:no-underline disabled:cursor-not-allowed disabled:border-ink-border disabled:bg-ink-soft disabled:text-ink-text-dim" type="button" data-open-payment data-shortcut="F9" {% if not cart_rows %}disabled{% endif %}>{% icon "cash" 16 %} {% trans "Complete Sale" %}</button>
+                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-ink-border bg-ink-soft px-[13px] py-[9px] font-sans text-sm font-[750] text-ink-text hover:no-underline max-[640px]:min-h-[42px]" type="submit" name="action" value="clear" data-loading-text="{% trans 'Clearing...' %}" data-confirm-message="{% trans 'Clear the whole cart?' %}">{% trans "Clear Cart" %}</button>
             </div>
 
-            <div class="payment-dialog" data-payment-dialog hidden>
-                <div class="payment-panel">
-                    <p class="terminal-line" aria-hidden="true"><span class="terminal-dot"></span>{% trans "PAYMENT" %} · <span class="mono">{{ cart_total }}</span>{% if store_setting and store_setting.khr_exchange_rate %} · <span class="mono">៛ {{ cart_total|khr:store_setting.khr_exchange_rate }}</span>{% endif %}</p>
-                    <div class="payment-methods">
-                        <button class="payment-method active" type="button" data-payment-choose="CASH">{% icon "cash" 18 %} {% trans "Cash" %}</button>
-                        <button class="payment-method" type="button" data-payment-choose="KHQR">{% icon "scan" 18 %} KHQR</button>
-                        <button class="payment-method" type="button" data-payment-choose="ABA">ABA</button>
-                        <button class="payment-method" type="button" data-payment-choose="CARD">{% trans "Card" %}</button>
+            <div class="fixed inset-0 z-[95] bg-payment-backdrop p-4 max-[640px]:p-2 [&[hidden]]:hidden" data-payment-dialog hidden>
+                <div class="flex h-full items-center justify-center max-[640px]:items-end">
+                <div class="grid w-[min(440px,100%)] gap-3.5 rounded-lg border border-ink-border bg-ink p-[18px] text-ink-text max-[640px]:w-full max-[640px]:max-h-[calc(100dvh-16px)] max-[640px]:overflow-auto">
+                    <p class="m-0 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-auth-terminal" aria-hidden="true"><span class="size-2 animate-terminal-pulse rounded-full bg-current shadow-[0_0_8px_currentColor]"></span>{% trans "PAYMENT" %} · <span class="font-mono tracking-[-0.01em]">{{ cart_total }}</span>{% if store_setting and store_setting.khr_exchange_rate %} · <span class="font-mono tracking-[-0.01em]">៛ {{ cart_total|khr:store_setting.khr_exchange_rate }}</span>{% endif %}</p>
+                    <div class="grid grid-cols-4 gap-1.5 max-[640px]:grid-cols-2">
+                        <button class="active inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-ink-border bg-ink-soft px-1.5 py-2.5 text-[13px] font-semibold text-ink-text [&.active]:border-accent-bright [&.active]:bg-accent [&.active]:text-accent-fg" type="button" data-payment-choose="CASH">{% icon "cash" 18 %} {% trans "Cash" %}</button>
+                        <button class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-ink-border bg-ink-soft px-1.5 py-2.5 text-[13px] font-semibold text-ink-text [&.active]:border-accent-bright [&.active]:bg-accent [&.active]:text-accent-fg" type="button" data-payment-choose="KHQR">{% icon "scan" 18 %} KHQR</button>
+                        <button class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-ink-border bg-ink-soft px-1.5 py-2.5 text-[13px] font-semibold text-ink-text [&.active]:border-accent-bright [&.active]:bg-accent [&.active]:text-accent-fg" type="button" data-payment-choose="ABA">ABA</button>
+                        <button class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-md border border-ink-border bg-ink-soft px-1.5 py-2.5 text-[13px] font-semibold text-ink-text [&.active]:border-accent-bright [&.active]:bg-accent [&.active]:text-accent-fg" type="button" data-payment-choose="CARD">{% trans "Card" %}</button>
                     </div>
 
-                    <div class="payment-pane" data-payment-pane="CASH">
+                    <div class="[&_label]:text-ink-text-dim [&_input]:border [&_input]:border-ink-border [&_input]:bg-auth-input-bg [&_input]:text-lg [&_input]:text-auth-input-text" data-payment-pane="CASH">
                         <label for="amount-received">{% trans "Amount Received" %}</label>
-                        <div class="input-row">
+                        <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px]">
                             <input id="amount-received" name="amount_received" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" data-change-input>
-                            <span class="change-due"><span class="muted">{% trans "Change" %}</span> <span class="mono" data-change-output>—</span></span>
+                            <span class="inline-flex items-baseline gap-2 whitespace-nowrap"><span class="text-ink-text-dim">{% trans "Change" %}</span> <span class="font-mono text-[20px] font-semibold tracking-[-0.01em] text-auth-alert-success-fg [&.change-negative]:text-auth-alert-danger-fg" data-change-output>—</span></span>
                         </div>
                     </div>
 
-                    <div class="payment-pane" data-payment-pane="KHQR" hidden>
+                    <div data-payment-pane="KHQR" hidden>
                         {% if store_setting.khqr_image %}
                             <img class="khqr-image" src="{{ store_setting.khqr_image.url }}" alt="KHQR">
                         {% else %}
-                            <p class="muted">{% trans "No KHQR code uploaded yet. Add one in Store Settings." %}</p>
+                            <p class="m-0 text-ink-text-dim">{% trans "No KHQR code uploaded yet. Add one in Store Settings." %}</p>
                         {% endif %}
-                        <p class="khqr-amount mono">{{ store_setting.currency_symbol }}{{ cart_total }}</p>
+                        <p class="mt-2 mb-0 text-center font-mono text-2xl font-semibold tracking-[-0.01em] text-auth-heading">{{ store_setting.currency_symbol }}{{ cart_total }}</p>
                     </div>
 
-                    <div class="form-actions">
-                        <button class="btn btn-success btn-charge" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}">{% icon "check" 16 %} <span data-payment-confirm-label>{% trans "Confirm Cash Payment" %}</span></button>
-                        <button class="btn" type="button" data-payment-close>{% trans "Back" %}</button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button class="inline-flex w-full min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-accent bg-accent px-[18px] py-[11px] font-sans text-[15px] font-[750] text-accent-fg hover:bg-accent-hover hover:no-underline" type="submit" name="action" value="confirm" data-loading-text="{% trans 'Completing...' %}">{% icon "check" 16 %} <span data-payment-confirm-label>{% trans "Confirm Cash Payment" %}</span></button>
+                        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-ink-border bg-ink-soft px-[13px] py-[9px] font-sans text-sm font-[750] text-ink-text hover:no-underline max-[640px]:min-h-[42px]" type="button" data-payment-close>{% trans "Back" %}</button>
                     </div>
+                </div>
                 </div>
             </div>
         </form>

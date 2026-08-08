@@ -5,48 +5,68 @@
 {% block page_title %}{% trans "Low Stock Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Products whose available stock is at or below the minimum." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'stock-summary-report' %}">{% trans "Stock Summary" %}</a>
-    <a class="btn" href="{% url 'expiry-report' %}">{% trans "Expiry" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-summary-report' %}">{% trans "Stock Summary" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'expiry-report' %}">{% trans "Expiry" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Report Definition" %}</h2>
-            <p>{% trans "Low stock means available active, unexpired stock is at or below the product minimum. Rows are prioritized by reorder gap." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Report Definition" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Low stock means available active, unexpired stock is at or below the product minimum. Rows are prioritized by reorder gap." %}</p>
         </div>
     </header>
 </section>
 
-<section class="metric-grid">
-    <article class="metric-card kpi-warning"><span>{% trans "Low-stock Products" %}</span><strong>{{ summary.product_count }}</strong></article>
-    <article class="metric-card"><span>{% trans "Available Units" %}</span><strong>{{ summary.total_available }}</strong></article>
-    <article class="metric-card kpi-danger"><span>{% trans "Out of Stock" %}</span><strong>{{ summary.out_of_stock_count }}</strong></article>
-    <article class="metric-card kpi-warning"><span>{% trans "Reorder Units" %}</span><strong>{{ summary.reorder_units }}</strong></article>
+<section class="mb-4 mt-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+    {% trans "Low-stock Products" as lbl_products %}
+    {% include "reports/_metric_card.html" with label=lbl_products value=summary.product_count tone="warning" %}
+    {% trans "Available Units" as lbl_units %}
+    {% include "reports/_metric_card.html" with label=lbl_units value=summary.total_available %}
+    {% trans "Out of Stock" as lbl_out %}
+    {% include "reports/_metric_card.html" with label=lbl_out value=summary.out_of_stock_count tone="danger" %}
+    {% trans "Reorder Units" as lbl_reorder %}
+    {% include "reports/_metric_card.html" with label=lbl_reorder value=summary.reorder_units tone="warning" %}
 </section>
-<section class="panel">
-    <div class="table-scroll">
-    <table class="data-table">
-        <thead><tr><th>{% trans "Product" %}</th><th>{% trans "Product Code" %}</th><th>{% trans "Total Available" %}</th><th>{% trans "Min Stock" %}</th><th>{% trans "Reorder Gap" %}</th><th>{% trans "State" %}</th><th>{% trans "Action" %}</th></tr></thead>
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+    <table class="w-full min-w-[720px] border-collapse">
+        <thead><tr>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product Code" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Total Available" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Min Stock" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Reorder Gap" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "State" %}</th>
+            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
+        </tr></thead>
         <tbody>
         {% for product in products %}
-            <tr>
-                <td>{{ product.name }}</td>
-                <td>{{ product.product_code }}</td>
-                <td>{{ product.total_available }}</td>
-                <td>{{ product.min_stock }}</td>
-                <td>{{ product.reorder_gap }}</td>
-                <td><span class="badge {{ product.stock_action_class }}">{{ product.stock_action_label }}</span></td>
-                <td>
-                    <div class="table-actions">
-                        <a class="btn" href="{% url 'inventory-summary' %}?q={{ product.product_code|urlencode }}">{% trans "Open Stock" %}</a>
-                        <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.name }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.product_code }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.total_available }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.min_stock }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.reorder_gap }}</td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    {% if product.stock_action_class == "badge-danger" %}
+                        {% include "catalog/_status_pill.html" with tone="danger" label=product.stock_action_label %}
+                    {% elif product.stock_action_class == "badge-warning" %}
+                        {% include "catalog/_status_pill.html" with tone="warning" label=product.stock_action_label %}
+                    {% else %}
+                        {% include "catalog/_status_pill.html" with tone="success" label=product.stock_action_label %}
+                    {% endif %}
+                </td>
+                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'inventory-summary' %}?q={{ product.product_code|urlencode }}">{% trans "Open Stock" %}</a>
+                        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
                     </div>
                 </td>
             </tr>
         {% empty %}
-            <tr><td colspan="7" class="empty-cell">{% trans "No low stock products." %}</td></tr>
+            <tr><td colspan="7" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No low stock products." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>

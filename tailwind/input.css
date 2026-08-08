@@ -1,0 +1,251 @@
+/*
+ * Melodu Tailwind input (Phase 2).
+ *
+ * Tailwind v4.3.3 — CSS-first config (@theme). No tailwind.config.js.
+ * Preflight is intentionally omitted so dashboard.css keeps owning global
+ * element styles on every page. Utilities only apply where classes are used.
+ *
+ * Token names in docs/DESIGN_SYSTEM.md remain authoritative (--bg, etc.).
+ * Tailwind theme namespaces use --color-*, --font-*, --radius-*, --shadow-*
+ * so utilities exist (bg-bg, font-sans, rounded, shadow). See DESIGN_SYSTEM
+ * for the mapping table.
+ *
+ * Cascade: dashboard.css loads via cascade.css in layer(legacy). Utilities
+ * are layered (no !important) so they beat legacy and still override each
+ * other by source order / specificity as normal.
+ */
+
+@layer legacy, theme, base, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* Scan Django templates for class names. */
+@source "../app/templates";
+
+/* html.sidebar-collapsed … → sidebar-collapsed:* utilities on descendants. */
+@custom-variant sidebar-collapsed (.sidebar-collapsed &);
+
+@theme {
+  /* Drop Tailwind's default palette — Melodu tokens only. */
+  --*: initial;
+
+  /* Base spacing unit (4px). Enables p-*, m-*, gap-*, etc. */
+  --spacing: 0.25rem;
+
+  /* Type scale used by the styleguide (Melodu sizes, not Tailwind defaults). */
+  --text-xs: 12px;
+  --text-xs--line-height: 1.45;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.45;
+  --text-base: 16px;
+  --text-base--line-height: 1.45;
+  --text-lg: 18px;
+  --text-lg--line-height: 1.4;
+  --text-xl: 22px;
+  --text-xl--line-height: 1.3;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 28px;
+  --text-3xl--line-height: 1.2;
+
+  /* Font weights.
+   * `--*: initial` above clears Tailwind's defaults, which also removes the
+   * --font-weight-* values that font-bold / font-semibold / font-medium are
+   * generated from. Without these, those utilities emit NO CSS and text
+   * silently renders at normal weight. Values match dashboard.css usage. */
+  /* Letter spacing. Also cleared by `--*: initial`. tracking-normal is used to
+   * RESET inherited spacing inside table-header popovers (dashboard.css did this
+   * with letter-spacing: 0), so without it those popovers inherit 0.07em. */
+  --tracking-normal: 0em;
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.14em;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* ---- Light working surface (DESIGN_SYSTEM §2.1) ---- */
+  --color-bg: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f8fafb;
+  --color-text: #1a2330;
+  --color-text-soft: #5f6b76;
+  --color-border: #d8dee4;
+  --color-border-strong: #aeb8c2;
+
+  /* ---- Semantic (DESIGN_SYSTEM §2.3) ---- */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-success: #127454;
+  --color-danger: #b42318;
+  --color-warning: #b7791f;
+  --color-focus: #0ea5e9;
+
+  /* ---- Ink console (DESIGN_SYSTEM §2.2) ---- */
+  --color-ink: #0b1220;
+  --color-ink-soft: #13314a;
+  --color-ink-border: #1e3a5f;
+  --color-ink-text: #c9d7e6;
+  --color-ink-text-dim: #5c7f9f;
+  --color-accent: #0e7490;
+  --color-accent-bright: #7dd3fc;
+  /* POS cart / payment accents (from dashboard.css .pos-cart-panel / .payment-*) */
+  --color-accent-hover: #0d8aab;
+  --color-accent-fg: #e0f7fa;
+  --color-ink-danger: #5c1d1d;
+  --color-ink-danger-border: #7a2a2a;
+  --color-ink-row-border: rgba(30, 58, 95, 0.55);
+  --color-ink-focus-ring: rgba(125, 211, 252, 0.15);
+  --color-payment-backdrop: rgba(7, 12, 22, 0.65);
+  /* POS quick-key promo (dashboard.css .quick-key-promo / .promo-tag) */
+  --color-promo-key: #fffaf2;
+  --color-promo-tag: #ba7517;
+
+  /* Neutrals needed by components (not Melodu tokens; keep minimal). */
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+
+  /* ---- Role badge ramp (DESIGN_SYSTEM §4.3) ----
+   * These values were already hardcoded in dashboard.css .role-* rules. Naming
+   * them here keeps the colour in one place: the badge partial references the
+   * token instead of repeating the hex, so the two cannot drift apart. */
+  --color-role-owner: #6d28d9;
+  --color-role-owner-bg: #ede9fe;
+  --color-role-owner-border: rgba(109, 40, 217, 0.25);
+  --color-role-manager: #0369a1;
+  --color-role-manager-bg: #e0f2fe;
+  --color-role-manager-border: rgba(3, 105, 161, 0.25);
+  --color-role-inventory: #92400e;
+  --color-role-inventory-bg: #fef3c7;
+  --color-role-inventory-border: rgba(146, 64, 14, 0.25);
+  --color-role-cashier-bg: #e8f3ee;
+  --color-role-viewer: #475569;
+  --color-role-viewer-bg: #f1f5f9;
+  --color-role-viewer-border: rgba(71, 85, 105, 0.25);
+
+  /* ---- Status pill ramp (DESIGN_SYSTEM §2.4) ----
+   * Pastel bg / dark text — separate from semantic action colours. */
+  --color-pill-neutral: #f1efe8;
+  --color-pill-neutral-fg: #444441;
+  --color-pill-success: #e1f5ee;
+  --color-pill-success-fg: #085041;
+  --color-pill-warning: #faeeda;
+  --color-pill-warning-fg: #633806;
+  --color-pill-danger: #fcebeb;
+  --color-pill-danger-fg: #791f1f;
+  --color-pill-info: #e6f1fb;
+  --color-pill-info-fg: #0c447c;
+
+  /* ---- Alert surfaces (dashboard.css .alert-*) ---- */
+  --color-alert-danger-bg: #fdecec;
+  --color-alert-danger-border: #f3b3ad;
+  --color-alert-success-bg: #e8f3ee;
+  --color-alert-success-border: #b9ddcf;
+  --color-alert-warning-bg: #fff6df;
+  --color-alert-warning-border: #f1d99a;
+
+  /* ---- Dashboard home KPI tones (dashboard.css .kpi-warning / .kpi-danger) ----
+   * Distinct from alert/metric borders — home KPI cards used these exact hexes. */
+  --color-kpi-warning: #854f0b;
+  --color-kpi-warning-border: #f0c9a4;
+  --color-kpi-danger: #a32d2d;
+  --color-kpi-danger-border: #f0b5b5;
+
+  /* ---- Modal backdrop (scanner / quick-create) ---- */
+  --color-modal-backdrop: rgba(32, 34, 35, 0.42);
+
+  /* ---- Auth surfaces (login / error pages; dashboard.css body.auth-page) ---- */
+  --color-auth-bg: #070b15;
+  --color-auth-fg: #dbe7f3;
+  --color-auth-panel: rgba(13, 20, 34, 0.88);
+  --color-auth-panel-border: rgba(94, 140, 190, 0.35);
+  --color-auth-terminal: #67e8f9;
+  --color-auth-terminal-alert: #fda4af;
+  --color-auth-heading: #f1f7ff;
+  --color-auth-muted: #8fb0cc;
+  --color-auth-dim: #6f8fae;
+  --color-auth-label: #a9c4dd;
+  --color-auth-input-bg: rgba(7, 12, 22, 0.85);
+  --color-auth-input-border: rgba(94, 140, 190, 0.4);
+  --color-auth-input-text: #e8f3fd;
+  --color-auth-meta-sep: #2dd4bf;
+  --color-auth-ghost-border: rgba(125, 165, 210, 0.4);
+  --color-auth-ghost-text: #bcd6ee;
+  --color-auth-message: #b8d0e6;
+  --color-auth-hint: #9fbed8;
+  --color-auth-step-border: rgba(125, 165, 210, 0.28);
+  --color-auth-step-bg: rgba(7, 12, 22, 0.38);
+  --color-auth-alert-border: rgba(125, 165, 210, 0.3);
+  --color-auth-alert-bg: rgba(15, 23, 40, 0.9);
+  --color-auth-alert-fg: #d7e6f5;
+  --color-auth-alert-danger-border: rgba(248, 113, 113, 0.5);
+  --color-auth-alert-danger-fg: #fecaca;
+  --color-auth-alert-warning-border: rgba(251, 191, 36, 0.5);
+  --color-auth-alert-warning-fg: #fde68a;
+  --color-auth-alert-success-border: rgba(52, 211, 153, 0.5);
+  --color-auth-alert-success-fg: #a7f3d0;
+  --color-auth-mark-from: #0e7490;
+  --color-auth-mark-to: #155e75;
+  --color-auth-mark-fg: #cffafe;
+  --color-auth-mark-border: rgba(103, 232, 249, 0.5);
+  --color-auth-btn-from: #0891b2;
+  --color-auth-btn-to: #2563eb;
+  --color-auth-btn-fg: #f0fbff;
+  --color-auth-btn-border: rgba(125, 211, 252, 0.55);
+  --color-auth-btn-hover-from: #06a6cf;
+  --color-auth-btn-hover-to: #2f6ef2;
+  --color-auth-focus: #22d3ee;
+
+  --animate-auth-sweep: auth-sweep 9s linear infinite;
+  --animate-terminal-pulse: terminal-pulse 2s ease-in-out infinite;
+
+  /* ---- Active-filter bar (DESIGN_SYSTEM §4.15) ---- */
+  --color-filter-bar: #f0fafc;
+  --color-filter-bar-border: #bae3ec;
+  --color-filter-bar-label: #0e5566;
+  --color-filter-chip-text: #0c4a56;
+
+  /* ---- Log console (dashboard.css .log-block) ---- */
+  --color-log-bg: #202223;
+  --color-log-error-bg: #2f1518;
+
+  /* ---- Radius / shadow / fonts (verbatim from dashboard.css :root) ----
+   * `--radius` (no suffix) is what generates the bare `rounded` utility in
+   * Tailwind v4. `--radius-DEFAULT` alone does not; with `--*: initial` the
+   * default radius namespace is cleared and `rounded` would emit no CSS.
+   * dashboard.css defines `--radius: 10px` — mirror that here. */
+  --radius: 10px;
+  --radius-DEFAULT: 10px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* Same DEFAULT-suffix trap as --radius above: Tailwind v4 generates the bare
+   * `shadow` utility from `--shadow`, not `--shadow-DEFAULT`. Without this the
+   * profile dropdown and scanner modal render with no drop shadow at all. */
+  --shadow: 0 1px 2px rgba(17, 24, 39, 0.08), 0 8px 24px rgba(17, 24, 39, 0.06);
+  --shadow-DEFAULT: 0 1px 2px rgba(17, 24, 39, 0.08), 0 8px 24px rgba(17, 24, 39, 0.06);
+  --shadow-panel: 0 1px 0 rgba(17, 24, 39, 0.03);
+
+  --font-sans: Inter, "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+@keyframes auth-sweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+@keyframes terminal-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* :root token names (--bg, etc.) remain defined in dashboard.css only.
+ * This file mirrors their values into @theme for utility classes. */

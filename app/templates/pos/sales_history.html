@@ -6,61 +6,76 @@
 {% block page_subtitle %}{% trans "Filter, inspect, and cancel completed sales when required." %}{% endblock %}
 
 {% block content %}
-<section class="metric-grid">
-    <article class="metric-card"><span>{% trans "Sales Found" %}</span><strong>{{ summary.sale_count }}</strong></article>
-    <article class="metric-card"><span>{% trans "Completed" %}</span><strong>{{ summary.completed_count }}</strong></article>
-    <article class="metric-card {% if summary.cancelled_count %}kpi-warning{% endif %}"><span>{% trans "Cancelled" %}</span><strong>{{ summary.cancelled_count }}</strong></article>
-    <article class="metric-card {% if summary.reprint_count %}kpi-warning{% endif %}"><span>{% trans "Receipt Reprints" %}</span><strong>{{ summary.reprint_count }}</strong></article>
-    <article class="metric-card"><span>{% trans "Completed Revenue" %}</span><strong>{{ summary.completed_total }}</strong></article>
+<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Sales Found" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.sale_count }}</strong>
+    </article>
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Completed" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.completed_count }}</strong>
+    </article>
+    <article class="rounded-md border bg-surface p-4 {% if summary.cancelled_count %}border-alert-warning-border [&_span]:text-warning [&_strong]:text-warning{% else %}border-border{% endif %}">
+        <span class="block text-text-soft">{% trans "Cancelled" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.cancelled_count }}</strong>
+    </article>
+    <article class="rounded-md border bg-surface p-4 {% if summary.reprint_count %}border-alert-warning-border [&_span]:text-warning [&_strong]:text-warning{% else %}border-border{% endif %}">
+        <span class="block text-text-soft">{% trans "Receipt Reprints" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.reprint_count }}</strong>
+    </article>
+    <article class="rounded-md border border-border bg-surface p-4">
+        <span class="block text-text-soft">{% trans "Completed Revenue" %}</span>
+        <strong class="mt-1.5 block text-[28px]">{{ summary.completed_total }}</strong>
+    </article>
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Filters" %}</h2>
-            <p>{% trans "Narrow sales by date, cashier, payment method, or status." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Filters" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Narrow sales by date, cashier, payment method, or status." %}</p>
         </div>
     </header>
     {% include "dashboard/_list_filter.html" %}
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Sales" %}</h2>
-            <p>{% trans "Completed and cancelled sale records." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Sales" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Completed and cancelled sale records." %}</p>
         </div>
     </header>
-    <div class="table-scroll">
-        <table class="data-table">
+    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table class="w-full min-w-[720px] border-collapse">
             <thead>
             <tr>
-                <th>{% trans "Sale No" %}</th>
-                <th>{% trans "Date" %}</th>
-                <th>{% trans "Cashier" %}</th>
-                <th>{% trans "Payment" %}</th>
-                <th>{% trans "Status" %}</th>
-                <th>{% trans "Final" %}</th>
-                <th>{% trans "Exception" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Sale No" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Date" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cashier" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Payment" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Final" %}</th>
+                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Exception" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for sale in sales %}
-                <tr>
-                    <td><a href="{% url 'sale-detail' sale.id %}"><span class="mono">{{ sale.sale_no }}</span></a></td>
-                    <td>{{ sale.created_at }}</td>
-                    <td>{{ sale.cashier.username }}</td>
-                    <td>{{ sale.payment_method }}</td>
-                    <td><span class="badge">{{ sale.status }}</span></td>
-                    <td class="mono">{{ sale.final_amount }}</td>
-                    <td>{% if sale.status == "CANCELLED" %}<span class="badge badge-warning">{% trans "Cancelled" %}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
+                <tr class="hover:bg-surface-subtle">
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><a href="{% url 'sale-detail' sale.id %}"><span class="font-mono">{{ sale.sale_no }}</span></a></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ sale.created_at }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ sale.cashier.username }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ sale.payment_method }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% include "catalog/_status_pill.html" with tone="neutral" label=sale.status %}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ sale.final_amount }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% if sale.status == "CANCELLED" %}{% trans "Cancelled" as cancelled_label %}{% include "catalog/_status_pill.html" with tone="warning" label=cancelled_label %}{% else %}<span class="text-text-soft">-</span>{% endif %}</td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="7" class="empty-cell">
-                        <div class="empty-state">
-                            <strong>{% trans "No sales found." %}</strong>
-                            <span>{% trans "Try different filters, or return after sales have been completed at POS." %}</span>
+                    <td colspan="7" class="border-b border-border px-[9px] py-6 text-center text-text-soft">
+                        <div class="grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft">
+                            <strong class="text-sm text-text">{% trans "No sales found." %}</strong>
+                            <span class="max-w-[420px]">{% trans "Try different filters, or return after sales have been completed at POS." %}</span>
                         </div>
                     </td>
                 </tr>

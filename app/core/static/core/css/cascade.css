@@ -1,0 +1,11 @@
+/*
+ * Cascade order for Melodu dashboard stylesheets.
+ *
+ * dashboard.css is imported into layer(legacy) so it loses to Tailwind
+ * utilities without needing utilities !important. Layer order is declared
+ * here (loaded first) and mirrored in tailwind/input.css.
+ *
+ * Do not edit dashboard.css to add @layer by hand — this wrapper does it.
+ */
+@layer legacy, theme, base, components, utilities;
+@import url("./dashboard.css") layer(legacy);

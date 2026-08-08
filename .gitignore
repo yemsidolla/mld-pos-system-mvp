@@ -36,3 +36,6 @@ data/garage/data/*
 .DS_Store
 .idea/
 .vscode/
+
+# Local Tailwind standalone CLI binary (scripts/build_tailwind.sh)
+.tools/

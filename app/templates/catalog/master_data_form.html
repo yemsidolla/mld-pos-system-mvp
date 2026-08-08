@@ -5,35 +5,35 @@
 {% block page_title %}{{ title }}{% endblock %}
 {% block page_subtitle %}{{ subtitle }}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{{ back_url }}">{% trans "Back" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ back_url }}">{% trans "Back" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% if mode == "create" %}{{ title }}{% else %}{{ object.name }}{% endif %}</h2>
-            <p>{% trans "Names should stay short and clear because they appear in filters, reports, and stock workflows." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% if mode == "create" %}{{ title }}{% else %}{{ object.name }}{% endif %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Names should stay short and clear because they appear in filters, reports, and stock workflows." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        <div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>
     {% endif %}
-    <form class="form-stack" method="post">
+    <form class="grid gap-3.5" method="post">
         {% csrf_token %}
-        <div class="form-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
-                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                    {% if field.help_text %}<p class="m-0 text-text-soft">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
-        <div class="form-actions">
-            <button class="btn btn-success" type="submit">{% if mode == "create" %}{% trans "Create" %}{% else %}{% trans "Save" %}{% endif %}</button>
-            <a class="btn" href="{{ back_url }}">{% trans "Cancel" %}</a>
+        <div class="flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit">{% if mode == "create" %}{% trans "Create" %}{% else %}{% trans "Save" %}{% endif %}</button>
+            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ back_url }}">{% trans "Cancel" %}</a>
         </div>
     </form>
 </section>

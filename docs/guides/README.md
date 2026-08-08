@@ -14,6 +14,7 @@ Operator and developer how-to documentation.
 | [PRODUCT_CLASSIFICATION_GUIDE](PRODUCT_CLASSIFICATION_GUIDE.md) | Product classification fields |
 | [PROMOTION_LABEL_GUIDE](PROMOTION_LABEL_GUIDE.md) | Promotion label printing |
 | [TESTING_GUIDE](TESTING_GUIDE.md) | Test commands and workflow |
+| [TAILWIND_WORKFLOW](TAILWIND_WORKFLOW.md) | Rebuild Tailwind CSS (standalone CLI, no Node) |
 | [USER_MANAGEMENT_GUIDE](USER_MANAGEMENT_GUIDE.md) | User and role operations |
 
 Related: runbooks and checklists are in `docs/operations/`. V6 Authentik setup

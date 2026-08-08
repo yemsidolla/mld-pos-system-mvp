@@ -7,173 +7,245 @@
 {% block page_subtitle %}{% trans "Every token and component, rendered from the real CSS. The visual half of docs/DESIGN_SYSTEM.md." %}{% endblock %}
 
 {% block content %}
-<nav class="panel sg-toc">
-    <a href="#tokens">{% trans "Tokens" %}</a>
-    <a href="#type">{% trans "Typography" %}</a>
-    <a href="#icons">{% trans "Icons" %}</a>
-    <a href="#buttons">{% trans "Buttons" %}</a>
-    <a href="#pills">{% trans "Pills & badges" %}</a>
-    <a href="#cards">{% trans "Cards" %}</a>
-    <a href="#table">{% trans "Table" %}</a>
-    <a href="#filters">{% trans "Column filters" %}</a>
-    <a href="#matrix">{% trans "Permission matrix" %}</a>
-    <a href="#forms">{% trans "Forms" %}</a>
-    <a href="#feedback">{% trans "Alerts" %}</a>
+{# Phase 1: styleguide markup uses Tailwind utilities mapped to Melodu tokens.
+   Shared component class names (panel, btn, …) are intentionally not used here
+   so this page proves the theme mapping. dashboard.css still styles the shell. #}
+
+<nav class="sticky top-[76px] z-[5] mb-4 flex flex-wrap gap-x-3.5 gap-y-1.5 rounded border border-border bg-surface px-4 py-3 shadow-panel" id="sg-toc" aria-label="{% trans 'Style guide sections' %}">
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#tokens">{% trans "Tokens" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#type">{% trans "Typography" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#icons">{% trans "Icons" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#buttons">{% trans "Buttons" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#pills">{% trans "Pills & badges" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#cards">{% trans "Cards" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#table">{% trans "Table" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#filters">{% trans "Column filters" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#matrix">{% trans "Permission matrix" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#forms">{% trans "Forms" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#feedback">{% trans "Alerts" %}</a>
 </nav>
 
-<section class="panel" id="tokens">
-    <header class="panel-header"><div><h2>{% trans "Color tokens" %}</h2><p>{% trans "Use the variable, never the raw value (DESIGN_SYSTEM §2)." %}</p></div></header>
-    <p class="section-label">{% trans "Light working surface" %}</p>
-    <div class="sg-swatches">
-        <div class="sg-swatch"><span style="background:var(--bg)"></span><code>--bg</code></div>
-        <div class="sg-swatch"><span style="background:var(--surface);border:1px solid var(--border)"></span><code>--surface</code></div>
-        <div class="sg-swatch"><span style="background:var(--surface-subtle);border:1px solid var(--border)"></span><code>--surface-subtle</code></div>
-        <div class="sg-swatch"><span style="background:var(--text)"></span><code>--text</code></div>
-        <div class="sg-swatch"><span style="background:var(--text-soft)"></span><code>--text-soft</code></div>
-        <div class="sg-swatch"><span style="background:var(--border)"></span><code>--border</code></div>
-        <div class="sg-swatch"><span style="background:var(--border-strong)"></span><code>--border-strong</code></div>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="tokens">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Color tokens" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Use the variable, never the raw value (DESIGN_SYSTEM §2)." %}</p>
+        </div>
+    </header>
+    <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Light working surface" %}</p>
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2.5">
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-bg"></span><code class="font-mono text-[11px] text-text-soft">--bg</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md border border-border bg-surface"></span><code class="font-mono text-[11px] text-text-soft">--surface</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md border border-border bg-surface-subtle"></span><code class="font-mono text-[11px] text-text-soft">--surface-subtle</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-text"></span><code class="font-mono text-[11px] text-text-soft">--text</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-text-soft"></span><code class="font-mono text-[11px] text-text-soft">--text-soft</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-border"></span><code class="font-mono text-[11px] text-text-soft">--border</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-border-strong"></span><code class="font-mono text-[11px] text-text-soft">--border-strong</code></div>
     </div>
-    <p class="section-label">{% trans "Ink console surface" %}</p>
-    <div class="sg-swatches">
-        <div class="sg-swatch"><span style="background:var(--ink)"></span><code>--ink</code></div>
-        <div class="sg-swatch"><span style="background:var(--ink-soft)"></span><code>--ink-soft</code></div>
-        <div class="sg-swatch"><span style="background:var(--ink-border)"></span><code>--ink-border</code></div>
-        <div class="sg-swatch"><span style="background:var(--ink-text)"></span><code>--ink-text</code></div>
-        <div class="sg-swatch"><span style="background:var(--ink-text-dim)"></span><code>--ink-text-dim</code></div>
-        <div class="sg-swatch"><span style="background:var(--accent)"></span><code>--accent</code></div>
-        <div class="sg-swatch"><span style="background:var(--accent-bright)"></span><code>--accent-bright</code></div>
+    <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Ink console surface" %}</p>
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2.5">
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-ink"></span><code class="font-mono text-[11px] text-text-soft">--ink</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-ink-soft"></span><code class="font-mono text-[11px] text-text-soft">--ink-soft</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-ink-border"></span><code class="font-mono text-[11px] text-text-soft">--ink-border</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-ink-text"></span><code class="font-mono text-[11px] text-text-soft">--ink-text</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-ink-text-dim"></span><code class="font-mono text-[11px] text-text-soft">--ink-text-dim</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-accent"></span><code class="font-mono text-[11px] text-text-soft">--accent</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-accent-bright"></span><code class="font-mono text-[11px] text-text-soft">--accent-bright</code></div>
     </div>
-    <p class="section-label">{% trans "Semantic" %}</p>
-    <div class="sg-swatches">
-        <div class="sg-swatch"><span style="background:var(--primary)"></span><code>--primary</code></div>
-        <div class="sg-swatch"><span style="background:var(--success)"></span><code>--success</code></div>
-        <div class="sg-swatch"><span style="background:var(--danger)"></span><code>--danger</code></div>
-        <div class="sg-swatch"><span style="background:var(--warning)"></span><code>--warning</code></div>
-        <div class="sg-swatch"><span style="background:var(--focus)"></span><code>--focus</code></div>
+    <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Semantic" %}</p>
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2.5">
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-primary"></span><code class="font-mono text-[11px] text-text-soft">--primary</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-success"></span><code class="font-mono text-[11px] text-text-soft">--success</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-danger"></span><code class="font-mono text-[11px] text-text-soft">--danger</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-warning"></span><code class="font-mono text-[11px] text-text-soft">--warning</code></div>
+        <div class="grid gap-1.5 text-[11px]"><span class="block h-11 rounded-md bg-focus"></span><code class="font-mono text-[11px] text-text-soft">--focus</code></div>
     </div>
 </section>
 
-<section class="panel" id="type">
-    <header class="panel-header"><div><h2>{% trans "Typography" %}</h2><p>{% trans "Inter + Noto Sans Khmer; mono for every machine value." %}</p></div></header>
-    <h1>{% trans "Heading 1 — 19px" %} · ភាសាខ្មែរ</h1>
-    <h2>{% trans "Heading 2 — 16px" %} · ភាសាខ្មែរ</h2>
-    <p>{% trans "Body text — 14px / 1.45. The quick brown dog. ឆ្កែ និង ឆ្មា។" %}</p>
-    <p class="muted">{% trans "Muted caption — --text-soft." %}</p>
-    <p class="mono">MONO 8851234567890 · B0421 · $9.99 · ៛ 40,959 · 2027-03-01</p>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="type">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Typography" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Inter + Noto Sans Khmer; mono for every machine value." %}</p>
+        </div>
+    </header>
+    <h1 class="font-sans text-[19px] font-semibold text-text">{% trans "Heading 1 — 19px" %} · ភាសាខ្មែរ</h1>
+    <h2 class="font-sans text-base font-semibold text-text">{% trans "Heading 2 — 16px" %} · ភាសាខ្មែរ</h2>
+    <p class="font-sans text-sm leading-[1.45] text-text">{% trans "Body text — 14px / 1.45. The quick brown dog. ឆ្កែ និង ឆ្មា។" %}</p>
+    <p class="text-text-soft">{% trans "Muted caption — --text-soft." %}</p>
+    <p class="font-mono text-[0.95em] tracking-[-0.01em]">MONO 8851234567890 · B0421 · $9.99 · ៛ 40,959 · 2027-03-01</p>
 </section>
 
-<section class="panel" id="icons">
-    <header class="panel-header"><div><h2>{% trans "Icons" %}</h2><p>{% trans "Inline SVG via the icon tag — no webfont." %}</p></div></header>
-    <div class="sg-icons">
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="icons">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Icons" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Inline SVG via the icon tag — no webfont." %}</p>
+        </div>
+    </header>
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-2">
         {% for name in icon_names %}
-            <div class="sg-icon">{% icon name 22 %}<code>{{ name }}</code></div>
+            <div class="grid justify-items-center gap-1.5 rounded-md border border-border px-1.5 py-3 text-text">{% icon name 22 %}<code class="font-mono text-[10.5px] text-text-soft">{{ name }}</code></div>
         {% endfor %}
     </div>
 </section>
 
-<section class="panel" id="buttons">
-    <header class="panel-header"><div><h2>{% trans "Buttons" %}</h2><p>{% trans "One primary action per view." %}</p></div></header>
-    <div class="sg-row">
-        <button class="btn btn-primary">{% icon "plus" 16 %} {% trans "Primary" %}</button>
-        <button class="btn btn-success">{% icon "check" 16 %} {% trans "Success" %}</button>
-        <button class="btn btn-danger">{% trans "Danger" %}</button>
-        <button class="btn">{% trans "Default" %}</button>
-        <button class="btn btn-secondary">{% trans "Secondary" %}</button>
-        <button class="btn" disabled>{% trans "Disabled" %}</button>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="buttons">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Buttons" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "One primary action per view." %}</p>
+        </div>
+    </header>
+    <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
+        <button type="button" class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline">{% icon "plus" 16 %} {% trans "Primary" %}</button>
+        <button type="button" class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline">{% icon "check" 16 %} {% trans "Success" %}</button>
+        <button type="button" class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-danger bg-danger px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline">{% trans "Danger" %}</button>
+        <button type="button" class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline">{% trans "Default" %}</button>
+        <button type="button" class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface-subtle px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline">{% trans "Secondary" %}</button>
+        <button type="button" disabled class="inline-flex min-h-[38px] cursor-not-allowed items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text opacity-[0.55]">{% trans "Disabled" %}</button>
     </div>
 </section>
 
-<section class="panel" id="pills">
-    <header class="panel-header"><div><h2>{% trans "Status pills & role badges" %}</h2><p>{% trans "Status ramp is separate from action colors." %}</p></div></header>
-    <div class="sg-row">
-        <span class="pill pill-neutral">{% trans "Sold out" %}</span>
-        <span class="pill pill-success">{% trans "Active" %}</span>
-        <span class="pill pill-warning">{% trans "Low stock" %}</span>
-        <span class="pill pill-danger">{% trans "Expired" %}</span>
-        <span class="pill pill-info">{% trans "Promo" %}</span>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="pills">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Status pills & role badges" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Status ramp is separate from action colors." %}</p>
+        </div>
+    </header>
+    <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
+        <span class="inline-block whitespace-nowrap rounded-full bg-[#f1efe8] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#444441]">{% trans "Sold out" %}</span>
+        <span class="inline-block whitespace-nowrap rounded-full bg-[#e1f5ee] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#085041]">{% trans "Active" %}</span>
+        <span class="inline-block whitespace-nowrap rounded-full bg-[#faeeda] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#633806]">{% trans "Low stock" %}</span>
+        <span class="inline-block whitespace-nowrap rounded-full bg-[#fcebeb] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#791f1f]">{% trans "Expired" %}</span>
+        <span class="inline-block whitespace-nowrap rounded-full bg-[#e6f1fb] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#0c447c]">{% trans "Promo" %}</span>
     </div>
-    <div class="sg-row">
-        <span class="role-badge role-owner">{% trans "Owner" %}</span>
-        <span class="role-badge role-manager">{% trans "Manager" %}</span>
-        <span class="role-badge role-inventory">{% trans "Inventory" %}</span>
-        <span class="role-badge role-cashier">{% trans "Cashier" %}</span>
-        <span class="role-badge role-viewer">{% trans "Viewer" %}</span>
-    </div>
-</section>
-
-<section class="panel" id="cards">
-    <header class="panel-header"><div><h2>{% trans "KPI & action cards" %}</h2></div></header>
-    <div class="kpi-grid">
-        <article class="kpi-card"><span class="kpi-label">{% icon "cash" 15 %}{% trans "Sales Today" %}</span><strong class="kpi-value">42</strong><span class="kpi-hint">{% trans "store-wide" %}</span></article>
-        <article class="kpi-card kpi-warning"><span class="kpi-label">{% icon "alert" 15 %}{% trans "Low Stock" %}</span><strong class="kpi-value">7</strong><span class="kpi-hint">{% trans "at or below minimum" %}</span></article>
-        <article class="kpi-card kpi-danger"><span class="kpi-label">{% icon "clock" 15 %}{% trans "Expiring" %}</span><strong class="kpi-value">3</strong><span class="kpi-hint">{% trans "≤30 days" %}</span></article>
-    </div>
-    <div class="action-grid" style="margin-top:12px;">
-        <a class="action-card" href="#cards">{% icon "cart" 20 "action-ic" %}<strong>{% trans "Action Card" %}</strong><span>{% trans "A large tappable shortcut." %}</span></a>
-        <a class="action-card" href="#cards">{% icon "package" 20 "action-ic" %}<strong>{% trans "Stock Overview" %}</strong><span>{% trans "Batches, expiry, levels." %}</span></a>
+    <div class="mb-2.5 flex flex-wrap items-center gap-2.5">
+        <span class="inline-block rounded-full border border-[rgba(109,40,217,0.25)] bg-[#ede9fe] px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] text-[#6d28d9]">{% trans "Owner" %}</span>
+        <span class="inline-block rounded-full border border-[rgba(3,105,161,0.25)] bg-[#e0f2fe] px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] text-[#0369a1]">{% trans "Manager" %}</span>
+        <span class="inline-block rounded-full border border-[rgba(146,64,14,0.25)] bg-[#fef3c7] px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] text-[#92400e]">{% trans "Inventory" %}</span>
+        <span class="inline-block rounded-full border border-[rgba(18,116,84,0.25)] bg-[#e8f3ee] px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] text-success">{% trans "Cashier" %}</span>
+        <span class="inline-block rounded-full border border-[rgba(71,85,105,0.25)] bg-[#f1f5f9] px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] text-[#475569]">{% trans "Viewer" %}</span>
     </div>
 </section>
 
-<section class="panel" id="table">
-    <header class="panel-header"><div><h2>{% trans "Data table" %}</h2><p>{% trans "Mono codes/amounts, pill statuses, hover rows." %}</p></div></header>
-    <table class="data-table">
-        <thead><tr><th>{% trans "Code" %}</th><th>{% trans "Product" %}</th><th>{% trans "Price" %}</th><th>{% trans "Status" %}</th></tr></thead>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="cards">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "KPI & action cards" %}</h2>
+        </div>
+    </header>
+    <div class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2.5">
+        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+            <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "cash" 15 %}{% trans "Sales Today" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">42</strong>
+            <span class="text-xs text-text-soft">{% trans "store-wide" %}</span>
+        </article>
+        <article class="grid gap-1 rounded border border-[#f0c9a4] bg-surface px-4 py-3.5">
+            <span class="flex items-center gap-1.5 text-xs text-[#854f0b]">{% icon "alert" 15 %}{% trans "Low Stock" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-[#854f0b]">7</strong>
+            <span class="text-xs text-[#854f0b]">{% trans "at or below minimum" %}</span>
+        </article>
+        <article class="grid gap-1 rounded border border-[#f0b5b5] bg-surface px-4 py-3.5">
+            <span class="flex items-center gap-1.5 text-xs text-[#a32d2d]">{% icon "clock" 15 %}{% trans "Expiring" %}</span>
+            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-[#a32d2d]">3</strong>
+            <span class="text-xs text-[#a32d2d]">{% trans "≤30 days" %}</span>
+        </article>
+    </div>
+    <div class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5">
+        <a class="grid gap-0.5 rounded-md border border-border bg-surface p-4 text-text no-underline hover:border-primary hover:no-underline" href="#cards">{% icon "cart" 20 "text-accent mb-0.5" %}<strong>{% trans "Action Card" %}</strong><span class="block text-text-soft">{% trans "A large tappable shortcut." %}</span></a>
+        <a class="grid gap-0.5 rounded-md border border-border bg-surface p-4 text-text no-underline hover:border-primary hover:no-underline" href="#cards">{% icon "package" 20 "text-accent mb-0.5" %}<strong>{% trans "Stock Overview" %}</strong><span class="block text-text-soft">{% trans "Batches, expiry, levels." %}</span></a>
+    </div>
+</section>
+
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="table">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Data table" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Mono codes/amounts, pill statuses, hover rows." %}</p>
+        </div>
+    </header>
+    <table class="w-full border-collapse">
+        <thead>
+            <tr>
+                <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Code" %}</th>
+                <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Product" %}</th>
+                <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Price" %}</th>
+                <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Status" %}</th>
+            </tr>
+        </thead>
         <tbody>
-            <tr><td class="mono">B0421</td><td>{% trans "Cat Food 2kg" %}</td><td class="mono">$9.99</td><td><span class="pill pill-success">{% trans "Active" %}</span></td></tr>
-            <tr><td class="mono">B0398</td><td>{% trans "Puppy Treats" %}</td><td class="mono">$2.25</td><td><span class="pill pill-warning">{% trans "Low stock" %}</span></td></tr>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">B0421</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle">{% trans "Cat Food 2kg" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">$9.99</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle"><span class="inline-block whitespace-nowrap rounded-full bg-[#e1f5ee] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#085041]">{% trans "Active" %}</span></td>
+            </tr>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">B0398</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle">{% trans "Puppy Treats" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">$2.25</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle"><span class="inline-block whitespace-nowrap rounded-full bg-[#faeeda] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#633806]">{% trans "Low stock" %}</span></td>
+            </tr>
         </tbody>
     </table>
 </section>
 
-<section class="panel" id="filters">
-    <header class="panel-header"><div><h2>{% trans "Column filters & active-filter bar" %}</h2><p>{% trans "Funnel per column → popover; rule summarised on top. Server-side, combines as AND (DESIGN_SYSTEM §4.14–4.15)." %}</p></div></header>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="filters">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Column filters & active-filter bar" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Funnel per column → popover; rule summarised on top. Server-side, combines as AND (DESIGN_SYSTEM §4.14–4.15)." %}</p>
+        </div>
+    </header>
 
-    <div class="filter-bar">
-        <span class="filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
-        <span class="filter-chip">{% trans "Status" %}: {% trans "Active, Low" %} <a href="#filters" aria-label="{% trans 'Remove' %}">{% icon "x" 13 %}</a></span>
-        <span class="filter-bar-join">{% trans "and" %}</span>
-        <span class="filter-chip">{% trans "Category" %}: {% trans "Food" %} <a href="#filters" aria-label="{% trans 'Remove' %}">{% icon "x" 13 %}</a></span>
-        <a class="filter-bar-clear" href="#filters">{% trans "Clear all" %}</a>
+    <div class="mb-2.5 flex flex-wrap items-center gap-1.5 rounded-md border border-[#bae3ec] bg-[#f0fafc] px-2.5 py-[7px] text-xs">
+        <span class="inline-flex items-center gap-1 font-semibold text-[#0e5566]">{% icon "search" 13 %} {% trans "Showing" %}</span>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-[#bae3ec] bg-surface px-2 py-0.5 text-[#0c4a56]">{% trans "Status" %}: {% trans "Active, Low" %} <a class="inline-flex min-h-0 border-0 bg-transparent p-0 text-text-soft no-underline hover:text-danger" href="#filters" aria-label="{% trans 'Remove' %}">{% icon "x" 13 %}</a></span>
+        <span class="text-ink-text-dim">{% trans "and" %}</span>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-[#bae3ec] bg-surface px-2 py-0.5 text-[#0c4a56]">{% trans "Category" %}: {% trans "Food" %} <a class="inline-flex min-h-0 border-0 bg-transparent p-0 text-text-soft no-underline hover:text-danger" href="#filters" aria-label="{% trans 'Remove' %}">{% icon "x" 13 %}</a></span>
+        <a class="ml-auto text-[11.5px] text-text-soft underline" href="#filters">{% trans "Clear all" %}</a>
     </div>
 
-    <table class="data-table">
+    <table class="w-full border-collapse">
         <thead>
         <tr>
-            <th>{% trans "Code" %}</th>
-            <th>{% trans "Product" %}</th>
-            <th class="has-filter">{% trans "Category" %}
-                <details class="col-filter is-active">
-                    <summary aria-label="{% trans 'Filter category' %}">{% icon "search" 14 %}</summary>
-                    <div class="col-filter-pop">
-                        <p class="col-filter-title">{% trans "Filter: Category" %}</p>
-                        <div class="col-filter-options">
-                            <label><input type="checkbox" checked> {% trans "Food" %}</label>
-                            <label><input type="checkbox"> {% trans "Toys" %}</label>
-                            <label><input type="checkbox"> {% trans "Grooming" %}</label>
+            <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Code" %}</th>
+            <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Product" %}</th>
+            <th class="relative border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Category" %}
+                <details class="relative ml-1 inline-block">
+                    <summary class="inline-flex cursor-pointer list-none rounded px-[3px] py-px text-accent [&::-webkit-details-marker]:hidden" aria-label="{% trans 'Filter category' %}">{% icon "search" 14 %}</summary>
+                    <div class="absolute right-0 top-[calc(100%+4px)] z-30 w-[210px] rounded border border-border-strong bg-surface p-2.5 text-left text-sm font-normal normal-case tracking-normal shadow">
+                        <p class="mb-1.5 mt-0 text-[11px] text-text-soft">{% trans "Filter: Category" %}</p>
+                        <div class="grid max-h-[200px] gap-0.5 overflow-y-auto">
+                            <label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text"><input type="checkbox" checked> {% trans "Food" %}</label>
+                            <label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text"><input type="checkbox"> {% trans "Toys" %}</label>
+                            <label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text"><input type="checkbox"> {% trans "Grooming" %}</label>
                         </div>
-                        <div class="col-filter-actions">
-                            <button class="btn btn-primary" type="button">{% trans "Apply" %}</button>
-                            <button class="btn" type="button">{% trans "Clear" %}</button>
+                        <div class="mt-[9px] flex gap-1.5 border-t border-border pt-[9px]">
+                            <button type="button" class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-2.5 py-1.5 text-xs font-[750] text-white">{% trans "Apply" %}</button>
+                            <button type="button" class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text">{% trans "Clear" %}</button>
                         </div>
                     </div>
                 </details>
             </th>
-            <th>{% trans "Price" %}</th>
-            <th class="has-filter">{% trans "Status" %}
-                <details class="col-filter is-active" open>
-                    <summary aria-label="{% trans 'Filter status' %}">{% icon "search" 14 %}</summary>
-                    <div class="col-filter-pop">
-                        <p class="col-filter-title">{% trans "Filter: Status" %}</p>
-                        <input class="col-filter-search" type="text" placeholder="{% trans 'Search values…' %}">
-                        <div class="col-filter-options">
-                            <label><input type="checkbox" checked> {% trans "Active" %}</label>
-                            <label><input type="checkbox" checked> {% trans "Low stock" %}</label>
-                            <label><input type="checkbox"> {% trans "Sold out" %}</label>
-                            <label><input type="checkbox"> {% trans "Expired" %}</label>
+            <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Price" %}</th>
+            <th class="relative border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Status" %}
+                <details class="relative ml-1 inline-block" open>
+                    <summary class="inline-flex cursor-pointer list-none rounded bg-surface-subtle px-[3px] py-px text-accent [&::-webkit-details-marker]:hidden" aria-label="{% trans 'Filter status' %}">{% icon "search" 14 %}</summary>
+                    <div class="absolute right-0 top-[calc(100%+4px)] z-30 w-[210px] rounded border border-border-strong bg-surface p-2.5 text-left text-sm font-normal normal-case tracking-normal shadow">
+                        <p class="mb-1.5 mt-0 text-[11px] text-text-soft">{% trans "Filter: Status" %}</p>
+                        <input class="mb-2 w-full" type="text" placeholder="{% trans 'Search values…' %}">
+                        <div class="grid max-h-[200px] gap-0.5 overflow-y-auto">
+                            <label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text"><input type="checkbox" checked> {% trans "Active" %}</label>
+                            <label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text"><input type="checkbox" checked> {% trans "Low stock" %}</label>
+                            <label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text"><input type="checkbox"> {% trans "Sold out" %}</label>
+                            <label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text"><input type="checkbox"> {% trans "Expired" %}</label>
                         </div>
-                        <div class="col-filter-actions">
-                            <button class="btn btn-primary" type="button">{% trans "Apply" %}</button>
-                            <button class="btn" type="button">{% trans "Clear" %}</button>
+                        <div class="mt-[9px] flex gap-1.5 border-t border-border pt-[9px]">
+                            <button type="button" class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-2.5 py-1.5 text-xs font-[750] text-white">{% trans "Apply" %}</button>
+                            <button type="button" class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text">{% trans "Clear" %}</button>
                         </div>
                     </div>
                 </details>
@@ -181,50 +253,110 @@
         </tr>
         </thead>
         <tbody>
-            <tr><td class="mono">P001</td><td>{% trans "Cat Food 2kg" %}</td><td>{% trans "Food" %}</td><td class="mono">$9.99</td><td><span class="pill pill-success">{% trans "Active" %}</span></td></tr>
-            <tr><td class="mono">P010</td><td>{% trans "Puppy Treats" %}</td><td>{% trans "Food" %}</td><td class="mono">$2.25</td><td><span class="pill pill-warning">{% trans "Low stock" %}</span></td></tr>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">P001</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle">{% trans "Cat Food 2kg" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle">{% trans "Food" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">$9.99</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle"><span class="inline-block whitespace-nowrap rounded-full bg-[#e1f5ee] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#085041]">{% trans "Active" %}</span></td>
+            </tr>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">P010</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle">{% trans "Puppy Treats" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle">{% trans "Food" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">$2.25</td>
+                <td class="border-b border-border px-2.5 py-2.5 align-middle"><span class="inline-block whitespace-nowrap rounded-full bg-[#faeeda] px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#633806]">{% trans "Low stock" %}</span></td>
+            </tr>
         </tbody>
     </table>
-    <p class="muted" style="margin-top:8px;">{% trans "Demo only — the Status popover is shown open. Live wiring to real list pages is a separate feature task." %}</p>
+    <p class="mt-2 text-text-soft">{% trans "Demo only — the Status popover is shown open. Live wiring to real list pages is a separate feature task." %}</p>
 </section>
 
-<section class="panel" id="matrix">
-    <header class="panel-header"><div><h2>{% trans "Permission matrix" %}</h2><p>{% trans "Role × capability grid (DESIGN_SYSTEM §4.16). Owner column always all-on and disabled." %}</p></div></header>
-    <table class="data-table matrix-grid">
-        <thead><tr><th>{% trans "Capability" %}</th><th class="matrix-role">{% trans "Owner" %}</th><th class="matrix-role">{% trans "Manager" %}</th><th class="matrix-role">{% trans "Cashier" %}</th></tr></thead>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="matrix">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Permission matrix" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Role × capability grid (DESIGN_SYSTEM §4.16). Owner column always all-on and disabled." %}</p>
+        </div>
+    </header>
+    <table class="w-full border-collapse">
+        <thead>
+            <tr>
+                <th class="border-b border-border px-2.5 py-2.5 text-left text-xs font-semibold uppercase text-text-soft">{% trans "Capability" %}</th>
+                <th class="border-b border-border px-2.5 py-2.5 text-center text-xs font-semibold uppercase text-text-soft">{% trans "Owner" %}</th>
+                <th class="border-b border-border px-2.5 py-2.5 text-center text-xs font-semibold uppercase text-text-soft">{% trans "Manager" %}</th>
+                <th class="border-b border-border px-2.5 py-2.5 text-center text-xs font-semibold uppercase text-text-soft">{% trans "Cashier" %}</th>
+            </tr>
+        </thead>
         <tbody>
-            <tr class="matrix-group"><td colspan="4">{% trans "POS & sales" %}</td></tr>
-            <tr><td>{% trans "Use the POS screen" %}</td><td class="matrix-cell"><input type="checkbox" checked disabled></td><td class="matrix-cell"><input type="checkbox" checked></td><td class="matrix-cell"><input type="checkbox" checked></td></tr>
-            <tr><td>{% trans "Cancel a sale" %}</td><td class="matrix-cell"><input type="checkbox" checked disabled></td><td class="matrix-cell"><input type="checkbox" checked></td><td class="matrix-cell"><input type="checkbox"></td></tr>
-            <tr class="matrix-group"><td colspan="4">{% trans "System" %}</td></tr>
-            <tr><td>{% trans "Reset or clear data" %}</td><td class="matrix-cell"><input type="checkbox" checked disabled></td><td class="matrix-cell"><input type="checkbox"></td><td class="matrix-cell"><input type="checkbox"></td></tr>
+            <tr>
+                <td class="bg-surface-subtle px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft" colspan="4">{% trans "POS & sales" %}</td>
+            </tr>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-2.5 py-2.5">{% trans "Use the POS screen" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox" checked disabled></td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox" checked></td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox" checked></td>
+            </tr>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-2.5 py-2.5">{% trans "Cancel a sale" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox" checked disabled></td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox" checked></td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox"></td>
+            </tr>
+            <tr>
+                <td class="bg-surface-subtle px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft" colspan="4">{% trans "System" %}</td>
+            </tr>
+            <tr class="hover:bg-surface-subtle">
+                <td class="border-b border-border px-2.5 py-2.5">{% trans "Reset or clear data" %}</td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox" checked disabled></td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox"></td>
+                <td class="border-b border-border px-2.5 py-2.5 text-center"><input class="h-[17px] w-[17px] accent-accent" type="checkbox"></td>
+            </tr>
         </tbody>
     </table>
 </section>
 
-<section class="panel" id="forms">
-    <header class="panel-header"><div><h2>{% trans "Form fields" %}</h2></div></header>
-    <div class="form-grid">
-        <div><label for="sg-text">{% trans "Text input" %}</label><input id="sg-text" type="text" placeholder="{% trans 'Type here' %}"></div>
-        <div><label for="sg-select">{% trans "Select" %}</label><select id="sg-select"><option>{% trans "Option A" %}</option><option>{% trans "Option B" %}</option></select></div>
-        <div><label>{% trans "Quantity stepper" %}</label>
-            <div class="input-row compact-row">
-                <button class="quantity-stepper" type="button">-</button>
-                <input class="quantity-input" type="number" value="1">
-                <button class="quantity-stepper" type="button">+</button>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="forms">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Form fields" %}</h2>
+        </div>
+    </header>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
+        <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-text-soft" for="sg-text">{% trans "Text input" %}</label>
+            <input id="sg-text" type="text" placeholder="{% trans 'Type here' %}">
+        </div>
+        <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-text-soft" for="sg-select">{% trans "Select" %}</label>
+            <select id="sg-select"><option>{% trans "Option A" %}</option><option>{% trans "Option B" %}</option></select>
+        </div>
+        <div>
+            <label class="mb-1.5 block text-[12.5px] font-semibold text-text-soft">{% trans "Quantity stepper" %}</label>
+            <div class="flex flex-wrap items-center gap-2">
+                <button class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface font-[750] text-text" type="button">-</button>
+                <input class="w-16 text-center" type="number" value="1">
+                <button class="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface font-[750] text-text" type="button">+</button>
             </div>
         </div>
-        <div><label for="sg-check"><input id="sg-check" type="checkbox" checked> {% trans "Checkbox" %}</label></div>
+        <div>
+            <label class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-text-soft" for="sg-check"><input id="sg-check" type="checkbox" checked> {% trans "Checkbox" %}</label>
+        </div>
     </div>
 </section>
 
-<section class="panel" id="feedback">
-    <header class="panel-header"><div><h2>{% trans "Alerts & empty state" %}</h2></div></header>
-    <div class="message-stack">
-        <div class="alert alert-success">{% trans "Success — saved." %}</div>
-        <div class="alert alert-warning">{% trans "Warning — check this." %}</div>
-        <div class="alert alert-danger">{% trans "Error — could not complete." %}</div>
+<section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="feedback">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <div>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Alerts & empty state" %}</h2>
+        </div>
+    </header>
+    <div class="mb-4 grid gap-2">
+        <div class="rounded-r-md border border-[#b9ddcf] border-l-[3px] border-l-success bg-[#e8f3ee] px-3 py-2.5 text-success">{% trans "Success — saved." %}</div>
+        <div class="rounded-r-md border border-[#f1d99a] border-l-[3px] border-l-warning bg-[#fff6df] px-3 py-2.5 text-warning">{% trans "Warning — check this." %}</div>
+        <div class="rounded-r-md border border-[#f3b3ad] border-l-[3px] border-l-danger bg-[#fdecec] px-3 py-2.5 text-danger">{% trans "Error — could not complete." %}</div>
     </div>
-    <p class="empty-state">{% icon "check" 16 %} {% trans "All clear — nothing here yet." %}</p>
+    <p class="px-3 py-[26px] text-center text-[13px] text-text-soft">{% icon "check" 16 %} {% trans "All clear — nothing here yet." %}</p>
 </section>
 {% endblock %}

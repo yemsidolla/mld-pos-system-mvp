@@ -7,24 +7,24 @@
 {% block page_subtitle %}{% trans "Choose what each role can do. Changes apply on the next request and are audited." %}{% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Roles" %}</h2>
-            <p>{% trans "Built-in roles can be retuned; add your own for special cases." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Roles" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Built-in roles can be retuned; add your own for special cases." %}</p>
         </div>
-        <a class="btn btn-primary" href="{% url 'role-create' %}">{% icon "plus" 16 %} {% trans "New Role" %}</a>
+        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'role-create' %}">{% icon "plus" 16 %} {% trans "New Role" %}</a>
     </header>
-    <div class="role-chips">
+    <div class="flex flex-wrap gap-2">
         {% for role in roles %}
-            <div class="role-chip">
-                <span class="role-chip-name">{{ role.name }}</span>
-                {% if role.is_builtin %}<span class="pill pill-neutral">{% trans "Built-in" %}</span>{% endif %}
-                <a class="role-chip-edit" href="{% url 'role-edit' role.slug %}" aria-label="{% trans 'Edit role' %}">{% icon "settings" 14 %}</a>
+            <div class="inline-flex items-center gap-2 rounded-full border border-border bg-surface py-[7px] pl-3 pr-2.5">
+                <span class="text-[13px] font-semibold">{{ role.name }}</span>
+                {% if role.is_builtin %}{% trans "Built-in" as builtin_label %}{% include "catalog/_status_pill.html" with tone="neutral" label=builtin_label %}{% endif %}
+                <a class="inline-flex min-h-0 cursor-pointer items-center border-0 bg-transparent p-0.5 text-text-soft no-underline hover:text-accent hover:no-underline" href="{% url 'role-edit' role.slug %}" aria-label="{% trans 'Edit role' %}">{% icon "settings" 14 %}</a>
                 {% if not role.is_builtin %}
-                    <form method="post" action="{% url 'role-delete' role.slug %}" data-confirm-message="{% blocktrans with name=role.name %}Delete the {{ name }} role?{% endblocktrans %}">
+                    <form class="m-0 inline-flex" method="post" action="{% url 'role-delete' role.slug %}" data-confirm-message="{% blocktrans with name=role.name %}Delete the {{ name }} role?{% endblocktrans %}">
                         {% csrf_token %}
-                        <button class="role-chip-delete" type="submit" aria-label="{% trans 'Delete role' %}">{% icon "x" 14 %}</button>
+                        <button class="inline-flex min-h-0 cursor-pointer items-center border-0 bg-transparent p-0.5 text-text-soft hover:text-danger" type="submit" aria-label="{% trans 'Delete role' %}">{% icon "x" 14 %}</button>
                     </form>
                 {% endif %}
             </div>
@@ -32,32 +32,34 @@
     </div>
 </section>
 
-<section class="panel">
-    <header class="panel-header">
+<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Permission matrix" %}</h2>
-            <p>{% trans "Tick a capability to grant it to a role." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Permission matrix" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Tick a capability to grant it to a role." %}</p>
         </div>
     </header>
-    <p class="matrix-owner-note">{% icon "shield" 14 %} {% trans "The Owner role always holds every capability and cannot be limited." %}</p>
+    <p class="mb-3 mt-0 text-xs text-text-soft">{% icon "shield" 14 %} {% trans "The Owner role always holds every capability and cannot be limited." %}</p>
     <form method="post">
         {% csrf_token %}
-        <div class="table-scroll">
-            <table class="data-table matrix-grid">
+        <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+            <table class="w-full min-w-[720px] border-collapse [&_tbody_tr:not(.matrix-group):hover]:bg-surface-subtle">
                 <thead>
                     <tr>
-                        <th>{% trans "Capability" %}</th>
-                        {% for role in roles %}<th class="matrix-role">{{ role.name }}</th>{% endfor %}
+                        <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Capability" %}</th>
+                        {% for role in roles %}<th class="border-b border-border px-[9px] py-2 text-center text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{{ role.name }}</th>{% endfor %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for group, items in capability_groups %}
-                        <tr class="matrix-group"><td colspan="{{ roles|length|add:1 }}">{{ group }}</td></tr>
+                        <tr class="matrix-group hover:bg-transparent">
+                            <td class="bg-surface-subtle px-[9px] py-1.5 text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft" colspan="{{ roles|length|add:1 }}">{{ group }}</td>
+                        </tr>
                         {% for key, label in items %}
-                            <tr>
-                                <td>{{ label }}</td>
+                            <tr class="hover:bg-surface-subtle">
+                                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ label }}</td>
                                 {% for role in roles %}
-                                    <td class="matrix-cell">
+                                    <td class="border-b border-border px-[9px] py-2.5 text-center align-middle [&_input]:size-[17px] [&_input]:accent-accent">
                                         <input type="checkbox" name="cap__{{ role.slug }}__{{ key }}"
                                             aria-label="{{ label }} — {{ role.name }}"
                                             {% if role.is_owner %}checked disabled{% elif key in role.capabilities %}checked{% endif %}>
@@ -69,8 +71,8 @@
                 </tbody>
             </table>
         </div>
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% trans "Save Permissions" %}</button>
+        <div class="mt-3.5 flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% icon "check" 16 %} {% trans "Save Permissions" %}</button>
         </div>
     </form>
 </section>

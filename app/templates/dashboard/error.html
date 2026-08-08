@@ -5,45 +5,48 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ status_code }} {{ title }} | Melodu POS</title>
-    <link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/cascade.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/tailwind.css' %}">
 </head>
-<body class="auth-page">
-<div class="auth-backdrop" aria-hidden="true"></div>
-<main class="auth-shell">
-    <section class="auth-panel error-panel">
-        <p class="terminal-line terminal-alert" aria-hidden="true">
-            <span class="terminal-dot"></span>MELODU-POS // {% trans "ACCESS CONTROL" %}
+<body class="relative grid min-h-screen place-items-center overflow-hidden bg-[radial-gradient(900px_500px_at_80%_-10%,rgba(34,211,238,0.16),transparent_60%),radial-gradient(700px_420px_at_8%_110%,rgba(99,102,241,0.18),transparent_55%),var(--color-auth-bg)] p-[18px] text-auth-fg max-[640px]:content-start max-[640px]:overflow-auto">
+<div class="pointer-events-none fixed inset-0 bg-[linear-gradient(rgba(148,184,220,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(148,184,220,0.07)_1px,transparent_1px)] bg-size-[44px_44px] [mask-image:radial-gradient(ellipse_90%_80%_at_50%_40%,black_35%,transparent_100%)]" aria-hidden="true">
+    <div class="absolute inset-0 animate-auth-sweep bg-[linear-gradient(180deg,transparent_0%,rgba(34,211,238,0.05)_50%,transparent_100%)]"></div>
+</div>
+<main class="relative z-[1] w-[min(420px,100%)] max-[640px]:mx-auto max-[640px]:w-[min(100%,430px)]">
+    <section class="rounded-[14px] border border-auth-panel-border bg-auth-panel px-[26px] pb-5 pt-[26px] text-left shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_18px_60px_rgba(2,6,16,0.7),inset_0_1px_0_rgba(160,200,255,0.10)] backdrop-blur-[10px]">
+        <p class="mb-4 mt-0 flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-auth-terminal-alert" aria-hidden="true">
+            <span class="size-2 animate-terminal-pulse rounded-full bg-current shadow-[0_0_8px_currentColor]"></span>MELODU-POS // {% trans "ACCESS CONTROL" %}
         </p>
 
-        <div class="auth-brand">
-            <span class="brand-mark glow">M</span>
+        <div class="mb-[18px] flex items-center gap-3">
+            <span class="inline-grid size-9 place-items-center rounded-md border border-auth-mark-border bg-[linear-gradient(145deg,var(--color-auth-mark-from),var(--color-auth-mark-to))] text-[15px] font-extrabold text-auth-mark-fg shadow-[0_0_18px_rgba(34,211,238,0.35)]">M</span>
             <div>
-                <p class="eyebrow">{% trans "Melodu POS" %}</p>
-                <h1>{{ title }}</h1>
+                <p class="m-0 text-xs font-[750] uppercase tracking-normal text-accent-bright">{% trans "Melodu POS" %}</p>
+                <h1 class="mt-0.5 mb-0 text-2xl leading-[1.15] tracking-[0.01em] text-auth-heading">{{ title }}</h1>
             </div>
         </div>
 
-        <div class="error-readout" aria-hidden="true">
-            <span class="error-code">{{ status_code }}</span>
-            <span class="error-scan"></span>
+        <div class="my-3.5 mb-2.5 flex items-center gap-4" aria-hidden="true">
+            <span class="m-0 font-mono text-[56px] font-bold leading-none text-auth-terminal [text-shadow:0_0_24px_rgba(34,211,238,0.45)]">{{ status_code }}</span>
+            <span class="h-2.5 flex-1 rounded-sm opacity-50 bg-[repeating-linear-gradient(90deg,rgba(103,232,249,0.45)_0_6px,transparent_6px_12px)]"></span>
         </div>
 
-        <p class="error-message">{{ message }}</p>
+        <p class="mb-[18px] mt-0 text-[15px] text-auth-message">{{ message }}</p>
 
-        <div class="error-next-steps">
-            <h2>{% trans "What to do next" %}</h2>
-            <p>{{ support_hint }}</p>
+        <div class="my-4 rounded-[10px] border border-auth-step-border bg-auth-step-bg px-3.5 py-3">
+            <h2 class="mb-1.5 mt-0 text-[13px] text-auth-heading">{% trans "What to do next" %}</h2>
+            <p class="m-0 text-[13px] text-auth-hint">{{ support_hint }}</p>
         </div>
 
-        <div class="form-actions">
-            <a class="btn btn-primary" href="{{ action_url }}">{{ action_label }}</a>
+        <div class="flex flex-wrap items-center gap-2">
+            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-auth-btn-border bg-[linear-gradient(135deg,var(--color-auth-btn-from),var(--color-auth-btn-to))] px-[13px] py-[9px] font-sans text-sm font-[750] text-auth-btn-fg no-underline shadow-[0_0_22px_rgba(37,99,235,0.35)] hover:bg-[linear-gradient(135deg,var(--color-auth-btn-hover-from),var(--color-auth-btn-hover-to))] hover:no-underline hover:shadow-[0_0_30px_rgba(56,189,248,0.5)]" href="{{ action_url }}">{{ action_label }}</a>
             {% if secondary_url %}
-                <a class="btn btn-ghost" href="{{ secondary_url }}">{{ secondary_label }}</a>
+                <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-auth-ghost-border bg-transparent px-[13px] py-[9px] font-sans text-sm font-[750] text-auth-ghost-text no-underline hover:no-underline" href="{{ secondary_url }}">{{ secondary_label }}</a>
             {% endif %}
         </div>
 
         {% if footer_note %}
-            <p class="auth-meta" aria-hidden="true">
+            <p class="mt-[22px] mb-0 flex justify-center gap-2 font-mono text-[10px] tracking-[0.16em] text-ink-text-dim" aria-hidden="true">
                 <span>{{ footer_note }}</span>
             </p>
         {% endif %}

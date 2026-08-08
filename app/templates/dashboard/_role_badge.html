@@ -1,0 +1,13 @@
+{% comment %}
+Shared role badge markup (DESIGN_SYSTEM §4.3). Used by the profile menu,
+user list, and styleguide — same classes everywhere, so the app and the
+styleguide cannot drift apart.
+
+Colours come from --color-role-* theme tokens rather than inline hex, so a
+role colour is defined in exactly one place.
+
+Expects: role (e.g. OWNER), label (display text).
+{% endcomment %}
+{% with r=role|lower %}
+<span class="role-badge role-{{ r }} inline-block rounded-full border px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] {% if r == 'owner' %}border-role-owner-border bg-role-owner-bg text-role-owner{% elif r == 'manager' %}border-role-manager-border bg-role-manager-bg text-role-manager{% elif r == 'inventory' %}border-role-inventory-border bg-role-inventory-bg text-role-inventory{% elif r == 'viewer' %}border-role-viewer-border bg-role-viewer-bg text-role-viewer{% else %}border-transparent bg-role-cashier-bg text-success{% endif %}">{{ label }}</span>
+{% endwith %}

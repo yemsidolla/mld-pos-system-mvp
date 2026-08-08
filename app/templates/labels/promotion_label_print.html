@@ -5,8 +5,8 @@
 {% block page_title %}{% trans "Promotion Labels" %}{% endblock %}
 {% block page_subtitle %}{% trans "Print special-offer labels for a promotion's products." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'promotion-list' %}">{% trans "Promotions" %}</a>
-    <a class="btn" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-list' %}">{% trans "Promotions" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
 {% endblock %}
 
 {% block extra_head %}
@@ -34,50 +34,54 @@
 {% endblock %}
 
 {% block content %}
-<section class="panel no-print">
-    <header class="panel-header">
+<section class="no-print rounded border border-border bg-surface p-[18px] shadow-panel print:hidden">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Promotion Label Setup" %}</h2>
-            <p>{% trans "Quantity is the number of copies per product in the promotion." %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Promotion Label Setup" %}</h2>
+            <p class="m-0 text-text-soft">{% trans "Quantity is the number of copies per product in the promotion." %}</p>
         </div>
     </header>
-    <div class="alert alert-warning">
+    <div class="rounded-r-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">
         {% trans "Promotion labels print one card per active product in the selected promotion. Review the active dates and prices before printing." %}
     </div>
-    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-    <form class="form-stack" method="post">
+    {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="grid gap-3.5" method="post">
         {% csrf_token %}
-        <div class="form-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
-                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                    {% if field.help_text %}<p class="m-0 text-text-soft">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
-        <div class="form-actions">
-            <button class="btn btn-primary" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
-            <button class="btn btn-success" type="submit" name="action" value="print">{% trans "Print" %}</button>
+        <div class="flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit" name="action" value="print">{% trans "Print" %}</button>
         </div>
     </form>
 </section>
 
 {% if template and labels %}
-<section class="metric-grid no-print">
-    <article class="metric-card"><span>{% trans "Promotion" %}</span><strong class="small-value">{{ promotion.name }}</strong></article>
-    <article class="metric-card"><span>{% trans "Active Products" %}</span><strong>{{ products|length }}</strong></article>
-    <article class="metric-card"><span>{% trans "Copies Per Product" %}</span><strong>{{ quantity }}</strong></article>
-    <article class="metric-card"><span>{% trans "Total Labels" %}</span><strong>{{ labels|length }}</strong></article>
+<section class="no-print mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 print:hidden">
+    {% trans "Promotion" as lbl_promo %}
+    {% include "reports/_metric_card.html" with label=lbl_promo value=promotion.name size="small" %}
+    {% trans "Active Products" as lbl_products %}
+    {% include "reports/_metric_card.html" with label=lbl_products value=products|length %}
+    {% trans "Copies Per Product" as lbl_copies %}
+    {% include "reports/_metric_card.html" with label=lbl_copies value=quantity %}
+    {% trans "Total Labels" as lbl_total %}
+    {% include "reports/_metric_card.html" with label=lbl_total value=labels|length %}
 </section>
-<section class="panel">
-    <header class="panel-header no-print">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel print:border-0 print:p-0 print:shadow-none">
+    <header class="no-print mb-3.5 flex items-start justify-between gap-3.5 print:hidden">
         <div>
-            <h2>{% trans "Promotion Print Preview" %}</h2>
-            <p>{{ promotion.name }} · {% trans "Promotion window" %}: {{ promotion.start_date }} → {{ promotion.end_date }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Promotion Print Preview" %}</h2>
+            <p class="m-0 text-text-soft">{{ promotion.name }} · {% trans "Promotion window" %}: {{ promotion.start_date }} → {{ promotion.end_date }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
         </div>
-        <button class="btn btn-success" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
+        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
     </header>
     <div class="label-sheet">
         {% for card in labels %}
@@ -88,7 +92,7 @@
                 <div class="was">{{ store_setting.currency_symbol|default:"$" }}{{ card.original_price }}</div>
                 <div class="now">{{ store_setting.currency_symbol|default:"$" }}{{ card.promo_price }}</div>
                 <div>{% trans "Save" %} {{ store_setting.currency_symbol|default:"$" }}{{ card.discount }}</div>
-                <div class="muted">{{ promotion.start_date }} – {{ promotion.end_date }}</div>
+                <div class="text-text-soft">{{ promotion.start_date }} – {{ promotion.end_date }}</div>
                 {% if template.custom_footer %}<div>{{ template.custom_footer }}</div>{% endif %}
             </article>
         {% endfor %}

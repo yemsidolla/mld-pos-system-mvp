@@ -1,36 +1,36 @@
 {% load i18n %}
-<div class="scanner-modal" data-scanner-modal hidden>
-    <div class="scanner-backdrop" data-scanner-close></div>
-    <section class="scanner-panel" role="dialog" aria-modal="true" aria-labelledby="scanner-title">
-        <header class="scanner-header">
+<div class="fixed inset-0 z-[80]" data-scanner-modal hidden>
+    <div class="absolute inset-0 bg-modal-backdrop" data-scanner-close></div>
+    <section class="relative mx-auto my-3.5 max-h-[calc(100vh-28px)] w-[min(680px,calc(100vw-28px))] overflow-auto rounded-md bg-surface p-[18px] shadow max-[640px]:my-0 max-[640px]:max-h-[100dvh] max-[640px]:w-full max-[640px]:rounded-none" role="dialog" aria-modal="true" aria-labelledby="scanner-title">
+        <header class="mb-3 flex items-start justify-between gap-3">
             <div>
-                <p class="eyebrow">{% trans "Camera scanner" %}</p>
-                <h2 id="scanner-title">{% trans "Scan barcode or QR" %}</h2>
+                <p class="m-0 text-xs font-[750] uppercase tracking-normal text-success">{% trans "Camera scanner" %}</p>
+                <h2 class="mt-0.5 mb-0 text-xl" id="scanner-title">{% trans "Scan barcode or QR" %}</h2>
             </div>
-            <button class="icon-button" type="button" data-scanner-close aria-label="{% trans 'Close scanner' %}">×</button>
+            <button class="inline-flex size-9 min-h-0 cursor-pointer items-center justify-center border border-border-strong bg-surface p-0 text-[22px] font-[750] text-text hover:bg-surface-subtle" type="button" data-scanner-close aria-label="{% trans 'Close scanner' %}">×</button>
         </header>
-        <div class="scanner-status" data-scanner-status>{% trans "Use the camera, upload an image, or type the code manually." %}</div>
-        <div class="scanner-help">
-            <strong>{% trans "Best results" %}</strong>
+        <div class="mb-3 text-text-soft" data-scanner-status>{% trans "Use the camera, upload an image, or type the code manually." %}</div>
+        <div class="mb-3 grid gap-1 rounded-md border border-border bg-surface px-3 py-2.5 text-text-soft">
+            <strong class="text-text">{% trans "Best results" %}</strong>
             <span>{% trans "Keep the full code straight, bright, and close to the camera. If camera scan fails, upload a sharp photo or type the code." %}</span>
         </div>
-        <div id="melodu-scanner-reader" class="scanner-reader"></div>
-        <div class="scanner-actions">
-            <button class="btn btn-primary" type="button" data-scanner-start>{% trans "Open Camera" %}</button>
-            <button class="btn" type="button" data-scanner-capture>{% trans "Capture Frame" %}</button>
-            <button class="btn" type="button" data-scanner-stop>{% trans "Stop Camera" %}</button>
-            <label class="btn btn-secondary file-button">
+        <div id="melodu-scanner-reader" class="grid min-h-[280px] place-items-center overflow-hidden rounded-md border border-dashed border-border-strong bg-surface-subtle"></div>
+        <div class="my-3 flex flex-wrap gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="button" data-scanner-start>{% trans "Open Camera" %}</button>
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scanner-capture>{% trans "Capture Frame" %}</button>
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scanner-stop>{% trans "Stop Camera" %}</button>
+            <label class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface-subtle px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline [&_input]:hidden">
                 {% trans "Upload Image" %}
                 <input type="file" accept="image/*,.jpg,.jpeg,.png,.webp" data-scanner-file>
             </label>
         </div>
-        <div class="manual-scan">
+        <div class="grid gap-1.5">
             <label for="manual-scan-value">{% trans "Manual code" %}</label>
-            <div class="input-row">
+            <div class="flex flex-wrap items-center gap-2 max-[640px]:items-stretch [&_input]:min-w-[min(100%,220px)] [&_input]:flex-[1_1_220px]">
                 <input id="manual-scan-value" type="text" data-scanner-manual autocomplete="off">
-                <button class="btn btn-primary" type="button" data-scanner-apply>{% trans "Apply" %}</button>
+                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline max-[640px]:flex-[1_1_140px]" type="button" data-scanner-apply>{% trans "Apply" %}</button>
             </div>
         </div>
-        <div class="scanner-result" data-scanner-result></div>
+        <div class="mt-3 text-text-soft" data-scanner-result></div>
     </section>
 </div>

@@ -6,17 +6,20 @@ field. Expects:
   title — popover heading text
   clear_url — href that drops all filters (from the view context)
 Must sit inside the list page's GET <form> so Apply submits the whole filter set.
+
+Hook classes kept: col-filter, is-active, col-filter-pop, col-filter-title,
+col-filter-options, col-filter-actions. No JS queries these; utilities carry the look.
 {% endcomment %}
-<details class="col-filter {% if field.value %}is-active{% endif %}">
-    <summary aria-label="{{ title }}">{% icon "search" 14 %}</summary>
-    <div class="col-filter-pop">
-        <p class="col-filter-title">{{ title }}</p>
-        <div class="col-filter-options">
-            {% for choice in field %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+<details class="col-filter relative ml-1 inline-block {% if field.value %}is-active{% endif %} open:[&>summary]:bg-surface-subtle open:[&>summary]:text-accent {% if field.value %}[&>summary]:text-accent{% endif %}">
+    <summary class="inline-flex cursor-pointer list-none rounded px-[3px] py-px text-text-soft hover:bg-surface-subtle hover:text-accent [&::-webkit-details-marker]:hidden" aria-label="{{ title }}">{% icon "search" 14 %}</summary>
+    <div class="col-filter-pop absolute right-0 top-[calc(100%+4px)] z-30 w-[210px] rounded border border-border-strong bg-surface p-2.5 text-left text-sm font-normal normal-case tracking-normal shadow">
+        <p class="col-filter-title mb-1.5 mt-0 text-[11px] text-text-soft">{{ title }}</p>
+        <div class="col-filter-options grid max-h-[200px] gap-0.5 overflow-y-auto">
+            {% for choice in field %}<label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text">{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
         </div>
-        <div class="col-filter-actions">
-            <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
-            <a class="btn" href="{{ clear_url }}">{% trans "Clear" %}</a>
+        <div class="col-filter-actions mt-[9px] flex gap-1.5 border-t border-border pt-[9px]">
+            <button class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-2.5 py-1.5 text-xs font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Apply" %}</button>
+            <a class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ clear_url }}">{% trans "Clear" %}</a>
         </div>
     </div>
 </details>

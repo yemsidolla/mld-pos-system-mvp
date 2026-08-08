@@ -1,0 +1,13 @@
+{% comment %}
+Report metric card — matches dashboard.css .metric-card (+ kpi-* tones).
+
+Expects:
+  label  — caption text
+  value  — figure (already formatted)
+  tone   — optional: success | warning | danger
+  size   — optional: small (18px) | omit for 28px default
+{% endcomment %}
+<article class="rounded-md border bg-surface p-4 {% if tone == 'success' %}border-alert-success-border [&_span]:text-success [&_strong]:text-success{% elif tone == 'warning' %}border-alert-warning-border [&_span]:text-warning [&_strong]:text-warning{% elif tone == 'danger' %}border-alert-danger-border [&_span]:text-danger [&_strong]:text-danger{% else %}border-border{% endif %}">
+    <span class="block text-text-soft">{{ label }}</span>
+    <strong class="mt-1.5 block {% if size == 'small' %}text-lg{% else %}text-[28px]{% endif %}">{{ value }}</strong>
+</article>

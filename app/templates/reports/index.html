@@ -6,16 +6,39 @@
 {% block page_subtitle %}{% trans "Simple HTML reports for sales, inventory, expiry, and staff performance." %}{% endblock %}
 
 {% block content %}
-<section class="panel">
-    <div class="action-grid">
-        <a class="action-card" href="{% url 'daily-closing-checklist' %}">{% icon "check" 20 "action-ic" %}<strong>{% trans "Daily Closing Checklist" %}</strong><span>{% trans "Owner/manager close-of-day control steps." %}</span></a>
-        <a class="action-card" href="{% url 'daily-sales-report' %}">{% icon "cash" 20 "action-ic" %}<strong>{% trans "Daily Sales Report" %}</strong><span>{% trans "Sales count and totals by date." %}</span></a>
-        <a class="action-card" href="{% url 'stock-summary-report' %}">{% icon "package" 20 "action-ic" %}<strong>{% trans "Stock Summary Report" %}</strong><span>{% trans "Available stock by product." %}</span></a>
-        <a class="action-card" href="{% url 'low-stock-report' %}">{% icon "alert" 20 "action-ic" %}<strong>{% trans "Low Stock Report" %}</strong><span>{% trans "Products at or below minimum stock." %}</span></a>
-        <a class="action-card" href="{% url 'expiry-report' %}">{% icon "clock" 20 "action-ic" %}<strong>{% trans "Expiry Report" %}</strong><span>{% trans "Expired, critical, and warning batches." %}</span></a>
-        <a class="action-card" href="{% url 'stock-movement-report' %}">{% icon "activity" 20 "action-ic" %}<strong>{% trans "Stock Movement Report" %}</strong><span>{% trans "Trace inventory movements." %}</span></a>
-        <a class="action-card" href="{% url 'staff-sales-report' %}">{% icon "user" 20 "action-ic" %}<strong>{% trans "Staff Sales Report" %}</strong><span>{% trans "Completed sales by cashier." %}</span></a>
-        <a class="action-card" href="{% url 'promotion-report' %}">{% icon "percent" 20 "action-ic" %}<strong>{% trans "Promotion & Below-cost Report" %}</strong><span>{% trans "Discount impact and risky promoted lines." %}</span></a>
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5">
+        {% trans "Daily Closing Checklist" as t1 %}{% trans "Owner/manager close-of-day control steps." as d1 %}
+        {% url 'daily-closing-checklist' as u1 %}
+        {% include "reports/_action_card.html" with href=u1 icon="check" title=t1 description=d1 %}
+
+        {% trans "Daily Sales Report" as t2 %}{% trans "Sales count and totals by date." as d2 %}
+        {% url 'daily-sales-report' as u2 %}
+        {% include "reports/_action_card.html" with href=u2 icon="cash" title=t2 description=d2 %}
+
+        {% trans "Stock Summary Report" as t3 %}{% trans "Available stock by product." as d3 %}
+        {% url 'stock-summary-report' as u3 %}
+        {% include "reports/_action_card.html" with href=u3 icon="package" title=t3 description=d3 %}
+
+        {% trans "Low Stock Report" as t4 %}{% trans "Products at or below minimum stock." as d4 %}
+        {% url 'low-stock-report' as u4 %}
+        {% include "reports/_action_card.html" with href=u4 icon="alert" title=t4 description=d4 %}
+
+        {% trans "Expiry Report" as t5 %}{% trans "Expired, critical, and warning batches." as d5 %}
+        {% url 'expiry-report' as u5 %}
+        {% include "reports/_action_card.html" with href=u5 icon="clock" title=t5 description=d5 %}
+
+        {% trans "Stock Movement Report" as t6 %}{% trans "Trace inventory movements." as d6 %}
+        {% url 'stock-movement-report' as u6 %}
+        {% include "reports/_action_card.html" with href=u6 icon="activity" title=t6 description=d6 %}
+
+        {% trans "Staff Sales Report" as t7 %}{% trans "Completed sales by cashier." as d7 %}
+        {% url 'staff-sales-report' as u7 %}
+        {% include "reports/_action_card.html" with href=u7 icon="user" title=t7 description=d7 %}
+
+        {% trans "Promotion & Below-cost Report" as t8 %}{% trans "Discount impact and risky promoted lines." as d8 %}
+        {% url 'promotion-report' as u8 %}
+        {% include "reports/_action_card.html" with href=u8 icon="percent" title=t8 description=d8 %}
     </div>
 </section>
 {% endblock %}

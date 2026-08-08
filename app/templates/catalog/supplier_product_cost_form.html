@@ -5,30 +5,30 @@
 {% block page_title %}{% if mode == "create" %}{% trans "New Reference Cost" %}{% else %}{% trans "Edit Reference Cost" %}{% endif %}{% endblock %}
 {% block page_subtitle %}{% trans "Set the expected supplier cost. Actual and landed costs are still recorded per received stock batch." %}{% endblock %}
 {% block header_actions %}
-    <a class="btn" href="{% url 'supplier-product-cost-list' %}">{% trans "Back to Reference Costs" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'supplier-product-cost-list' %}">{% trans "Back to Reference Costs" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <p class="muted">{% trans "Reference cost is planning data. Stock-in Actual Unit Cost records what was paid for a batch; Landed Unit Cost can include shipping or handling." %}</p>
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <p class="text-text-soft">{% trans "Reference cost is planning data. Stock-in Actual Unit Cost records what was paid for a batch; Landed Unit Cost can include shipping or handling." %}</p>
     {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        <div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>
     {% endif %}
-    <form class="form-stack" method="post">
+    <form class="grid gap-3.5" method="post">
         {% csrf_token %}
-        <div class="form-grid">
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
-                    {% if field.help_text %}<p class="muted">{{ field.help_text }}</p>{% endif %}
+                    {% if field.help_text %}<p class="m-0 text-text-soft">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
-        <div class="form-actions">
-            <button class="btn btn-success" type="submit">{% trans "Save Reference Cost" %}</button>
-            <a class="btn" href="{% url 'supplier-product-cost-list' %}">{% trans "Cancel" %}</a>
+        <div class="flex flex-wrap items-center gap-2">
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit">{% trans "Save Reference Cost" %}</button>
+            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'supplier-product-cost-list' %}">{% trans "Cancel" %}</a>
         </div>
     </form>
 </section>

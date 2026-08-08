@@ -5,133 +5,133 @@
 {% block page_title %}{% trans "Products" %}{% endblock %}
 {% block page_subtitle %}{% trans "Create, search, and maintain product master data for daily store operations." %}{% endblock %}
 {% block header_actions %}
-    <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan Search" %}</button>
-    <a class="btn" href="{% url 'category-list' %}">{% trans "Categories" %}</a>
-    <a class="btn" href="{% url 'brand-list' %}">{% trans "Brands" %}</a>
-    <a class="btn" href="{% url 'animal-type-list' %}">{% trans "Animal Types" %}</a>
-    <a class="btn" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
-    <a class="btn btn-primary" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
+    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#id_q" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan Search" %}</button>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'category-list' %}">{% trans "Categories" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'brand-list' %}">{% trans "Brands" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'animal-type-list' %}">{% trans "Animal Types" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
+    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <header class="panel-header">
+<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+    <header class="mb-3.5 flex items-start justify-between gap-3.5">
         <div>
-            <h2>{% trans "Product Catalog" %}</h2>
-            <p>{% blocktrans count count=product_count %}{{ count }} product found.{% plural %}{{ count }} products found.{% endblocktrans %}</p>
+            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Product Catalog" %}</h2>
+            <p class="m-0 text-text-soft">{% blocktrans count count=product_count %}{{ count }} product found.{% plural %}{{ count }} products found.{% endblocktrans %}</p>
         </div>
     </header>
 
-    <form class="form-stack" method="get">
-        <div class="input-row catalog-search-row">
+    <form class="grid gap-3.5" method="get">
+        <div class="catalog-search-row flex flex-wrap items-center gap-2 [&_input]:min-w-[min(100%,260px)] [&_input]:flex-[1_1_320px] [&_select]:flex-[1_1_220px]">
             <input id="id_q" type="search" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Search name, code, barcode, or tag' %}" autocomplete="off">
-            <button class="btn btn-primary" type="submit">{% icon "search" 16 %} {% trans "Search" %}</button>
-            <button class="btn" type="button" data-scan-target="#id_q" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
-            {% if active_filters %}<a class="btn" href="{{ clear_url }}">{% trans "Reset" %}</a>{% endif %}
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% icon "search" 16 %} {% trans "Search" %}</button>
+            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#id_q" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
+            {% if active_filters %}<a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ clear_url }}">{% trans "Reset" %}</a>{% endif %}
         </div>
 
         {% if active_filters %}
-        <div class="filter-bar">
-            <span class="filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
+        <div class="mb-2.5 flex flex-wrap items-center gap-1.5 rounded-md border border-filter-bar-border bg-filter-bar px-2.5 py-[7px] text-xs">
+            <span class="inline-flex items-center gap-1 font-semibold text-filter-bar-label">{% icon "search" 13 %} {% trans "Showing" %}</span>
             {% for f in active_filters %}
-                {% if not forloop.first %}<span class="filter-bar-join">{% trans "and" %}</span>{% endif %}
-                <span class="filter-chip">{{ f.label }}: {{ f.values|join:", " }}
-                    <a href="{{ f.remove_url }}" aria-label="{% trans 'Remove filter' %}">{% icon "x" 13 %}</a></span>
+                {% if not forloop.first %}<span class="text-ink-text-dim">{% trans "and" %}</span>{% endif %}
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-filter-bar-border bg-surface px-2 py-0.5 text-filter-chip-text">{{ f.label }}: {{ f.values|join:", " }}
+                    <a class="inline-flex min-h-0 border-0 bg-transparent p-0 text-text-soft no-underline hover:text-danger" href="{{ f.remove_url }}" aria-label="{% trans 'Remove filter' %}">{% icon "x" 13 %}</a></span>
             {% endfor %}
-            <a class="filter-bar-clear" href="{{ clear_url }}">{% trans "Clear all" %}</a>
+            <a class="ml-auto text-[11.5px] text-text-soft underline" href="{{ clear_url }}">{% trans "Clear all" %}</a>
         </div>
         {% endif %}
 
-        <div class="table-scroll">
-        <table class="data-table">
+        <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
+        <table class="w-full min-w-[720px] border-collapse">
             <thead>
                 <tr>
-                    <th class="thumb-col">{% trans "Photo" %}</th>
-                    <th>{% trans "Code" %}</th>
-                    <th class="has-filter">{% trans "Product" %}
-                        <details class="col-filter {% if form.q.value %}is-active{% endif %}">
-                            <summary aria-label="{% trans 'Search products' %}">{% icon "search" 14 %}</summary>
-                            <div class="col-filter-pop">
-                                <p class="col-filter-title">{% trans "Search name, code, or barcode" %}</p>
-                                <input class="col-filter-search" id="id_q_column" type="text" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Contains…' %}">
-                                <div class="col-filter-actions">
-                                    <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
-                                    <a class="btn" href="{{ clear_url }}">{% trans "Clear" %}</a>
+                    <th class="w-[58px] min-w-[58px] border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Photo" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Code" %}</th>
+                    <th class="relative border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product" %}
+                        <details class="col-filter relative ml-1 inline-block {% if form.q.value %}is-active{% endif %} open:[&>summary]:bg-surface-subtle open:[&>summary]:text-accent {% if form.q.value %}[&>summary]:text-accent{% endif %}">
+                            <summary class="inline-flex cursor-pointer list-none rounded px-[3px] py-px text-text-soft hover:bg-surface-subtle hover:text-accent [&::-webkit-details-marker]:hidden" aria-label="{% trans 'Search products' %}">{% icon "search" 14 %}</summary>
+                            <div class="col-filter-pop absolute right-0 top-[calc(100%+4px)] z-30 w-[210px] rounded border border-border-strong bg-surface p-2.5 text-left text-sm font-normal normal-case tracking-normal shadow">
+                                <p class="col-filter-title mb-1.5 mt-0 text-[11px] text-text-soft">{% trans "Search name, code, or barcode" %}</p>
+                                <input class="col-filter-search mb-2 w-full" id="id_q_column" type="text" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Contains…' %}">
+                                <div class="col-filter-actions mt-[9px] flex gap-1.5 border-t border-border pt-[9px]">
+                                    <button class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-2.5 py-1.5 text-xs font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Apply" %}</button>
+                                    <a class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ clear_url }}">{% trans "Clear" %}</a>
                                 </div>
                             </div>
                         </details>
                     </th>
-                    <th>{% trans "Barcode" %}</th>
-                    <th class="has-filter">{% trans "Category" %}{% include "catalog/_col_filter.html" with field=form.category title=_("Filter: Category") %}</th>
-                    <th class="has-filter">{% trans "Brand" %}{% include "catalog/_col_filter.html" with field=form.brand title=_("Filter: Brand") %}</th>
-                    <th class="has-filter">{% trans "Classification" %}
-                        <details class="col-filter {% if form.animal_type.value or form.life_stage.value or form.tag.value %}is-active{% endif %}">
-                            <summary aria-label="{% trans 'Filter classification' %}">{% icon "search" 14 %}</summary>
-                            <div class="col-filter-pop">
-                                <p class="col-filter-title">{% trans "Animal" %}</p>
-                                <div class="col-filter-options">
-                                    {% for choice in form.animal_type %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Barcode" %}</th>
+                    <th class="relative border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Category" %}{% include "catalog/_col_filter.html" with field=form.category title=_("Filter: Category") %}</th>
+                    <th class="relative border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Brand" %}{% include "catalog/_col_filter.html" with field=form.brand title=_("Filter: Brand") %}</th>
+                    <th class="relative border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Classification" %}
+                        <details class="col-filter relative ml-1 inline-block {% if form.animal_type.value or form.life_stage.value or form.tag.value %}is-active{% endif %} open:[&>summary]:bg-surface-subtle open:[&>summary]:text-accent {% if form.animal_type.value or form.life_stage.value or form.tag.value %}[&>summary]:text-accent{% endif %}">
+                            <summary class="inline-flex cursor-pointer list-none rounded px-[3px] py-px text-text-soft hover:bg-surface-subtle hover:text-accent [&::-webkit-details-marker]:hidden" aria-label="{% trans 'Filter classification' %}">{% icon "search" 14 %}</summary>
+                            <div class="col-filter-pop absolute right-0 top-[calc(100%+4px)] z-30 w-[210px] rounded border border-border-strong bg-surface p-2.5 text-left text-sm font-normal normal-case tracking-normal shadow">
+                                <p class="col-filter-title mb-1.5 mt-0 text-[11px] text-text-soft">{% trans "Animal" %}</p>
+                                <div class="col-filter-options grid max-h-[200px] gap-0.5 overflow-y-auto">
+                                    {% for choice in form.animal_type %}<label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text">{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
                                 </div>
-                                <p class="col-filter-title" style="margin-top:8px;">{% trans "Life stage" %}</p>
-                                <div class="col-filter-options">
-                                    {% for choice in form.life_stage %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+                                <p class="col-filter-title mb-1.5 mt-2 text-[11px] text-text-soft">{% trans "Life stage" %}</p>
+                                <div class="col-filter-options grid max-h-[200px] gap-0.5 overflow-y-auto">
+                                    {% for choice in form.life_stage %}<label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text">{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
                                 </div>
-                                <p class="col-filter-title" style="margin-top:8px;">{% trans "Tag" %}</p>
-                                <div class="col-filter-options">
-                                    {% for choice in form.tag %}<label>{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
+                                <p class="col-filter-title mb-1.5 mt-2 text-[11px] text-text-soft">{% trans "Tag" %}</p>
+                                <div class="col-filter-options grid max-h-[200px] gap-0.5 overflow-y-auto">
+                                    {% for choice in form.tag %}<label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text">{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
                                 </div>
-                                <div class="col-filter-actions">
-                                    <button class="btn btn-primary" type="submit">{% trans "Apply" %}</button>
-                                    <a class="btn" href="{{ clear_url }}">{% trans "Clear" %}</a>
+                                <div class="col-filter-actions mt-[9px] flex gap-1.5 border-t border-border pt-[9px]">
+                                    <button class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-2.5 py-1.5 text-xs font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Apply" %}</button>
+                                    <a class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ clear_url }}">{% trans "Clear" %}</a>
                                 </div>
                             </div>
                         </details>
                     </th>
-                    <th>{% trans "Price" %}</th>
-                    <th class="has-filter">{% trans "Status" %}{% include "catalog/_col_filter.html" with field=form.status title=_("Filter: Status") %}</th>
-                    <th>{% trans "Action" %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Price" %}</th>
+                    <th class="relative border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}{% include "catalog/_col_filter.html" with field=form.status title=_("Filter: Status") %}</th>
+                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
                 </tr>
             </thead>
             <tbody>
             {% for product in products %}
-                <tr>
-                    <td class="thumb-col">
+                <tr class="hover:bg-surface-subtle">
+                    <td class="w-[58px] min-w-[58px] border-b border-border px-[9px] py-2.5 align-middle">
                         {% if product.image_thumb %}
-                            <img class="product-thumb" src="{{ product.image_thumb.url }}" alt="{{ product.name }}">
+                            <img class="product-thumb inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image_thumb.url }}" alt="{{ product.name }}">
                         {% elif product.image %}
-                            <img class="product-thumb" src="{{ product.image.url }}" alt="{{ product.name }}">
+                            <img class="product-thumb inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image.url }}" alt="{{ product.name }}">
                         {% else %}
-                            <span class="product-thumb product-thumb-empty" aria-label="{% trans 'No product image' %}">{% icon "package" 18 %}</span>
+                            <span class="product-thumb product-thumb-empty inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle text-text-soft" aria-label="{% trans 'No product image' %}">{% icon "package" 18 %}</span>
                         {% endif %}
                     </td>
-                    <td class="mono">{{ product.product_code }}</td>
-                    <td><strong>{{ product.name }}</strong><br><span class="muted">{{ product.unit }}</span></td>
-                    <td class="mono">{{ product.original_barcode|default:"-" }}</td>
-                    <td>{{ product.category|default:"-" }}</td>
-                    <td>{{ product.brand|default:"-" }}</td>
-                    <td>
-                        {% for animal in product.animal_type_labels %}<span class="pill pill-info">{{ animal }}</span>{% endfor %}
-                        {% if product.life_stage %}<span class="pill pill-info">{{ product.get_life_stage_display }}</span>{% endif %}
-                        {% for tag in product.tags.all %}<span class="pill pill-success">{{ tag.name }}</span>{% endfor %}
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ product.product_code }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><strong>{{ product.name }}</strong><br><span class="text-text-soft">{{ product.unit }}</span></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ product.original_barcode|default:"-" }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.category|default:"-" }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.brand|default:"-" }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                        {% for animal in product.animal_type_labels %}{% include "catalog/_status_pill.html" with tone="info" label=animal %}{% endfor %}
+                        {% if product.life_stage %}{% include "catalog/_status_pill.html" with tone="info" label=product.get_life_stage_display %}{% endif %}
+                        {% for tag in product.tags.all %}{% include "catalog/_status_pill.html" with tone="success" label=tag.name %}{% endfor %}
                         {% if not product.animal_type_labels and not product.life_stage and not product.tags.all %}-{% endif %}
                     </td>
-                    <td class="mono">{{ product.default_selling_price }}</td>
-                    <td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ product.default_selling_price }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
                         {% if product.is_active %}
-                            <span class="pill pill-success">{% trans "Active" %}</span>
+                            {% include "catalog/_status_pill.html" with tone="success" label=_("Active") %}
                         {% else %}
-                            <span class="pill pill-danger">{% trans "Inactive" %}</span>
+                            {% include "catalog/_status_pill.html" with tone="danger" label=_("Inactive") %}
                         {% endif %}
                     </td>
-                    <td><a class="btn" href="{% url 'product-edit' product.id %}">{% trans "Edit" %}</a></td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-edit' product.id %}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="10" class="empty-cell">
-                        <div class="empty-state">
-                            <strong>{% trans "No products match these filters." %}</strong>
-                            <span>{% trans "Clear the filters or create a new product for this catalog item." %}</span>
-                            <a class="btn" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
+                    <td colspan="10" class="border-b border-border px-[9px] py-6 text-center text-text-soft">
+                        <div class="grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft">
+                            <strong class="text-sm text-text">{% trans "No products match these filters." %}</strong>
+                            <span class="max-w-[420px]">{% trans "Clear the filters or create a new product for this catalog item." %}</span>
+                            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
                         </div>
                     </td>
                 </tr>
