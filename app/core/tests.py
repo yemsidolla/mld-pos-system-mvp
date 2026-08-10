@@ -76,7 +76,12 @@ class ProtectedMediaTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
+    @override_settings(USE_S3_MEDIA=False)
     def test_protected_media_serves_existing_file_to_dashboard_user(self):
+        # This test exercises the local-filesystem branch of protected_media_view.
+        # Without pinning USE_S3_MEDIA it inherits the environment's value, and in
+        # an S3-mode container the view redirects to object storage where the temp
+        # file does not exist — failing with 404 for reasons unrelated to the view.
         self.client.force_login(self.user)
 
         with TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
