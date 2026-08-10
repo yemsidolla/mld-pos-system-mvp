@@ -84,10 +84,14 @@ MIDDLEWARE = [
 # definition — it cannot be weakened without failing a test.
 DEV_AUTH_BYPASS = env_bool("DEV_AUTH_BYPASS", False)
 DEV_AUTH_BYPASS_USER = os.environ.get("DEV_AUTH_BYPASS_USER", "")
+DEV_AUTH_BYPASS_TRUSTED_ADDRS = env_list("DEV_AUTH_BYPASS_TRUSTED_ADDRS", [])
 if DEV_AUTH_BYPASS:
-    from core.dev_auth import dev_auth_bypass_active
+    from core.dev_auth import dev_auth_bypass_active, is_running_tests
 
-    if dev_auth_bypass_active(DEBUG, DEV_AUTH_BYPASS, ALLOWED_HOSTS):
+    # The startup gate raises (refuses to boot) on any non-local config. The
+    # test-runner check keeps a bypass-enabled .env from authenticating test
+    # clients — the middleware is simply never installed during `manage.py test`.
+    if dev_auth_bypass_active(DEBUG, DEV_AUTH_BYPASS, ALLOWED_HOSTS) and not is_running_tests():
         # Insert immediately after AuthenticationMiddleware, which populates
         # request.user; the bypass then overrides it to a dev user.
         _auth_i = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")

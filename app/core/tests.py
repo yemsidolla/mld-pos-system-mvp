@@ -967,6 +967,14 @@ class DevAuthBypassGuardTests(SimpleTestCase):
     def test_middleware_not_installed_by_default(self):
         self.assertNotIn("core.dev_auth.DevAuthBypassMiddleware", settings.MIDDLEWARE)
 
+    def test_is_running_tests_detects_test_argv(self):
+        from core.dev_auth import is_running_tests
+
+        self.assertTrue(is_running_tests(["manage.py", "test"]))
+        self.assertTrue(is_running_tests(["manage.py", "test", "core"]))
+        self.assertFalse(is_running_tests(["manage.py", "runserver"]))
+        self.assertFalse(is_running_tests(["gunicorn", "melodu_pos.wsgi"]))
+
 
 class DevAuthBypassMiddlewareTests(TestCase):
     def test_self_disables_when_inactive(self):
@@ -976,3 +984,34 @@ class DevAuthBypassMiddlewareTests(TestCase):
         # DEBUG/DEV_AUTH_BYPASS are off in test settings → must refuse to install.
         with self.assertRaises(MiddlewareNotUsed):
             DevAuthBypassMiddleware(lambda r: r)
+
+    def _make_middleware(self, trusted, dev_user):
+        """Build the middleware bypassing __init__'s inactive guard, so the
+        per-request peer logic can be tested directly."""
+        from core.dev_auth import DevAuthBypassMiddleware
+
+        mw = DevAuthBypassMiddleware.__new__(DevAuthBypassMiddleware)
+        mw.get_response = lambda r: r
+        mw._username = dev_user
+        mw._trusted = frozenset(trusted)
+        return mw
+
+    def test_untrusted_peer_is_not_authenticated(self):
+        # The reviewer's exploit: a remote client (203.0.113.9) sending
+        # Host: localhost. REMOTE_ADDR is the real peer and is not trusted, so
+        # the request must fall through unauthenticated.
+        admin = get_user_model().objects.create_superuser("bypassadmin", "b@x.com", "Pw12345678")
+        mw = self._make_middleware(trusted={"127.0.0.1"}, dev_user="")
+        request = RequestFactory().get("/dashboard/", REMOTE_ADDR="203.0.113.9", HTTP_HOST="localhost")
+        request.user = AnonymousUser()
+        mw(request)
+        self.assertFalse(request.user.is_authenticated)
+
+    def test_trusted_loopback_peer_is_authenticated(self):
+        admin = get_user_model().objects.create_superuser("bypassadmin2", "b2@x.com", "Pw12345678")
+        mw = self._make_middleware(trusted={"127.0.0.1"}, dev_user="")
+        request = RequestFactory().get("/dashboard/", REMOTE_ADDR="127.0.0.1")
+        request.user = AnonymousUser()
+        mw(request)
+        self.assertTrue(request.user.is_authenticated)
+        self.assertEqual(request.user, admin)

@@ -26,6 +26,28 @@ and the tests, so it cannot be weakened without failing
 A denylist of production domains was the original design and was unsafe —
 `ALLOWED_HOSTS=['*']` passed it. Do not reintroduce one.
 
+## Three controls, all required
+
+1. **Startup allowlist** — refuses to boot unless `DEBUG=True` and every
+   `ALLOWED_HOSTS` entry is loopback (see above). Guarantees it can never run on
+   production/SIT.
+2. **Not under the test runner** — never installed during `manage.py test`, so a
+   bypass-enabled `.env` cannot authenticate test clients.
+3. **Per-request trusted peer** — only bypasses when `REMOTE_ADDR` (the TCP peer,
+   set by the server — not the client-controlled `Host` header) is in
+   `DEV_AUTH_BYPASS_TRUSTED_ADDRS`, default loopback. A remote client spoofing
+   `Host: localhost` is not trusted and gets normal login.
+
+## Use the overlay (recommended)
+
+`docker-compose.dev-bypass.yml` turns the bypass on **and** binds the web port to
+`127.0.0.1` only, so the process is not reachable off this machine:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.local.yml \
+               -f docker-compose.dev-bypass.yml up -d --build
+```
+
 ## Turn it on (local only)
 
 In a local `.env` (never a prod/SIT one):
