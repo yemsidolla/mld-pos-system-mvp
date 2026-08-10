@@ -6,14 +6,25 @@ and automated browsing).
 
 ## It cannot run in production or SIT
 
-`settings.py` refuses to start if `DEV_AUTH_BYPASS=True` while:
+The gate is an **allowlist**: it activates only when `DJANGO_DEBUG=True` **and**
+every entry in `DJANGO_ALLOWED_HOSTS` is a loopback host (`localhost`,
+`127.0.0.1`, `::1`, `0.0.0.0`, `web`, `testserver`). Anything else refuses to
+start:
 
-- `DJANGO_DEBUG` is false (production and SIT run `DEBUG=False`), **or**
-- any `*.khlovepet.com` / `*.khapper.com` host is in `DJANGO_ALLOWED_HOSTS`.
+- a real domain (production/SIT hosts), **or**
+- a public IP, **or**
+- a wildcard `*` (which would make Django accept every Host header), **or**
+- `DEBUG=False`.
 
-A misconfiguration crashes the boot rather than silently opening the door. The
-middleware also self-disables (`MiddlewareNotUsed`) unless both flags are set.
-Guard behaviour is covered by `core.tests.DevAuthBypassGuardTests`.
+Case and a trailing dot are normalised, so `KHLOVEPET.COM` and
+`melodu-pos.khlovepet.com.` are rejected too. The single gate function
+`dev_auth_bypass_active` in `core/dev_auth.py` is called by both `settings.py`
+and the tests, so it cannot be weakened without failing
+`core.tests.DevAuthBypassGuardTests`. The middleware also self-disables
+(`MiddlewareNotUsed`) unless the gate agrees.
+
+A denylist of production domains was the original design and was unsafe —
+`ALLOWED_HOSTS=['*']` passed it. Do not reintroduce one.
 
 ## Turn it on (local only)
 

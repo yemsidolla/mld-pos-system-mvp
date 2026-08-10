@@ -7,6 +7,7 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -909,39 +910,61 @@ class AuthSettingsTests(TestCase):
 class DevAuthBypassGuardTests(SimpleTestCase):
     """The bypass must be impossible to activate outside local dev.
 
-    settings.py performs the guard at import time, so these tests re-run that
-    guard logic against hostile configurations and assert it refuses.
+    These tests call the REAL guard used by settings.py — ``dev_auth_bypass_active``
+    — not a copy, so weakening the guard fails a test rather than shipping.
     """
 
-    def _run_guard(self, *, debug, allowed_hosts):
-        # Mirror of the guard in settings.py. Kept here so a change to the guard
-        # that weakens it fails a test rather than silently shipping.
-        from django.core.exceptions import ImproperlyConfigured
+    def _guard(self, *, debug, bypass=True, hosts):
+        from core.dev_auth import dev_auth_bypass_active
 
-        if not debug:
-            raise ImproperlyConfigured("requires DEBUG")
-        public = [h for h in allowed_hosts if h.endswith("khlovepet.com") or h.endswith("khapper.com")]
-        if public:
-            raise ImproperlyConfigured(f"public hosts: {public}")
+        return dev_auth_bypass_active(debug, bypass, hosts)
+
+    def test_off_returns_false_without_raising(self):
+        self.assertFalse(self._guard(debug=True, bypass=False, hosts=["melodu-pos.khlovepet.com"]))
 
     def test_refuses_when_debug_false(self):
-        with self.assertRaises(Exception):
-            self._run_guard(debug=False, allowed_hosts=["localhost"])
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=False, hosts=["localhost"])
 
-    def test_refuses_with_production_host(self):
-        with self.assertRaises(Exception):
-            self._run_guard(debug=True, allowed_hosts=["melodu-pos.khlovepet.com"])
+    def test_refuses_production_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["melodu-pos.khlovepet.com"])
 
-    def test_refuses_with_sit_or_media_host(self):
-        with self.assertRaises(Exception):
-            self._run_guard(debug=True, allowed_hosts=["mld-pos-media.khapper.com"])
+    def test_refuses_sit_media_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["mld-pos-media.khapper.com"])
 
-    def test_allows_local_dev(self):
-        # Should not raise.
-        self._run_guard(debug=True, allowed_hosts=["localhost", "127.0.0.1"])
+    def test_refuses_wildcard(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["*"])
+
+    def test_refuses_public_ip(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["192.168.1.212"])
+
+    def test_refuses_uppercase_production_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["MELODU-POS.KHLOVEPET.COM"])
+
+    def test_refuses_trailing_dot_production_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["melodu-pos.khlovepet.com."])
+
+    def test_refuses_local_mixed_with_public(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["localhost", "melodu-pos.khlovepet.com"])
+
+    def test_refuses_empty_hosts(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=[])
+
+    def test_allows_loopback_only(self):
+        self.assertTrue(self._guard(debug=True, hosts=["localhost", "127.0.0.1", "web"]))
+
+    def test_allows_loopback_with_whitespace_and_case(self):
+        self.assertTrue(self._guard(debug=True, hosts=[" LOCALHOST ", "127.0.0.1"]))
 
     def test_middleware_not_installed_by_default(self):
-        # In the running test settings, the bypass must not be present.
         self.assertNotIn("core.dev_auth.DevAuthBypassMiddleware", settings.MIDDLEWARE)
 
 
