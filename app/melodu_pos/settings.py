@@ -74,6 +74,36 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# --- Development-only auth bypass (see core/dev_auth.py) ---
+# A deliberate auth backdoor for browsing a LOCAL instance without logging in.
+# It activates ONLY when DEBUG and DEV_AUTH_BYPASS are both true, and the block
+# below REFUSES TO START otherwise. Production and SIT run DEBUG=False, so it can
+# never activate there — a misconfiguration crashes the boot instead of silently
+# opening the door.
+DEV_AUTH_BYPASS = env_bool("DEV_AUTH_BYPASS", False)
+DEV_AUTH_BYPASS_USER = os.environ.get("DEV_AUTH_BYPASS_USER", "")
+if DEV_AUTH_BYPASS:
+    from django.core.exceptions import ImproperlyConfigured
+
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DEV_AUTH_BYPASS=True requires DJANGO_DEBUG=True. Refusing to start — "
+            "this must never run in a production or SIT environment."
+        )
+    _public_hosts = [
+        h for h in ALLOWED_HOSTS
+        if h.endswith("khlovepet.com") or h.endswith("khapper.com")
+    ]
+    if _public_hosts:
+        raise ImproperlyConfigured(
+            "DEV_AUTH_BYPASS=True must not run with public hosts in "
+            f"ALLOWED_HOSTS ({_public_hosts}). Refusing to start."
+        )
+    # Insert immediately after AuthenticationMiddleware, which populates
+    # request.user; the bypass then overrides it to a dev user.
+    _auth_i = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+    MIDDLEWARE.insert(_auth_i + 1, "core.dev_auth.DevAuthBypassMiddleware")
+
 ROOT_URLCONF = "melodu_pos.urls"
 LOGIN_URL = "/dashboard/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"

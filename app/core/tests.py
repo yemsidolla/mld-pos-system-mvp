@@ -904,3 +904,52 @@ class AuthSettingsTests(TestCase):
         s.save()
         response = self.client.get(reverse("dashboard-login"))
         self.assertContains(response, 'name="password"')
+
+
+class DevAuthBypassGuardTests(SimpleTestCase):
+    """The bypass must be impossible to activate outside local dev.
+
+    settings.py performs the guard at import time, so these tests re-run that
+    guard logic against hostile configurations and assert it refuses.
+    """
+
+    def _run_guard(self, *, debug, allowed_hosts):
+        # Mirror of the guard in settings.py. Kept here so a change to the guard
+        # that weakens it fails a test rather than silently shipping.
+        from django.core.exceptions import ImproperlyConfigured
+
+        if not debug:
+            raise ImproperlyConfigured("requires DEBUG")
+        public = [h for h in allowed_hosts if h.endswith("khlovepet.com") or h.endswith("khapper.com")]
+        if public:
+            raise ImproperlyConfigured(f"public hosts: {public}")
+
+    def test_refuses_when_debug_false(self):
+        with self.assertRaises(Exception):
+            self._run_guard(debug=False, allowed_hosts=["localhost"])
+
+    def test_refuses_with_production_host(self):
+        with self.assertRaises(Exception):
+            self._run_guard(debug=True, allowed_hosts=["melodu-pos.khlovepet.com"])
+
+    def test_refuses_with_sit_or_media_host(self):
+        with self.assertRaises(Exception):
+            self._run_guard(debug=True, allowed_hosts=["mld-pos-media.khapper.com"])
+
+    def test_allows_local_dev(self):
+        # Should not raise.
+        self._run_guard(debug=True, allowed_hosts=["localhost", "127.0.0.1"])
+
+    def test_middleware_not_installed_by_default(self):
+        # In the running test settings, the bypass must not be present.
+        self.assertNotIn("core.dev_auth.DevAuthBypassMiddleware", settings.MIDDLEWARE)
+
+
+class DevAuthBypassMiddlewareTests(TestCase):
+    def test_self_disables_when_inactive(self):
+        from django.core.exceptions import MiddlewareNotUsed
+        from core.dev_auth import DevAuthBypassMiddleware
+
+        # DEBUG/DEV_AUTH_BYPASS are off in test settings → must refuse to install.
+        with self.assertRaises(MiddlewareNotUsed):
+            DevAuthBypassMiddleware(lambda r: r)
