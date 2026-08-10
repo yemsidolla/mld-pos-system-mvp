@@ -74,6 +74,29 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# --- Development-only auth bypass (see core/dev_auth.py) ---
+# A deliberate auth backdoor for browsing a LOCAL instance without logging in.
+# The gate is an allowlist: it activates only when DEBUG is true AND every
+# ALLOWED_HOSTS entry is a loopback host. Any real domain, public IP, or "*"
+# makes dev_auth_bypass_active REFUSE TO START. Production and SIT have public
+# hosts, so a misconfiguration there crashes the boot instead of opening the
+# door. The guard lives in core.dev_auth so settings and tests share one
+# definition — it cannot be weakened without failing a test.
+DEV_AUTH_BYPASS = env_bool("DEV_AUTH_BYPASS", False)
+DEV_AUTH_BYPASS_USER = os.environ.get("DEV_AUTH_BYPASS_USER", "")
+DEV_AUTH_BYPASS_TRUSTED_ADDRS = env_list("DEV_AUTH_BYPASS_TRUSTED_ADDRS", [])
+if DEV_AUTH_BYPASS:
+    from core.dev_auth import dev_auth_bypass_active, is_running_tests
+
+    # The startup gate raises (refuses to boot) on any non-local config. The
+    # test-runner check keeps a bypass-enabled .env from authenticating test
+    # clients — the middleware is simply never installed during `manage.py test`.
+    if dev_auth_bypass_active(DEBUG, DEV_AUTH_BYPASS, ALLOWED_HOSTS) and not is_running_tests():
+        # Insert immediately after AuthenticationMiddleware, which populates
+        # request.user; the bypass then overrides it to a dev user.
+        _auth_i = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
+        MIDDLEWARE.insert(_auth_i + 1, "core.dev_auth.DevAuthBypassMiddleware")
+
 ROOT_URLCONF = "melodu_pos.urls"
 LOGIN_URL = "/dashboard/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"

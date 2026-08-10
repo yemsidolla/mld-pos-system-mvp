@@ -7,6 +7,7 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.auth import SESSION_KEY, get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
+from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -904,3 +905,113 @@ class AuthSettingsTests(TestCase):
         s.save()
         response = self.client.get(reverse("dashboard-login"))
         self.assertContains(response, 'name="password"')
+
+
+class DevAuthBypassGuardTests(SimpleTestCase):
+    """The bypass must be impossible to activate outside local dev.
+
+    These tests call the REAL guard used by settings.py — ``dev_auth_bypass_active``
+    — not a copy, so weakening the guard fails a test rather than shipping.
+    """
+
+    def _guard(self, *, debug, bypass=True, hosts):
+        from core.dev_auth import dev_auth_bypass_active
+
+        return dev_auth_bypass_active(debug, bypass, hosts)
+
+    def test_off_returns_false_without_raising(self):
+        self.assertFalse(self._guard(debug=True, bypass=False, hosts=["melodu-pos.khlovepet.com"]))
+
+    def test_refuses_when_debug_false(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=False, hosts=["localhost"])
+
+    def test_refuses_production_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["melodu-pos.khlovepet.com"])
+
+    def test_refuses_sit_media_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["mld-pos-media.khapper.com"])
+
+    def test_refuses_wildcard(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["*"])
+
+    def test_refuses_public_ip(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["192.168.1.212"])
+
+    def test_refuses_uppercase_production_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["MELODU-POS.KHLOVEPET.COM"])
+
+    def test_refuses_trailing_dot_production_host(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["melodu-pos.khlovepet.com."])
+
+    def test_refuses_local_mixed_with_public(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=["localhost", "melodu-pos.khlovepet.com"])
+
+    def test_refuses_empty_hosts(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self._guard(debug=True, hosts=[])
+
+    def test_allows_loopback_only(self):
+        self.assertTrue(self._guard(debug=True, hosts=["localhost", "127.0.0.1", "web"]))
+
+    def test_allows_loopback_with_whitespace_and_case(self):
+        self.assertTrue(self._guard(debug=True, hosts=[" LOCALHOST ", "127.0.0.1"]))
+
+    def test_middleware_not_installed_by_default(self):
+        self.assertNotIn("core.dev_auth.DevAuthBypassMiddleware", settings.MIDDLEWARE)
+
+    def test_is_running_tests_detects_test_argv(self):
+        from core.dev_auth import is_running_tests
+
+        self.assertTrue(is_running_tests(["manage.py", "test"]))
+        self.assertTrue(is_running_tests(["manage.py", "test", "core"]))
+        self.assertFalse(is_running_tests(["manage.py", "runserver"]))
+        self.assertFalse(is_running_tests(["gunicorn", "melodu_pos.wsgi"]))
+
+
+class DevAuthBypassMiddlewareTests(TestCase):
+    def test_self_disables_when_inactive(self):
+        from django.core.exceptions import MiddlewareNotUsed
+        from core.dev_auth import DevAuthBypassMiddleware
+
+        # DEBUG/DEV_AUTH_BYPASS are off in test settings → must refuse to install.
+        with self.assertRaises(MiddlewareNotUsed):
+            DevAuthBypassMiddleware(lambda r: r)
+
+    def _make_middleware(self, trusted, dev_user):
+        """Build the middleware bypassing __init__'s inactive guard, so the
+        per-request peer logic can be tested directly."""
+        from core.dev_auth import DevAuthBypassMiddleware
+
+        mw = DevAuthBypassMiddleware.__new__(DevAuthBypassMiddleware)
+        mw.get_response = lambda r: r
+        mw._username = dev_user
+        mw._trusted = frozenset(trusted)
+        return mw
+
+    def test_untrusted_peer_is_not_authenticated(self):
+        # The reviewer's exploit: a remote client (203.0.113.9) sending
+        # Host: localhost. REMOTE_ADDR is the real peer and is not trusted, so
+        # the request must fall through unauthenticated.
+        admin = get_user_model().objects.create_superuser("bypassadmin", "b@x.com", "Pw12345678")
+        mw = self._make_middleware(trusted={"127.0.0.1"}, dev_user="")
+        request = RequestFactory().get("/dashboard/", REMOTE_ADDR="203.0.113.9", HTTP_HOST="localhost")
+        request.user = AnonymousUser()
+        mw(request)
+        self.assertFalse(request.user.is_authenticated)
+
+    def test_trusted_loopback_peer_is_authenticated(self):
+        admin = get_user_model().objects.create_superuser("bypassadmin2", "b2@x.com", "Pw12345678")
+        mw = self._make_middleware(trusted={"127.0.0.1"}, dev_user="")
+        request = RequestFactory().get("/dashboard/", REMOTE_ADDR="127.0.0.1")
+        request.user = AnonymousUser()
+        mw(request)
+        self.assertTrue(request.user.is_authenticated)
+        self.assertEqual(request.user, admin)
