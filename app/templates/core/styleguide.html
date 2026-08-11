@@ -7,9 +7,11 @@
 {% block page_subtitle %}{% trans "Every token and component, rendered from the real CSS. The visual half of docs/DESIGN_SYSTEM.md." %}{% endblock %}
 
 {% block content %}
-{# Phase 1: styleguide markup uses Tailwind utilities mapped to Melodu tokens.
-   Shared component class names (panel, btn, …) are intentionally not used here
-   so this page proves the theme mapping. dashboard.css still styles the shell. #}
+{% comment %}
+Styleguide markup uses Tailwind utilities mapped to Melodu tokens. Shared
+component class names (panel, btn, …) are intentionally not used here so this
+page proves the theme mapping. dashboard.css still styles the shell.
+{% endcomment %}
 
 <nav class="sticky top-[76px] z-[5] mb-4 flex flex-wrap gap-x-3.5 gap-y-1.5 rounded border border-border bg-surface px-4 py-3 shadow-panel" id="sg-toc" aria-label="{% trans 'Style guide sections' %}">
     <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#tokens">{% trans "Tokens" %}</a>
