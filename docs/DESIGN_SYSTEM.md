@@ -557,3 +557,7 @@ Append one line per design-system task (the only thing that may edit this file).
 - 2026-08-06 — Tailwind Phase 1: standalone CLI v4.3.3 (CSS-first `@theme`, no
   Node in runtime), Melodu 24-token theme mapped in §2.0, styleguide converted
   to utilities; `dashboard.css` unchanged and still loaded for all other pages.
+- 2026-08-11 — Form-field affordance: text inputs, selects and textareas fill
+  with `--surface-subtle` by default (was `--surface`) so a field's extent is
+  visible against a white card, and lift to `--surface` on focus. CSS-only;
+  styleguide Forms section reflects it automatically via the global input rule.

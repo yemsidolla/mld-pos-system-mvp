@@ -215,9 +215,17 @@ textarea {
     padding: 9px 10px;
     border: 1px solid var(--border-strong);
     border-radius: 6px;
-    background: var(--surface);
+    /* Subtly recessed fill so a field's extent is visible against a white
+       card even where the border reads as faint (DESIGN_SYSTEM §11, 2026-08-11). */
+    background: var(--surface-subtle);
     color: var(--text);
     font: inherit;
+}
+select:focus,
+input:focus,
+textarea:focus {
+    /* Lift to white on focus so the active field is unmistakable. */
+    background: var(--surface);
 }
 input,
 select,
