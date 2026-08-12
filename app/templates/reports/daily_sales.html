@@ -42,7 +42,7 @@
     {% trans "Cancelled Sales" as lbl_cancelled %}
     {% include "reports/_metric_card.html" with label=lbl_cancelled value=totals.cancelled_count tone=totals.cancelled_count|yesno:"warning," %}
     {% trans "Completed Revenue" as lbl_revenue %}
-    {% include "reports/_metric_card.html" with label=lbl_revenue value=totals.total_amount %}
+    {% include "reports/_metric_card.html" with label=lbl_revenue value=totals.total_amount emphasis=True %}
     {% trans "Average Sale" as lbl_avg %}
     {% include "reports/_metric_card.html" with label=lbl_avg value=totals.average_sale|floatformat:2 %}
 </section>

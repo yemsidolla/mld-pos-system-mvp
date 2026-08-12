@@ -227,6 +227,21 @@ textarea:focus {
     /* Lift to white on focus so the active field is unmistakable. */
     background: var(--surface);
 }
+/* Custom chevron so native selects match the styled inputs instead of showing
+   each browser's default dropdown (DESIGN_SYSTEM §11, 2026-08-12). */
+select:not([multiple]) {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%235f6b76' stroke-width='1.5' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+select:not([multiple]):focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%235f6b76' stroke-width='1.5' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
 input,
 select,
 textarea { width: 100%; }
@@ -1352,6 +1367,13 @@ body.auth-page .error-message { color: #b8d0e6; font-size: 15px; }
 .pos-cart-panel select:focus {
     border-color: var(--accent-bright);
     box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.15);
+}
+/* Light chevron on the dark cart selects so it reads against the ink surface. */
+.pos-cart-panel select:not([multiple]),
+.pos-cart-panel select:not([multiple]):focus {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23c9d7e6' stroke-width='1.5' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
 }
 .pos-cart-panel .quantity-stepper {
     background: var(--ink-soft);
