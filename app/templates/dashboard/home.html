@@ -53,6 +53,33 @@
 </section>
 
 <section class="grid grid-cols-1 gap-4">
+    {% if caps.can_inventory %}
+    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
+        <header class="mb-3.5 flex items-start justify-between gap-3.5">
+            <div>
+                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Needs Attention" %}</h2>
+                <p class="m-0 text-text-soft">{% trans "Low stock and batches expiring soon." %}</p>
+            </div>
+        </header>
+        {% if low_stock_list or expiring_list %}
+            <div class="grid gap-2 text-[13px]">
+                {% for product in low_stock_list %}
+                    <div class="flex items-center justify-between gap-2.5 text-text [&_.icon]:text-kpi-warning">
+                        <span>{% icon "alert" 15 %} {{ product.name }}</span>
+                        <span class="whitespace-nowrap font-mono text-kpi-warning">{{ product.total_available }} {% trans "left" %}</span>
+                    </div>
+                {% endfor %}
+                {% for batch in expiring_list %}
+                    <div class="flex items-center justify-between gap-2.5 text-text [&_.icon]:text-kpi-danger">
+                        <span>{% icon "clock" 15 %} {{ batch.product.name }} · <span class="font-mono">{{ batch.batch_no }}</span></span>
+                        <span class="whitespace-nowrap font-mono text-kpi-danger">{% trans "exp" %} {{ batch.expiry_date }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="px-3 py-[26px] text-center text-[13px] text-text-soft">{% icon "check" 16 %} {% trans "All clear — nothing needs attention." %}</p>
+        {% endif %}
+
     <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
         <header class="mb-3.5 flex items-start justify-between gap-3.5">
             <div>
@@ -97,33 +124,6 @@
             {% endif %}
         </div>
     </article>
-
-    {% if caps.can_inventory %}
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <header class="mb-3.5 flex items-start justify-between gap-3.5">
-            <div>
-                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Needs Attention" %}</h2>
-                <p class="m-0 text-text-soft">{% trans "Low stock and batches expiring soon." %}</p>
-            </div>
-        </header>
-        {% if low_stock_list or expiring_list %}
-            <div class="grid gap-2 text-[13px]">
-                {% for product in low_stock_list %}
-                    <div class="flex items-center justify-between gap-2.5 text-text [&_.icon]:text-kpi-warning">
-                        <span>{% icon "alert" 15 %} {{ product.name }}</span>
-                        <span class="whitespace-nowrap font-mono text-kpi-warning">{{ product.total_available }} {% trans "left" %}</span>
-                    </div>
-                {% endfor %}
-                {% for batch in expiring_list %}
-                    <div class="flex items-center justify-between gap-2.5 text-text [&_.icon]:text-kpi-danger">
-                        <span>{% icon "clock" 15 %} {{ batch.product.name }} · <span class="font-mono">{{ batch.batch_no }}</span></span>
-                        <span class="whitespace-nowrap font-mono text-kpi-danger">{% trans "exp" %} {{ batch.expiry_date }}</span>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="px-3 py-[26px] text-center text-[13px] text-text-soft">{% icon "check" 16 %} {% trans "All clear — nothing needs attention." %}</p>
-        {% endif %}
     </article>
     {% endif %}
 
