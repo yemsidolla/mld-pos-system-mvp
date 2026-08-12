@@ -106,14 +106,14 @@
                     </td>
                     <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ product.product_code }}</td>
                     <td class="border-b border-border px-[9px] py-2.5 align-middle"><strong>{{ product.name }}</strong><br><span class="text-text-soft">{{ product.unit }}</span></td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ product.original_barcode|default:"-" }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.category|default:"-" }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.brand|default:"-" }}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ product.original_barcode|default_if_none:"" }}{% if not product.original_barcode %}<span class="text-text-soft">—</span>{% endif %}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.category|default_if_none:"" }}{% if not product.category %}<span class="text-text-soft">—</span>{% endif %}</td>
+                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.brand|default_if_none:"" }}{% if not product.brand %}<span class="text-text-soft">—</span>{% endif %}</td>
                     <td class="border-b border-border px-[9px] py-2.5 align-middle">
                         {% for animal in product.animal_type_labels %}{% include "catalog/_status_pill.html" with tone="info" label=animal %}{% endfor %}
                         {% if product.life_stage %}{% include "catalog/_status_pill.html" with tone="info" label=product.get_life_stage_display %}{% endif %}
                         {% for tag in product.tags.all %}{% include "catalog/_status_pill.html" with tone="success" label=tag.name %}{% endfor %}
-                        {% if not product.animal_type_labels and not product.life_stage and not product.tags.all %}-{% endif %}
+                        {% if not product.animal_type_labels and not product.life_stage and not product.tags.all %}<span class="text-text-soft">—</span>{% endif %}
                     </td>
                     <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono text-[0.95em] tracking-[-0.01em]">{{ product.default_selling_price }}</td>
                     <td class="border-b border-border px-[9px] py-2.5 align-middle">
