@@ -561,3 +561,9 @@ Append one line per design-system task (the only thing that may edit this file).
   with `--surface-subtle` by default (was `--surface`) so a field's extent is
   visible against a white card, and lift to `--surface` on focus. CSS-only;
   styleguide Forms section reflects it automatically via the global input rule.
+- 2026-08-12 — Native `<select>` restyled with `appearance: none` and a custom
+  chevron so dropdowns match the styled inputs (dark chevron on the light
+  surface, light chevron on the ink POS cart selects). Added an `emphasis`
+  option to the report metric-card component (`_metric_card.html`) — accent
+  border, tint and value colour — for the single most important number on a
+  page (e.g. daily revenue). CSS + component + this log together.
