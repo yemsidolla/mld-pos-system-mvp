@@ -13,10 +13,17 @@ constraints were fixed, and they shape everything below:
 1. **For ourselves first.** One shop (Melodu), not multiple tenants yet.
    Multi-tenancy (ADR-0008) is **not** a prerequisite and is out of scope here.
 2. **Offline-first.** A sale must complete with no network, then sync.
-3. **Backend and device share a LAN.** The server (`192.168.1.212`) and the
-   tablets/phones are on the same wifi. "Offline" here means a brief blip or a
-   server restart, not hours in the field. Sync happens within seconds when the
-   link is up.
+3. **The device is usually co-located with the server.** Most of the time the
+   tablet or phone is on the same local network as the backend. This is the key
+   architectural lever: if the backend is reached by a **local network address /
+   local DNS name** rather than a public internet route, then **losing the
+   internet is not the same as losing the backend** — a WAN outage still leaves
+   the device talking to the local server in real time. So the common "offline"
+   situation is really *"no internet, local server still reachable,"* where
+   near-real-time sync simply continues. The genuine "cannot reach the backend at
+   all" case (the local network itself is down, or the device has left the
+   premises) becomes the rarer edge. Offline-first is the safety net for that
+   edge, not the everyday path — which materially de-risks the whole design.
 
 React Native is acceptable to Sidolla as the client technology.
 
@@ -80,8 +87,10 @@ drives the whole design:
 This is the honest answer to "must complete sales offline" on batch inventory:
 not "overselling is impossible" (it isn't, in any offline system) but **"rare,
 detected on sync, and reconciled — never a lost sale."** It is viable *here*
-specifically because the shop is small, LAN-local, and syncs in seconds; it
-would not be viable for a multi-shop cloud POS.
+specifically because the shop is small and the backend is usually reachable on
+the local network (constraint 3), so sync is near-continuous and the window for
+two devices to race the same batch is tiny. It would not be viable for a
+multi-shop cloud POS.
 
 ### Sync protocol (sketch)
 
@@ -91,8 +100,14 @@ would not be viable for a multi-shop cloud POS.
   stay meaningful.)
 - **Push** (device → server): queued sales, each with its client UUID; server
   upserts idempotently and returns per-sale results (accepted / exception).
-- **Cadence**: on connectivity, on app foreground, and on a short timer. On a
-  LAN this is effectively continuous.
+- **Cadence**: on connectivity, on app foreground, and on a short timer. When
+  the local server is reachable (the usual case, see constraint 3) this is
+  effectively continuous — the full-offline queue is exercised only during a
+  genuine local-network outage.
+- **Backend address**: the client targets the backend by a **local DNS name**
+  (e.g. `pos.melodu.local`) resolved on the local network, not a hardcoded IP and
+  not a public internet route. This is what makes "internet down, backend still
+  reachable" work, and it lets the server move without reconfiguring devices.
 - **Auth**: token-based (DRF token or JWT). The device caches a token to operate
   offline under a known cashier identity. Token lifetime and offline-revocation
   are an open question (below).
