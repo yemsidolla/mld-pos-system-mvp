@@ -1,114 +1,144 @@
 #!/usr/bin/env bash
 # Melodu deploy-agent — watches origin/main and deploys to this box from cron.
 #
-# Safe by construction (each guard answers a real failure mode):
-#   - DRY-RUN by default (DEPLOY_AGENT_LIVE=1 to arm).
-#   - Single-flight lock — never two deploys at once.
-#   - Migration guard — commits that add migrations are HELD for a human; the
-#     automated path deploys only no-schema-change commits, so rollback is purely
-#     code+image and always safe (DB rollback is not automated).
-#   - Exact-SHA pin — deploys the fetched target commit, not a re-pulled newer one.
-#   - main stays at the known-good commit until the new one passes health; a
-#     mid-deploy death therefore never marks a broken commit as "deployed".
-#   - Image retag rollback — the running image is tagged :rollback before the
-#     build, so recovery restores it without rebuilding old source.
-#   - Explicit error handling (NOT `set -e`) so rollback ALWAYS runs on any
-#     failed step, with a retrying health check on both deploy and rollback.
-#   - Quarantine — a commit that failed deploy is not retried until main moves,
-#     so a bad commit can't cause a redeploy storm every tick.
+# Model: automate the happy path, ALERT on the sad path — never auto-rollback.
+# A failed deploy STOPS, quarantines the commit, and raises a durable, loud alert
+# for a human to recover. Chosen by Sidolla 2026-08-16.
+#
+# Operational state (log, alert, quarantine) lives OUTSIDE the repo in
+# DEPLOY_AGENT_STATE_DIR, so it never dirties the worktree the agent must build
+# from cleanly. An EXIT trap raises a CRITICAL alert if the process dies after
+# swapping the container without completing — so the till is never left down
+# silently. Migrations and dirty worktrees are held for a human.
 set -uo pipefail
 
 REPO="${DEPLOY_AGENT_REPO:-/opt/mld-pos-system-mvp}"
 COMPOSE="${DEPLOY_AGENT_COMPOSE:-docker-compose.prod.yml}"
-IMG="${DEPLOY_AGENT_IMAGE:-mld-pos-system-mvp-web}"
 LIVE="${DEPLOY_AGENT_LIVE:-0}"
-LOG="${DEPLOY_AGENT_LOG:-$REPO/deploy-agent.log}"
+STATE_DIR="${DEPLOY_AGENT_STATE_DIR:-/var/lib/mld-deploy-agent}"
 LOCK="${DEPLOY_AGENT_LOCK:-/tmp/mld-deploy-agent.lock}"
-QUARANTINE="${DEPLOY_AGENT_QUARANTINE:-/tmp/mld-deploy-agent.quarantine}"
+ALERT_CMD="${DEPLOY_AGENT_ALERT_CMD:-}"          # optional notifier; run as: CMD "<message>"
+HEALTH_URL="${DEPLOY_AGENT_HEALTH_URL:-}"        # optional host/nginx URL; else in-container probe
 
-log() { echo "$(date -u +%FT%TZ) $*" >> "$LOG"; }
-dc()  { docker compose -f "$COMPOSE" "$@"; }
+mkdir -p "$STATE_DIR" 2>/dev/null || true
+LOG="$STATE_DIR/deploy-agent.log"
+ALERT_FILE="$STATE_DIR/DEPLOY-ALERT.txt"
+QUARANTINE="$STATE_DIR/quarantine"
 
-# One internal health probe; caller retries. Checks the real health payload.
+SWAPPED=0        # 1 once the new container is running (till is now affected on failure)
+DONE=0           # 1 once we reach a terminal, handled state (success or handled failure)
+
+RECOVER="cd $REPO && git checkout main && docker compose -f $COMPOSE build web && docker compose -f $COMPOSE up -d --force-recreate web"
+
+log() { echo "$(date -u +%FT%TZ) $*" >> "$LOG" 2>/dev/null; }
+
+alert() {  # $1 severity, $2 message — durable: STATE_DIR is ours, outside the repo
+  local sev="$1" msg="$2" when; when="$(date -u +%FT%TZ)"
+  log "  ALERT[$sev] $msg"
+  { printf '%s\n[%s] %s\n' "$when" "$sev" "$msg" > "$ALERT_FILE"; } 2>/dev/null \
+    || echo "$when [$sev] $msg" >&2   # last resort: stderr (cron mails it)
+  if [ -n "$ALERT_CMD" ]; then
+    local -a acmd; read -ra acmd <<< "$ALERT_CMD"
+    DEPLOY_ALERT_SEVERITY="$sev" "${acmd[@]}" "$msg" >>"$LOG" 2>&1 \
+      || log "  ALERT-CMD FAILED (message preserved in $ALERT_FILE)"
+  fi
+}
+
+quarantine_set() {  # atomic; log if it fails (a failed write risks a redeploy storm)
+  printf '%s\n' "$1" > "${QUARANTINE}.tmp" 2>/dev/null && mv -f "${QUARANTINE}.tmp" "$QUARANTINE" 2>/dev/null \
+    || { log "  WARN: could not write quarantine for ${1:0:8}"; alert WARN "quarantine write failed for ${1:0:8}; may retry a bad commit."; }
+}
+
+on_exit() {  # safety net: an unexpected death after swap must still alert
+  local rc=$?
+  if [ "$SWAPPED" = "1" ] && [ "$DONE" != "1" ]; then
+    alert CRITICAL "deploy-agent exited (rc=$rc) after container swap without completing — TILL MAY BE DOWN. Recover: $RECOVER"
+  fi
+}
+trap on_exit EXIT
+
+dc() { docker compose -f "$COMPOSE" "$@"; }
+
 probe() {
-  dc exec -T web python -c \
-    "import urllib.request,sys; sys.exit(0 if '\"status\": \"ok\"' in urllib.request.urlopen('http://127.0.0.1:8000/health/',timeout=5).read().decode() else 1)" \
-    2>/dev/null
+  if [ -n "$HEALTH_URL" ]; then
+    curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null \
+      | python3 -c "import json,sys; sys.exit(0 if json.load(sys.stdin).get('status')=='ok' else 1)" 2>/dev/null
+  else
+    dc exec -T web python -c \
+      "import json,urllib.request,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://127.0.0.1:8000/health/',timeout=5)).get('status')=='ok' else 1)" \
+      2>/dev/null
+  fi
 }
-healthy() {  # retry for slow startup: 6 x 5s = 30s
-  for _ in 1 2 3 4 5 6; do sleep 5; probe && return 0; done
-  return 1
-}
+healthy() { for _ in 1 2 3 4 5 6; do sleep 5; probe && return 0; done; return 1; }
 
 # ---- single-flight ----
 exec 9>"$LOCK"
 flock -n 9 || exit 0
 
 cd "$REPO" || { log "ERROR: repo $REPO missing"; exit 1; }
-
+git rev-parse --verify -q main >/dev/null || { log "ERROR: no main branch"; exit 1; }
+git checkout -q main 2>>"$LOG" || { log "ERROR: cannot checkout main"; exit 1; }
 git fetch -q origin main || { log "ERROR: git fetch failed"; exit 1; }
-GOOD="$(git rev-parse HEAD)"            # currently checked-out & running = known good
-TARGET="$(git rev-parse origin/main)"
-[ "$GOOD" = "$TARGET" ] && exit 0       # nothing new — the quiet common case
 
-# Quarantine: don't retry a commit we already failed to deploy.
-if [ -f "$QUARANTINE" ] && [ "$(cat "$QUARANTINE" 2>/dev/null)" = "$TARGET" ]; then
-  exit 0
-fi
+GOOD="$(git rev-parse main)"
+TARGET="$(git rev-parse origin/main)"
+[ "$GOOD" = "$TARGET" ] && { DONE=1; exit 0; }
+if [ -f "$QUARANTINE" ] && [ "$(cat "$QUARANTINE" 2>/dev/null)" = "$TARGET" ]; then DONE=1; exit 0; fi
 
 log "main advanced ${GOOD:0:8} -> ${TARGET:0:8}"
 
-# Migration guard — schema changes are a human's job (DB rollback isn't safe to
-# automate). Hold and stop.
-NEWMIG="$(git diff --name-only "$GOOD" "$TARGET" -- '*/migrations/*.py' | grep -v '__init__' || true)"
-if [ -n "$NEWMIG" ]; then
-  log "  HELD: ${TARGET:0:8} adds migration(s) — manual deploy required:"
-  while IFS= read -r m; do log "    $m"; done <<< "$NEWMIG"
-  echo "$TARGET" > "$QUARANTINE"   # don't re-log every tick
-  exit 0
+# Migration guard — fail CLOSED if the diff itself errors.
+if ! MIGDIFF="$(git diff --name-only "$GOOD" "$TARGET" -- '*/migrations/*.py')"; then
+  log "  ABORT: migration diff failed; holding."
+  alert WARN "Deploy held: could not diff ${TARGET:0:8} for migrations. Till unaffected."
+  DONE=1; exit 1
+fi
+if printf '%s\n' "$MIGDIFF" | grep -v '__init__' | grep -q .; then
+  log "  HELD: ${TARGET:0:8} changes migrations — manual deploy required."
+  quarantine_set "$TARGET"
+  alert WARN "Deploy held: ${TARGET:0:8} changes migrations; manual deploy needed. Till unaffected."
+  DONE=1; exit 0
+fi
+
+# Clean worktree — an environment issue, NOT a bad commit, so do not quarantine.
+if [ -n "$(git status --porcelain)" ]; then
+  log "  ABORT: worktree dirty; refusing to build."
+  alert WARN "Deploy aborted: production worktree dirty. Till unaffected; clean it (retries when clean)."
+  DONE=1; exit 1
 fi
 
 if [ "$LIVE" != "1" ]; then
-  log "  DRY-RUN: would deploy ${TARGET:0:8} (no migrations; retag-rollback armed). Set DEPLOY_AGENT_LIVE=1 to arm."
-  exit 0
+  log "  DRY-RUN: would deploy ${TARGET:0:8} (no migrations, clean tree). Set DEPLOY_AGENT_LIVE=1 to arm."
+  DONE=1; exit 0
 fi
 
-# ---- deploy: build TARGET while main stays at GOOD (detached), promote on health ----
-deploy() {
-  scripts/backup_db.sh                         >>"$LOG" 2>&1 || return 1
-  docker image inspect "${IMG}:latest" >/dev/null 2>&1 \
-    && { docker tag "${IMG}:latest" "${IMG}:rollback" >>"$LOG" 2>&1 || return 1; }
-  git checkout -q --detach "$TARGET"           >>"$LOG" 2>&1 || return 1
-  dc build web                                 >>"$LOG" 2>&1 || return 1
-  dc up -d                                     >>"$LOG" 2>&1 || return 1
-  dc exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1 || return 1
-  healthy || return 1
-  git checkout -q -B main "$TARGET"            >>"$LOG" 2>&1 || return 1   # promote: main = TARGET
-  return 0
-}
+# ---- deploy: build TARGET detached; promote main only after health ----
+if ! git checkout -q --detach "$TARGET" 2>>"$LOG"; then
+  git checkout -q main; alert WARN "Deploy failed at checkout of ${TARGET:0:8}. Till unaffected."; quarantine_set "$TARGET"; DONE=1; exit 1
+fi
+if ! scripts/backup_db.sh >>"$LOG" 2>&1; then
+  git checkout -q main; alert WARN "Deploy aborted: DB backup failed for ${TARGET:0:8}. Till unaffected."; quarantine_set "$TARGET"; DONE=1; exit 1
+fi
+if ! dc build web >>"$LOG" 2>&1; then
+  git checkout -q main; alert WARN "Deploy failed: build error for ${TARGET:0:8}. Till unaffected (old container still serving)."; quarantine_set "$TARGET"; DONE=1; exit 1
+fi
 
-rollback() {
-  log "  ROLLING BACK to ${GOOD:0:8}"
-  git checkout -q -B main "$GOOD" >>"$LOG" 2>&1
-  if docker image inspect "${IMG}:rollback" >/dev/null 2>&1; then
-    docker tag "${IMG}:rollback" "${IMG}:latest" >>"$LOG" 2>&1
-    dc up -d >>"$LOG" 2>&1
-  else
-    dc build web >>"$LOG" 2>&1; dc up -d >>"$LOG" 2>&1   # last resort: rebuild old source
-  fi
-  if healthy; then
-    log "  ROLLED BACK OK -> ${GOOD:0:8} (deploy of ${TARGET:0:8} rejected)"
-  else
-    log "  ROLLBACK UNHEALTHY — MANUAL INTERVENTION NEEDED (known-good ${GOOD:0:8})"
-  fi
-}
+# Point of no easy return: swap the running container to the new image.
+SWAPPED=1
+if ! dc up -d >>"$LOG" 2>&1; then
+  alert CRITICAL "Deploy of ${TARGET:0:8} failed during container swap — TILL MAY BE DOWN. Recover: $RECOVER"; git checkout -q main; quarantine_set "$TARGET"; DONE=1; exit 1
+fi
+if ! dc exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1; then
+  alert CRITICAL "Deploy of ${TARGET:0:8}: collectstatic FAILED after swap — TILL LIKELY BROKEN. Recover: $RECOVER"; git checkout -q main; quarantine_set "$TARGET"; DONE=1; exit 1
+fi
 
-if deploy; then
-  rm -f "$QUARANTINE"
-  log "  DEPLOYED OK -> ${TARGET:0:8}"
+if healthy; then
+  if git checkout -q -B main "$TARGET" 2>>"$LOG"; then
+    rm -f "$QUARANTINE" "$ALERT_FILE" 2>/dev/null
+    DONE=1; log "  DEPLOYED OK -> ${TARGET:0:8}"
+  else
+    alert CRITICAL "Deploy of ${TARGET:0:8} healthy but could not advance main — state inconsistent. Check: cd $REPO && git status"; DONE=1; exit 1
+  fi
 else
-  log "  DEPLOY FAILED for ${TARGET:0:8}"
-  rollback
-  echo "$TARGET" > "$QUARANTINE"   # don't retry this bad commit until main moves
-  exit 1
+  alert CRITICAL "Deploy of ${TARGET:0:8} UNHEALTHY after swap — TILL LIKELY DOWN. Recover: $RECOVER"; git checkout -q main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
