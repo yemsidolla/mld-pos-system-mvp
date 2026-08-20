@@ -10,43 +10,77 @@
 # from cleanly. An EXIT trap raises a CRITICAL alert if the process dies after
 # swapping the container without completing — so the till is never left down
 # silently. Migrations and dirty worktrees are held for a human.
+#
+# Every command that can block (docker, git-over-network, the notifier) runs
+# under `timeout`: a hang would otherwise hold the flock forever with no alert —
+# the one failure the EXIT trap cannot catch, because the process never exits.
+# The container swap touches ONLY web (--no-deps): postgres and garage are
+# never reconciled by an automated deploy.
 set -uo pipefail
 
 REPO="${DEPLOY_AGENT_REPO:-/opt/mld-pos-system-mvp}"
 COMPOSE="${DEPLOY_AGENT_COMPOSE:-docker-compose.prod.yml}"
 LIVE="${DEPLOY_AGENT_LIVE:-0}"
 STATE_DIR="${DEPLOY_AGENT_STATE_DIR:-/var/lib/mld-deploy-agent}"
-LOCK="${DEPLOY_AGENT_LOCK:-/tmp/mld-deploy-agent.lock}"
 ALERT_CMD="${DEPLOY_AGENT_ALERT_CMD:-}"          # optional notifier; run as: CMD "<message>"
 HEALTH_URL="${DEPLOY_AGENT_HEALTH_URL:-}"        # optional host/nginx URL; else in-container probe
 
-mkdir -p "$STATE_DIR" 2>/dev/null || true
+# Bounded time for anything that can block. A hang would hold the single-flight
+# lock forever with DONE=0 and no alert — worse than any clean failure.
+T_GIT="${DEPLOY_AGENT_T_GIT:-120}"               # fetch (network)
+T_BACKUP="${DEPLOY_AGENT_T_BACKUP:-600}"
+T_BUILD="${DEPLOY_AGENT_T_BUILD:-1800}"          # pip + Tailwind can be slow; pre-swap, till unaffected
+T_SWAP="${DEPLOY_AGENT_T_SWAP:-120}"             # post-swap commands must fail FAST
+T_STATIC="${DEPLOY_AGENT_T_STATIC:-180}"
+T_PROBE="${DEPLOY_AGENT_T_PROBE:-30}"
+T_ALERT="${DEPLOY_AGENT_T_ALERT:-30}"            # a hung notifier must never block the trap
+
+# State dir must be writable BEFORE anything else: without it there is no log,
+# no durable alert, and no quarantine — never proceed on `|| true`.
+if ! mkdir -p "$STATE_DIR" 2>/dev/null || [ ! -w "$STATE_DIR" ]; then
+  echo "deploy-agent: STATE_DIR $STATE_DIR not writable — refusing to run" >&2
+  exit 1
+fi
 LOG="$STATE_DIR/deploy-agent.log"
 ALERT_FILE="$STATE_DIR/DEPLOY-ALERT.txt"
 QUARANTINE="$STATE_DIR/quarantine"
+# Lock lives in STATE_DIR, not /tmp: tmp cleaners unlink held locks, and two
+# agents on one worktree can swap a torn build.
+LOCK="${DEPLOY_AGENT_LOCK:-$STATE_DIR/lock}"
 
 SWAPPED=0        # 1 once the new container is running (till is now affected on failure)
 DONE=0           # 1 once we reach a terminal, handled state (success or handled failure)
 
-RECOVER="cd $REPO && git checkout main && docker compose -f $COMPOSE build web && docker compose -f $COMPOSE up -d --force-recreate web"
+RECOVER="cd $REPO && git checkout main && docker compose -f $COMPOSE build web && docker compose -f $COMPOSE up -d --no-deps --force-recreate web"
 
 log() { echo "$(date -u +%FT%TZ) $*" >> "$LOG" 2>/dev/null; }
 
-alert() {  # $1 severity, $2 message — durable: STATE_DIR is ours, outside the repo
+alert() {  # $1 severity, $2 message — durable file first; notifier bounded after
   local sev="$1" msg="$2" when; when="$(date -u +%FT%TZ)"
   log "  ALERT[$sev] $msg"
   { printf '%s\n[%s] %s\n' "$when" "$sev" "$msg" > "$ALERT_FILE"; } 2>/dev/null \
     || echo "$when [$sev] $msg" >&2   # last resort: stderr (cron mails it)
   if [ -n "$ALERT_CMD" ]; then
     local -a acmd; read -ra acmd <<< "$ALERT_CMD"
-    DEPLOY_ALERT_SEVERITY="$sev" "${acmd[@]}" "$msg" >>"$LOG" 2>&1 \
-      || log "  ALERT-CMD FAILED (message preserved in $ALERT_FILE)"
+    DEPLOY_ALERT_SEVERITY="$sev" timeout "$T_ALERT" "${acmd[@]}" "$msg" >>"$LOG" 2>&1 \
+      || log "  ALERT-CMD FAILED/TIMED OUT (message preserved in $ALERT_FILE)"
   fi
 }
 
-quarantine_set() {  # atomic; log if it fails (a failed write risks a redeploy storm)
-  printf '%s\n' "$1" > "${QUARANTINE}.tmp" 2>/dev/null && mv -f "${QUARANTINE}.tmp" "$QUARANTINE" 2>/dev/null \
-    || { log "  WARN: could not write quarantine for ${1:0:8}"; alert WARN "quarantine write failed for ${1:0:8}; may retry a bad commit."; }
+quarantine_set() {  # atomic; a failed write after swap risks redeploying a bad commit
+  if printf '%s\n' "$1" > "${QUARANTINE}.tmp" 2>/dev/null && mv -f "${QUARANTINE}.tmp" "$QUARANTINE" 2>/dev/null; then
+    return 0
+  fi
+  if [ "$SWAPPED" = "1" ]; then
+    alert CRITICAL "quarantine write FAILED for ${1:0:8} after container swap — next cron WILL redeploy it. Disable cron or fix $STATE_DIR now."
+  else
+    alert WARN "quarantine write failed for ${1:0:8}; may retry a bad commit."
+  fi
+}
+
+back_to_main() {  # failure paths must not strand HEAD detached at a bad commit
+  git checkout -q main 2>>"$LOG" \
+    || alert CRITICAL "could not return checkout to main — HEAD may be detached in $REPO. Fix: cd $REPO && git checkout main"
 }
 
 on_exit() {  # safety net: an unexpected death after swap must still alert
@@ -57,14 +91,13 @@ on_exit() {  # safety net: an unexpected death after swap must still alert
 }
 trap on_exit EXIT
 
-dc() { docker compose -f "$COMPOSE" "$@"; }
 
 probe() {
   if [ -n "$HEALTH_URL" ]; then
     curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null \
       | python3 -c "import json,sys; sys.exit(0 if json.load(sys.stdin).get('status')=='ok' else 1)" 2>/dev/null
   else
-    dc exec -T web python -c \
+    timeout "$T_PROBE" docker compose -f "$COMPOSE" exec -T web python -c \
       "import json,urllib.request,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://127.0.0.1:8000/health/',timeout=5)).get('status')=='ok' else 1)" \
       2>/dev/null
   fi
@@ -72,13 +105,16 @@ probe() {
 healthy() { for _ in 1 2 3 4 5 6; do sleep 5; probe && return 0; done; return 1; }
 
 # ---- single-flight ----
-exec 9>"$LOCK"
+if ! exec 9>"$LOCK"; then
+  alert WARN "deploy-agent: cannot open lock $LOCK — deploys are NOT running."
+  exit 1
+fi
 flock -n 9 || exit 0
 
-cd "$REPO" || { log "ERROR: repo $REPO missing"; exit 1; }
-git rev-parse --verify -q main >/dev/null || { log "ERROR: no main branch"; exit 1; }
-git checkout -q main 2>>"$LOG" || { log "ERROR: cannot checkout main"; exit 1; }
-git fetch -q origin main || { log "ERROR: git fetch failed"; exit 1; }
+cd "$REPO" || { alert WARN "deploy-agent: repo $REPO missing — deploys are NOT running."; exit 1; }
+git rev-parse --verify -q main >/dev/null || { alert WARN "deploy-agent: no main branch in $REPO — deploys are NOT running."; exit 1; }
+git checkout -q main 2>>"$LOG" || { alert WARN "deploy-agent: cannot checkout main in $REPO (HEAD may be detached) — deploys are NOT running."; exit 1; }
+timeout "$T_GIT" git fetch -q origin main || { log "ERROR: git fetch failed/timed out (transient; will retry)"; exit 1; }
 
 GOOD="$(git rev-parse main)"
 TARGET="$(git rev-parse origin/main)"
@@ -114,22 +150,28 @@ fi
 
 # ---- deploy: build TARGET detached; promote main only after health ----
 if ! git checkout -q --detach "$TARGET" 2>>"$LOG"; then
-  git checkout -q main; alert WARN "Deploy failed at checkout of ${TARGET:0:8}. Till unaffected."; quarantine_set "$TARGET"; DONE=1; exit 1
+  back_to_main; alert WARN "Deploy failed at checkout of ${TARGET:0:8}. Till unaffected."; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
-if ! scripts/backup_db.sh >>"$LOG" 2>&1; then
-  git checkout -q main; alert WARN "Deploy aborted: DB backup failed for ${TARGET:0:8}. Till unaffected."; quarantine_set "$TARGET"; DONE=1; exit 1
+# Backup failure is an ENVIRONMENT fault (disk, pg down) — like a dirty
+# worktree, it does not quarantine: retry when the environment recovers.
+if ! timeout "$T_BACKUP" scripts/backup_db.sh >>"$LOG" 2>&1; then
+  back_to_main; alert WARN "Deploy aborted: DB backup failed/timed out for ${TARGET:0:8}. Till unaffected (retries next run)."; DONE=1; exit 1
 fi
-if ! dc build web >>"$LOG" 2>&1; then
-  git checkout -q main; alert WARN "Deploy failed: build error for ${TARGET:0:8}. Till unaffected (old container still serving)."; quarantine_set "$TARGET"; DONE=1; exit 1
+# Build failure is plausibly the COMMIT's fault (Dockerfile, deps) — quarantine
+# so a broken commit does not rebuild every cron tick.
+if ! timeout "$T_BUILD" docker compose -f "$COMPOSE" build web >>"$LOG" 2>&1; then
+  back_to_main; alert WARN "Deploy failed: build error/timeout for ${TARGET:0:8}. Till unaffected (old container still serving)."; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
 
 # Point of no easy return: swap the running container to the new image.
+# ONLY web, --no-deps: postgres health must not block the swap, and an
+# automated deploy must never restart the database or media store.
 SWAPPED=1
-if ! dc up -d >>"$LOG" 2>&1; then
-  alert CRITICAL "Deploy of ${TARGET:0:8} failed during container swap — TILL MAY BE DOWN. Recover: $RECOVER"; git checkout -q main; quarantine_set "$TARGET"; DONE=1; exit 1
+if ! timeout "$T_SWAP" docker compose -f "$COMPOSE" up -d --no-deps --force-recreate web >>"$LOG" 2>&1; then
+  alert CRITICAL "Deploy of ${TARGET:0:8} failed/timed out during container swap — TILL MAY BE DOWN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
-if ! dc exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1; then
-  alert CRITICAL "Deploy of ${TARGET:0:8}: collectstatic FAILED after swap — TILL LIKELY BROKEN. Recover: $RECOVER"; git checkout -q main; quarantine_set "$TARGET"; DONE=1; exit 1
+if ! timeout "$T_STATIC" docker compose -f "$COMPOSE" exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1; then
+  alert CRITICAL "Deploy of ${TARGET:0:8}: collectstatic FAILED/timed out after swap — TILL LIKELY BROKEN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
 
 if healthy; then
@@ -140,5 +182,5 @@ if healthy; then
     alert CRITICAL "Deploy of ${TARGET:0:8} healthy but could not advance main — state inconsistent. Check: cd $REPO && git status"; DONE=1; exit 1
   fi
 else
-  alert CRITICAL "Deploy of ${TARGET:0:8} UNHEALTHY after swap — TILL LIKELY DOWN. Recover: $RECOVER"; git checkout -q main; quarantine_set "$TARGET"; DONE=1; exit 1
+  alert CRITICAL "Deploy of ${TARGET:0:8} UNHEALTHY after swap — TILL LIKELY DOWN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
