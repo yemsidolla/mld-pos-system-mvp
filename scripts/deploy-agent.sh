@@ -105,8 +105,14 @@ trap on_exit EXIT
 
 probe() {
   if [ -n "$HEALTH_URL" ]; then
+    # pipefail would report the RIGHTMOST failure: a curl killed at 124 shows
+    # as python's 1 and healthy() would retry a hang. Surface the 124.
     bounded "$T_PROBE" curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null \
       | python3 -c "import json,sys; sys.exit(0 if json.load(sys.stdin).get('status')=='ok' else 1)" 2>/dev/null
+    local -a ps=("${PIPESTATUS[@]}")
+    [ "${ps[0]}" -eq 124 ] && return 124   # curl leg hung/killed: this is a hang, not "not ready"
+    [ "${ps[0]}" -ne 0 ] && return 1
+    return "${ps[1]}"
   else
     bounded "$T_PROBE" docker compose -f "$COMPOSE" exec -T web python -c \
       "import json,urllib.request,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://127.0.0.1:8000/health/',timeout=5)).get('status')=='ok' else 1)" \
