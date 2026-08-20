@@ -53,16 +53,23 @@ DONE=0           # 1 once we reach a terminal, handled state (success or handled
 
 RECOVER="cd $REPO && git checkout main && docker compose -f $COMPOSE build web && docker compose -f $COMPOSE up -d --no-deps --force-recreate web"
 
+# TERM then KILL: coreutils timeout without --kill-after waits FOREVER on a
+# child that ignores SIGTERM (docker compose routinely does). Every bound in
+# this script goes through here, including the notifier called from the trap.
+bounded() { timeout --kill-after=5 "$@"; }
+
 log() { echo "$(date -u +%FT%TZ) $*" >> "$LOG" 2>/dev/null; }
 
 alert() {  # $1 severity, $2 message — durable file first; notifier bounded after
   local sev="$1" msg="$2" when; when="$(date -u +%FT%TZ)"
   log "  ALERT[$sev] $msg"
-  { printf '%s\n[%s] %s\n' "$when" "$sev" "$msg" > "$ALERT_FILE"; } 2>/dev/null \
+  # APPEND, never truncate: a follow-up alert (e.g. back_to_main's) must not
+  # clobber the till-down recovery message. Cleared on successful deploy.
+  { printf '%s [%s] %s\n' "$when" "$sev" "$msg" >> "$ALERT_FILE"; } 2>/dev/null \
     || echo "$when [$sev] $msg" >&2   # last resort: stderr (cron mails it)
   if [ -n "$ALERT_CMD" ]; then
     local -a acmd; read -ra acmd <<< "$ALERT_CMD"
-    DEPLOY_ALERT_SEVERITY="$sev" timeout "$T_ALERT" "${acmd[@]}" "$msg" >>"$LOG" 2>&1 \
+    DEPLOY_ALERT_SEVERITY="$sev" bounded "$T_ALERT" "${acmd[@]}" "$msg" >>"$LOG" 2>&1 \
       || log "  ALERT-CMD FAILED/TIMED OUT (message preserved in $ALERT_FILE)"
   fi
 }
@@ -79,8 +86,12 @@ quarantine_set() {  # atomic; a failed write after swap risks redeploying a bad 
 }
 
 back_to_main() {  # failure paths must not strand HEAD detached at a bad commit
-  git checkout -q main 2>>"$LOG" \
-    || alert CRITICAL "could not return checkout to main — HEAD may be detached in $REPO. Fix: cd $REPO && git checkout main"
+  bounded 30 git checkout -q main 2>>"$LOG" && return 0
+  if [ "$SWAPPED" = "1" ]; then  # caller already raised the till-down CRITICAL
+    log "  ERROR: could not return checkout to main (HEAD likely detached)"
+  else
+    alert CRITICAL "could not return checkout to main — HEAD may be detached in $REPO. Fix: cd $REPO && git checkout main"
+  fi
 }
 
 on_exit() {  # safety net: an unexpected death after swap must still alert
@@ -94,15 +105,23 @@ trap on_exit EXIT
 
 probe() {
   if [ -n "$HEALTH_URL" ]; then
-    curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null \
+    bounded "$T_PROBE" curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null \
       | python3 -c "import json,sys; sys.exit(0 if json.load(sys.stdin).get('status')=='ok' else 1)" 2>/dev/null
   else
-    timeout "$T_PROBE" docker compose -f "$COMPOSE" exec -T web python -c \
+    bounded "$T_PROBE" docker compose -f "$COMPOSE" exec -T web python -c \
       "import json,urllib.request,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://127.0.0.1:8000/health/',timeout=5)).get('status')=='ok' else 1)" \
       2>/dev/null
   fi
 }
-healthy() { for _ in 1 2 3 4 5 6; do sleep 5; probe && return 0; done; return 1; }
+healthy() {  # 124 = the probe HUNG (wedged docker/engine): fail now, not after 6x35s
+  local rc
+  for _ in 1 2 3 4 5 6; do
+    sleep 5
+    probe && return 0
+    rc=$?; [ "$rc" -eq 124 ] && { log "  probe timed out (rc=124); not retrying a wedged probe"; return 1; }
+  done
+  return 1
+}
 
 # ---- single-flight ----
 if ! exec 9>"$LOCK"; then
@@ -114,7 +133,7 @@ flock -n 9 || exit 0
 cd "$REPO" || { alert WARN "deploy-agent: repo $REPO missing — deploys are NOT running."; exit 1; }
 git rev-parse --verify -q main >/dev/null || { alert WARN "deploy-agent: no main branch in $REPO — deploys are NOT running."; exit 1; }
 git checkout -q main 2>>"$LOG" || { alert WARN "deploy-agent: cannot checkout main in $REPO (HEAD may be detached) — deploys are NOT running."; exit 1; }
-timeout "$T_GIT" git fetch -q origin main || { log "ERROR: git fetch failed/timed out (transient; will retry)"; exit 1; }
+bounded "$T_GIT" git fetch -q origin main || { log "ERROR: git fetch failed/timed out (transient; will retry)"; exit 1; }
 
 GOOD="$(git rev-parse main)"
 TARGET="$(git rev-parse origin/main)"
@@ -154,12 +173,12 @@ if ! git checkout -q --detach "$TARGET" 2>>"$LOG"; then
 fi
 # Backup failure is an ENVIRONMENT fault (disk, pg down) — like a dirty
 # worktree, it does not quarantine: retry when the environment recovers.
-if ! timeout "$T_BACKUP" scripts/backup_db.sh >>"$LOG" 2>&1; then
+if ! bounded "$T_BACKUP" scripts/backup_db.sh >>"$LOG" 2>&1; then
   back_to_main; alert WARN "Deploy aborted: DB backup failed/timed out for ${TARGET:0:8}. Till unaffected (retries next run)."; DONE=1; exit 1
 fi
 # Build failure is plausibly the COMMIT's fault (Dockerfile, deps) — quarantine
 # so a broken commit does not rebuild every cron tick.
-if ! timeout "$T_BUILD" docker compose -f "$COMPOSE" build web >>"$LOG" 2>&1; then
+if ! bounded "$T_BUILD" docker compose -f "$COMPOSE" build web >>"$LOG" 2>&1; then
   back_to_main; alert WARN "Deploy failed: build error/timeout for ${TARGET:0:8}. Till unaffected (old container still serving)."; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
 
@@ -167,10 +186,10 @@ fi
 # ONLY web, --no-deps: postgres health must not block the swap, and an
 # automated deploy must never restart the database or media store.
 SWAPPED=1
-if ! timeout "$T_SWAP" docker compose -f "$COMPOSE" up -d --no-deps --force-recreate web >>"$LOG" 2>&1; then
+if ! bounded "$T_SWAP" docker compose -f "$COMPOSE" up -d --no-deps --force-recreate web >>"$LOG" 2>&1; then
   alert CRITICAL "Deploy of ${TARGET:0:8} failed/timed out during container swap — TILL MAY BE DOWN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
-if ! timeout "$T_STATIC" docker compose -f "$COMPOSE" exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1; then
+if ! bounded "$T_STATIC" docker compose -f "$COMPOSE" exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1; then
   alert CRITICAL "Deploy of ${TARGET:0:8}: collectstatic FAILED/timed out after swap — TILL LIKELY BROKEN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
 
