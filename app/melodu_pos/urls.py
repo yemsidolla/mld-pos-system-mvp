@@ -35,6 +35,7 @@ from catalog.views import (
     supplier_edit_view,
     supplier_list_view,
 )
+from core.pwa import manifest_view, offline_view, service_worker_view
 from core.views import (
     auth_settings_view,
     dashboard_home_view,
@@ -170,6 +171,9 @@ urlpatterns = [
     path("dashboard/system-health/", system_health_view, name="system-health"),
     path("dashboard/stock-in/", stock_in_view, name="stock-in"),
     path("health/", health_check, name="health-check"),
+    path("manifest.webmanifest", manifest_view, name="pwa-manifest"),
+    path("sw.js", service_worker_view, name="pwa-service-worker"),
+    path("offline/", offline_view, name="pwa-offline"),
     path("media/<path:path>", protected_media_view, name="protected-media"),
 ]
 

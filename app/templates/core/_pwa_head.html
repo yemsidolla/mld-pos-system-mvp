@@ -1,0 +1,12 @@
+{% load static %}
+{# Install metadata. Included by every template that owns its own <head>. #}
+<link rel="manifest" href="{% url 'pwa-manifest' %}">
+<meta name="theme-color" content="#0b1220">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Melodu">
+<link rel="icon" href="{% static 'core/icons/favicon-32.png' %}" sizes="32x32" type="image/png">
+<link rel="icon" href="{% static 'core/icons/icon-192.png' %}" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="{% static 'core/icons/apple-touch-icon-180.png' %}">
+<script src="{% static 'core/js/pwa.js' %}" defer></script>
