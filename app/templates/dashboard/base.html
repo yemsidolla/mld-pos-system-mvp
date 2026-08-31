@@ -7,32 +7,45 @@
     <title>{% block title %}{% trans "Dashboard" %}{% endblock %} | Melodu POS</title>
     <link rel="stylesheet" href="{% static 'core/css/cascade.css' %}">
     <link rel="stylesheet" href="{% static 'core/css/tailwind.css' %}">
-    <script>if (localStorage.getItem("melodu-sidebar") === "collapsed") document.documentElement.classList.add("sidebar-collapsed");</script>
+    {# Applied before paint so a collapsed sidebar or group never flashes open.
+       The accordion's full behaviour lives in nav.js; this only pre-marks the
+       groups so the first frame is already correct. #}
+    <script>
+      if (localStorage.getItem("melodu-sidebar") === "collapsed") document.documentElement.classList.add("sidebar-collapsed");
+      try {
+        var c = JSON.parse(localStorage.getItem("melodu-nav-collapsed")) || {};
+        document.addEventListener("DOMContentLoaded", function () {
+          document.querySelectorAll("[data-nav-group]").forEach(function (g) {
+            if (c[g.getAttribute("data-nav-group")] === true) g.setAttribute("data-collapsed", "true");
+          });
+        });
+      } catch (e) {}
+    </script>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="melodu-app">
 <a class="skip-link fixed left-4 top-[-48px] z-[100] rounded-sm border border-border bg-surface px-3 py-2 focus:top-4" href="#main-content">{% trans "Skip to content" %}</a>
-<<aside class="app-sidebar fixed inset-y-0 left-0 z-auto flex w-[248px] flex-col border-r border-ink-border bg-ink transition-[width] duration-[160ms] ease-linear print:hidden max-[900px]:hidden sidebar-collapsed:w-16" aria-label="{% trans 'Primary navigation' %}">
-    <div class="sidebar-header flex flex-none items-center justify-between gap-1 px-3.5 pb-2.5 pt-[18px] sidebar-collapsed:flex-col sidebar-collapsed:gap-1.5 sidebar-collapsed:px-2 sidebar-collapsed:pb-2 sidebar-collapsed:pt-3.5">
-        <a class="brand flex items-center gap-2.5 px-2 py-1.5 text-[#f1f7ff] no-underline hover:no-underline sidebar-collapsed:justify-center sidebar-collapsed:p-0" href="{% url 'dashboard-home' %}">
+<<aside class="app-sidebar fixed inset-y-0 left-0 z-auto flex w-[248px] flex-col border-r border-ink-border bg-ink transition-[width] duration-[160ms] ease-linear print:hidden max-[900px]:hidden rail:w-16 sidebar-collapsed:w-16" aria-label="{% trans 'Primary navigation' %}">
+    <div class="sidebar-header flex flex-none items-center justify-between gap-1 px-3.5 pb-2.5 pt-[18px] rail:flex-col sidebar-collapsed:flex-col rail:gap-1.5 sidebar-collapsed:gap-1.5 rail:px-2 sidebar-collapsed:px-2 sidebar-collapsed:pb-2 sidebar-collapsed:pt-3.5">
+        <a class="brand flex items-center gap-2.5 px-2 py-1.5 text-[#f1f7ff] no-underline hover:no-underline rail:justify-center sidebar-collapsed:justify-center rail:p-0 sidebar-collapsed:p-0" href="{% url 'dashboard-home' %}">
             <span class="brand-mark inline-grid size-9 place-items-center rounded-md bg-accent text-[15px] font-bold text-[#e0f7fa]">M</span>
-            <span class="brand-text sidebar-collapsed:hidden">
+            <span class="brand-text rail:hidden sidebar-collapsed:hidden">
                 <strong class="block">Melodu</strong>
                 <small class="mt-px block text-xs text-ink-text-dim">{% trans "Pet Store POS" %}</small>
             </span>
         </a>
-        <button class="sidebar-toggle inline-grid flex-none cursor-pointer place-items-center rounded-[7px] border-0 bg-transparent p-[7px] text-ink-text-dim hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] max-[900px]:hidden" type="button" data-sidebar-toggle aria-label="{% trans 'Expand or collapse sidebar' %}">{% icon "sidebar" 17 %}</button>
+        <button class="sidebar-toggle inline-grid flex-none cursor-pointer place-items-center rounded-[7px] border-0 bg-transparent p-[7px] text-ink-text-dim hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] max-[900px]:hidden rail:hidden" type="button" data-sidebar-toggle aria-label="{% trans 'Expand or collapse sidebar' %}">{% icon "sidebar" 17 %}</button>
     </div>
-    <div class="sidebar-body min-h-0 flex-auto overflow-y-auto px-3.5 pb-3 pt-1 [scrollbar-color:var(--ink-border)_transparent] [scrollbar-width:thin] sidebar-collapsed:px-2 sidebar-collapsed:pb-3 sidebar-collapsed:pt-1">
+    <div class="sidebar-body min-h-0 flex-auto overflow-y-auto px-3.5 pb-3 pt-1 [scrollbar-color:var(--ink-border)_transparent] [scrollbar-width:thin] rail:px-2 sidebar-collapsed:px-2 sidebar-collapsed:pb-3 sidebar-collapsed:pt-1">
         <nav class="nav-groups grid gap-4">
             {% for group in dashboard_nav_groups %}
                 <div class="nav-group sidebar-collapsed:mt-2.5 sidebar-collapsed:first:mt-0">
-                    <p class="nav-group-title mb-1 mt-0 px-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-text-dim sidebar-collapsed:hidden">{{ group.label }}</p>
+                    <p class="nav-group-title mb-1 mt-0 px-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-text-dim rail:hidden sidebar-collapsed:hidden">{{ group.label }}</p>
                     <div class="nav-list grid gap-1">
                         {% for item in group.items %}
-                            <a class="nav-item flex min-h-[38px] items-center gap-[9px] rounded-sm px-2.5 py-2 font-medium text-ink-text no-underline hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] hover:no-underline [&.active]:bg-ink-soft [&.active]:text-accent-bright [&_.nav-ic]:opacity-75 [&.active_.nav-ic]:opacity-100 sidebar-collapsed:justify-center sidebar-collapsed:px-0 sidebar-collapsed:py-2.5 sidebar-collapsed:[&_.nav-ic]:opacity-90 {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}" title="{{ item.label }}">
+                            <a class="nav-item flex min-h-[38px] items-center gap-[9px] rounded-sm px-2.5 py-2 font-medium text-ink-text no-underline hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] hover:no-underline [&.active]:bg-ink-soft [&.active]:text-accent-bright [&_.nav-ic]:opacity-75 [&.active_.nav-ic]:opacity-100 rail:justify-center sidebar-collapsed:justify-center rail:px-0 sidebar-collapsed:px-0 rail:py-2.5 sidebar-collapsed:py-2.5 sidebar-collapsed:[&_.nav-ic]:opacity-90 {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}" title="{{ item.label }}">
                                 {% if item.icon %}{% icon item.icon 17 "nav-ic" %}{% endif %}
-                                <span class="sidebar-collapsed:hidden">{{ item.label }}</span>
+                                <span class="rail:hidden sidebar-collapsed:hidden">{{ item.label }}</span>
                             </a>
                         {% endfor %}
                     </div>
@@ -40,24 +53,35 @@
             {% endfor %}
         </nav>
     </div>
-    <div class="sidebar-footer grid flex-none gap-2 border-t border-ink-border px-3.5 pb-[18px] pt-2.5 sidebar-collapsed:px-2 sidebar-collapsed:pb-3.5 sidebar-collapsed:pt-2.5">
+    <div class="sidebar-footer grid flex-none gap-2 border-t border-ink-border px-3.5 pb-[18px] pt-2.5 rail:px-2 sidebar-collapsed:px-2 sidebar-collapsed:pb-3.5 sidebar-collapsed:pt-2.5">
+        {% if dashboard_utility_items %}
+            {# Diagnostics (System Health, Live Logs, Style Guide) dock here as
+               icons: needed occasionally, but they were padding out the
+               everyday Administration list. #}
+            <div class="utility-row flex flex-wrap gap-1 rail:justify-center sidebar-collapsed:justify-center">
+                {% for item in dashboard_utility_items %}
+                    <a class="nav-item compact inline-grid size-8 cursor-pointer place-items-center rounded-sm text-ink-text no-underline hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] hover:no-underline [&.active]:bg-ink-soft [&.active]:text-accent-bright [&_.nav-ic]:opacity-75 {% if request.resolver_match.url_name == item.url_name %}active{% endif %}"
+                       href="{{ item.href }}" title="{{ item.label }}" aria-label="{{ item.label }}">{% icon item.icon 16 "nav-ic" %}</a>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% if dashboard_is_admin %}
-            <a class="nav-item compact flex min-h-[34px] items-center gap-[9px] rounded-sm px-2.5 py-2 font-medium text-ink-text no-underline hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] hover:no-underline [&_.nav-ic]:opacity-75 sidebar-collapsed:justify-center sidebar-collapsed:px-0 sidebar-collapsed:py-2.5" href="{% url 'admin:index' %}">{% icon "settings" 15 "nav-ic" %}<span class="sidebar-collapsed:hidden">{% trans "Django Admin" %}</span></a>
+            <a class="nav-item compact flex min-h-[34px] items-center gap-[9px] rounded-sm px-2.5 py-2 font-medium text-ink-text no-underline hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] hover:no-underline [&_.nav-ic]:opacity-75 rail:justify-center sidebar-collapsed:justify-center rail:px-0 sidebar-collapsed:px-0 rail:py-2.5 sidebar-collapsed:py-2.5" href="{% url 'admin:index' %}">{% icon "settings" 15 "nav-ic" %}<span class="rail:hidden sidebar-collapsed:hidden">{% trans "Django Admin" %}</span></a>
         {% endif %}
         {% if request.user.is_authenticated %}
-            <div class="sidebar-user flex items-center gap-[9px] px-2.5 py-1 sidebar-collapsed:justify-center sidebar-collapsed:px-0 sidebar-collapsed:py-1">
+            <div class="sidebar-user flex items-center gap-[9px] px-2.5 py-1 rail:justify-center sidebar-collapsed:justify-center rail:px-0 sidebar-collapsed:px-0 sidebar-collapsed:py-1">
                 <span class="sidebar-avatar inline-grid size-7 flex-none place-items-center rounded-full bg-accent text-[13px] font-bold text-[#e0f7fa]">{{ request.user.get_full_name|default:request.user.username|first|upper }}</span>
-                <span class="sidebar-user-text grid min-w-0 leading-[1.2] sidebar-collapsed:hidden">
+                <span class="sidebar-user-text grid min-w-0 leading-[1.2] rail:hidden sidebar-collapsed:hidden">
                     <strong class="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-[#f1f7ff]">{{ request.user.get_full_name|default:request.user.username }}</strong>
                     {% if dashboard_role_label %}<small class="text-[11px] text-accent-bright">{{ dashboard_role_label }}</small>{% endif %}
                 </span>
             </div>
         {% endif %}
-        <span class="version mono px-2.5 text-[11px] text-ink-text-dim sidebar-collapsed:hidden">v{{ app_version }}</span>
+        <span class="version mono px-2.5 text-[11px] text-ink-text-dim rail:hidden sidebar-collapsed:hidden">v{{ app_version }}</span>
     </div>
 </aside>
 
-<div class="app-frame ml-[248px] min-h-screen transition-[margin-left] duration-[160ms] ease-linear print:m-0 max-[900px]:ml-0 sidebar-collapsed:ml-16">
+<div class="app-frame ml-[248px] min-h-screen transition-[margin-left] duration-[160ms] ease-linear print:m-0 max-[900px]:ml-0 rail:ml-16 sidebar-collapsed:ml-16">
     <header class="topbar sticky top-0 z-20 flex min-h-16 items-center justify-between gap-[18px] border-b border-border bg-white/94 px-6 py-2.5 print:hidden max-[900px]:static max-[900px]:flex-col max-[900px]:items-start max-[900px]:px-3.5 max-[900px]:py-4 max-[640px]:px-3.5 max-[640px]:py-2.5">
         <div>
             <p class="eyebrow m-0 text-[11px] font-bold uppercase tracking-[0.08em] text-accent">{% block page_eyebrow %}{% trans "Melodu Dashboard" %}{% endblock %}</p>
