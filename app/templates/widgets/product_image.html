@@ -14,9 +14,11 @@ all, and the panel's own "click to choose" text would be a lie. The normal
 picker still offers the camera as one of its options.
 {% endcomment %}
 <div class="media-field" data-media-field>
-    {# focus-within moves the ring to the visible affordance — the real input
-       is sr-only, which clips the browser's own ring inside a 1x1 box, so
-       tabbing here would otherwise be an invisible stop. #}
+    {% comment %}
+    focus-within moves the ring to the visible affordance — the real input
+    is sr-only, which clips the browser's own ring inside a 1x1 box, so
+    tabbing here would otherwise be an invisible stop.
+    {% endcomment %}
     <label class="media-drop group grid cursor-pointer justify-items-center gap-2 rounded-md border border-dashed border-border-strong bg-surface-subtle px-4 py-6 text-center hover:border-primary hover:bg-surface focus-within:border-primary focus-within:bg-surface focus-within:outline focus-within:outline-2 focus-within:outline-focus"
            for="{{ widget.attrs.id }}" data-media-drop>
         <span class="media-preview hidden" data-media-preview>

@@ -16,8 +16,10 @@ back to the full image, so a card grid does not pull full-size originals.
         {% elif product.image %}
             <img class="size-full object-cover" src="{{ product.image.url }}" alt="" loading="lazy" decoding="async">
         {% else %}
-            {# No aria-label: ARIA forbids it on a bare span and browsers drop
-               it. The card already names the product below. #}
+            {% comment %}
+            No aria-label: ARIA forbids it on a bare span and browsers drop
+            it. The card already names the product below.
+            {% endcomment %}
             <span class="grid size-full place-items-center text-text-soft">{% icon "package" 28 %}</span>
         {% endif %}
         {% if not product.is_active %}
@@ -30,11 +32,13 @@ back to the full image, so a card grid does not pull full-size originals.
         is harder to scan than a clipped one.
         {% endcomment %}
         <strong class="line-clamp-2 text-[13px] leading-[1.3] text-text">
-            {# Stretched link: the name is the real link and its ::after covers
-               the card, so the whole card is clickable while the accessible
-               name stays just the product — and the code, unit and price
-               remain readable in the accessibility tree. Any control added
-               inside the card needs `relative z-10` to sit above the ::after. #}
+            {% comment %}
+            Stretched link: the name is the real link and its ::after covers
+            the card, so the whole card is clickable while the accessible
+            name stays just the product — and the code, unit and price
+            remain readable in the accessibility tree. Any control added
+            inside the card needs `relative z-10` to sit above the ::after.
+            {% endcomment %}
             <a class="text-text no-underline after:absolute after:inset-0 after:rounded-md hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
                href="{% url 'product-edit' product.id %}" title="{{ product.name }}">{{ product.name }}</a>
         </strong>
