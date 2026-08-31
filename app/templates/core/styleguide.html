@@ -11,6 +11,10 @@
 Styleguide markup uses Tailwind utilities mapped to Melodu tokens. Shared
 component class names (panel, btn, …) are intentionally not used here so this
 page proves the theme mapping. dashboard.css still styles the shell.
+
+The one exception is the final "V8 components" section, which uses ONLY the
+component classes — it exists to prove the contract templates migrate onto in
+Phase 3, so it must not be converted back to utilities.
 {% endcomment %}
 
 <nav class="sticky top-[76px] z-[5] mb-4 flex flex-wrap gap-x-3.5 gap-y-1.5 rounded border border-border bg-surface px-4 py-3 shadow-panel" id="sg-toc" aria-label="{% trans 'Style guide sections' %}">
@@ -25,6 +29,7 @@ page proves the theme mapping. dashboard.css still styles the shell.
     <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#matrix">{% trans "Permission matrix" %}</a>
     <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#forms">{% trans "Forms" %}</a>
     <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#feedback">{% trans "Alerts" %}</a>
+    <a class="text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline" href="#components">{% trans "V8 components" %}</a>
 </nav>
 
 <section class="mb-4 rounded border border-border bg-surface p-[18px] shadow-panel" id="tokens">
@@ -360,5 +365,96 @@ page proves the theme mapping. dashboard.css still styles the shell.
         <div class="rounded-r-md border border-[#f3b3ad] border-l-[3px] border-l-danger bg-[#fdecec] px-3 py-2.5 text-danger">{% trans "Error — could not complete." %}</div>
     </div>
     <p class="px-3 py-[26px] text-center text-[13px] text-text-soft">{% icon "check" 16 %} {% trans "All clear — nothing here yet." %}</p>
+</section>
+{% comment %}
+V8 component layer (DESIGN_SYSTEM §2.0/§4). Unlike every section above — which
+deliberately uses raw utilities to prove the theme mapping — this section uses
+ONLY the component classes from tailwind/input.css @layer components, so it
+proves the contract templates migrate onto in Phase 3.
+{% endcomment %}
+<section class="panel mb-4" id="components">
+    <header class="panel-header">
+        <div>
+            <h2 class="panel-title">{% trans "V8 components" %}</h2>
+            <p class="panel-sub">{% trans "The template contract: anything repeated twice is one of these classes. This whole section is rendered with them." %}</p>
+        </div>
+        <a class="link-subtle" href="#sg-toc">{% trans "Back to top" %}</a>
+    </header>
+
+    <p class="section-label">{% trans "Buttons — .btn / -primary / -success / -danger / -sm; .btn-icon and .btn-ghost stand alone" %}</p>
+    <div class="toolbar mb-4">
+        <button class="btn" type="button">{% trans "Secondary" %}</button>
+        <button class="btn btn-primary" type="button">{% icon "plus" 16 %} {% trans "Primary" %}</button>
+        <button class="btn btn-success" type="button">{% trans "Complete" %}</button>
+        <button class="btn btn-danger" type="button">{% trans "Delete" %}</button>
+        <button class="btn btn-sm btn-primary" type="button">{% trans "Small" %}</button>
+        <button class="btn btn-sm" type="button">{% trans "Small secondary" %}</button>
+        <button class="btn-icon" type="button" aria-label="{% trans 'Close' %}">&times;</button>
+        <button class="btn-ghost" type="button">{% trans "Clear filter" %}</button>
+    </div>
+
+    <p class="section-label">{% trans "Pills — .pill + tone" %}</p>
+    <div class="toolbar mb-4">
+        <span class="pill pill-success">{% trans "Active" %}</span>
+        <span class="pill pill-warning">{% trans "Low stock" %}</span>
+        <span class="pill pill-danger">{% trans "Expired" %}</span>
+        <span class="pill pill-info">{% trans "Draft" %}</span>
+        <span class="pill pill-neutral">{% trans "Archived" %}</span>
+    </div>
+
+    <p class="section-label">{% trans "Alerts — .alert + tone" %}</p>
+    <div class="form-stack mb-4">
+        <div class="alert alert-danger">{% trans "Error — could not complete." %}</div>
+        <div class="alert alert-warning">{% trans "Warning — check this." %}</div>
+        <div class="alert alert-success">{% trans "Success — saved." %}</div>
+        <div class="alert alert-neutral">{% trans "Note — nothing urgent." %}</div>
+    </div>
+
+    <p class="section-label">{% trans "Stat cards — .stat-grid / .stat-card / .stat-label / .stat-value (+ -sm); .kpi-tile / .kpi-value" %}</p>
+    <div class="stat-grid mb-4">
+        <article class="stat-card"><span class="stat-label">{% trans "Products" %}</span><strong class="stat-value">1,284</strong></article>
+        <article class="stat-card"><span class="stat-label">{% trans "Batches" %}</span><strong class="stat-value stat-value-sm">312</strong></article>
+        <div class="kpi-tile"><span class="stat-label">{% trans "Today" %}</span><strong class="kpi-value">$1,204.50</strong></div>
+    </div>
+
+    <p class="section-label">{% trans "Toolbar — .toolbar (+ .toolbar-input to stretch the field)" %}</p>
+    <div class="toolbar toolbar-input mb-4">
+        <input aria-label="{% trans 'Search' %}" placeholder="{% trans 'Search…' %}" type="text">
+        <button class="btn btn-primary" type="button">{% trans "Search" %}</button>
+        <button class="btn" type="button">{% trans "Reset" %}</button>
+    </div>
+
+    <p class="section-label">{% trans "Form — .form-stack / .field-grid / .section-label; help text is .panel-sub" %}</p>
+    <div class="form-stack mb-4">
+        <div class="field-grid">
+            <div>
+                <label for="sg-v8-name">{% trans "Product name" %}</label>
+                <input id="sg-v8-name" type="text" placeholder="{% trans 'e.g. Royal Canin 2kg' %}">
+                <p class="panel-sub">{% trans "Shown on receipts and labels." %}</p>
+            </div>
+            <div>
+                <label for="sg-v8-cat">{% trans "Category" %}</label>
+                <select id="sg-v8-cat"><option>{% trans "Dog food" %}</option><option>{% trans "Cat food" %}</option></select>
+            </div>
+        </div>
+    </div>
+
+    <p class="section-label">{% trans "Data table — .table-wrap wrapping .data-table (+ .data-table-hover, .data-table-fit, .cell-num, .cell-empty)" %}</p>
+    <div class="table-wrap mb-4">
+        <table class="data-table data-table-fit data-table-hover">
+            <thead><tr><th>{% trans "Code" %}</th><th>{% trans "Name" %}</th><th class="text-right">{% trans "Price" %}</th><th>{% trans "Status" %}</th></tr></thead>
+            <tbody>
+                <tr><td class="font-mono">P-00041</td><td>{% trans "Puppy chow 2kg" %}</td><td class="cell-num text-right">$12.50</td><td><span class="pill pill-success">{% trans "Active" %}</span></td></tr>
+                <tr><td class="font-mono">P-00042</td><td>{% trans "Cat litter 5L" %}</td><td class="cell-num text-right">$6.75</td><td><span class="pill pill-warning">{% trans "Low stock" %}</span></td></tr>
+                <tr><td class="cell-empty" colspan="4">{% trans "No more rows — this is .cell-empty." %}</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p class="section-label">{% trans "Empty state — .empty-state (stacked) and .empty-state-inline (one line)" %}</p>
+    <div class="empty-state mb-2">{% icon "package" 20 %} <span>{% trans "No products yet. Add your first one." %}</span></div>
+    <p class="empty-state-inline mb-2">{% icon "check" 16 %} {% trans "All clear — nothing here yet." %}</p>
+
+    <p class="panel-sub">{% trans "Breakpoints: sm 640 · md 900 · lg 1280 · xl 1500. Use phone: for the inclusive 640px rules — see DESIGN_SYSTEM §2.6." %}</p>
 </section>
 {% endblock %}
