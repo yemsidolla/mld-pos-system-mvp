@@ -38,7 +38,7 @@
             <p class="m-0 text-[13px] text-auth-hint">{{ support_hint }}</p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="toolbar">
             <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-auth-btn-border bg-[linear-gradient(135deg,var(--color-auth-btn-from),var(--color-auth-btn-to))] px-[13px] py-[9px] font-sans text-sm font-[750] text-auth-btn-fg no-underline shadow-[0_0_22px_rgba(37,99,235,0.35)] hover:bg-[linear-gradient(135deg,var(--color-auth-btn-hover-from),var(--color-auth-btn-hover-to))] hover:no-underline hover:shadow-[0_0_30px_rgba(56,189,248,0.5)]" href="{{ action_url }}">{{ action_label }}</a>
             {% if secondary_url %}
                 <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-auth-ghost-border bg-transparent px-[13px] py-[9px] font-sans text-sm font-[750] text-auth-ghost-text no-underline hover:no-underline" href="{{ secondary_url }}">{{ secondary_label }}</a>

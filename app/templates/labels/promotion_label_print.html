@@ -5,8 +5,8 @@
 {% block page_title %}{% trans "Promotion Labels" %}{% endblock %}
 {% block page_subtitle %}{% trans "Print special-offer labels for a promotion's products." %}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-list' %}">{% trans "Promotions" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
+    <a class="btn" href="{% url 'promotion-list' %}">{% trans "Promotions" %}</a>
+    <a class="btn" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
 {% endblock %}
 
 {% block extra_head %}
@@ -34,20 +34,20 @@
 {% endblock %}
 
 {% block content %}
-<section class="no-print rounded border border-border bg-surface p-[18px] shadow-panel print:hidden">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel no-print print:hidden">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Promotion Label Setup" %}</h2>
+            <h2 class="panel-title">{% trans "Promotion Label Setup" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Quantity is the number of copies per product in the promotion." %}</p>
         </div>
     </header>
-    <div class="rounded-r-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">
+    <div class="alert alert-warning">
         {% trans "Promotion labels print one card per active product in the selected promotion. Review the active dates and prices before printing." %}
     </div>
-    {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
-    <form class="grid gap-3.5" method="post">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="form-stack" method="post">
         {% csrf_token %}
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
+        <div class="field-grid">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
@@ -57,15 +57,15 @@
                 </div>
             {% endfor %}
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit" name="action" value="print">{% trans "Print" %}</button>
+        <div class="toolbar">
+            <button class="btn btn-primary" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
+            <button class="btn btn-success" type="submit" name="action" value="print">{% trans "Print" %}</button>
         </div>
     </form>
 </section>
 
 {% if template and labels %}
-<section class="no-print mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 print:hidden">
+<section class="stat-grid mb-4 no-print print:hidden">
     {% trans "Promotion" as lbl_promo %}
     {% include "reports/_metric_card.html" with label=lbl_promo value=promotion.name size="small" %}
     {% trans "Active Products" as lbl_products %}
@@ -75,13 +75,13 @@
     {% trans "Total Labels" as lbl_total %}
     {% include "reports/_metric_card.html" with label=lbl_total value=labels|length %}
 </section>
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel print:border-0 print:p-0 print:shadow-none">
-    <header class="no-print mb-3.5 flex items-start justify-between gap-3.5 print:hidden">
+<section class="panel print:border-0 print:p-0 print:shadow-none">
+    <header class="panel-header no-print print:hidden">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Promotion Print Preview" %}</h2>
+            <h2 class="panel-title">{% trans "Promotion Print Preview" %}</h2>
             <p class="m-0 text-text-soft">{{ promotion.name }} · {% trans "Promotion window" %}: {{ promotion.start_date }} → {{ promotion.end_date }} · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
         </div>
-        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
+        <button class="btn btn-success" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
     </header>
     <div class="label-sheet">
         {% for card in labels %}

@@ -6,24 +6,24 @@
 {% block page_subtitle %}{{ stock_batch.product.name }} · {{ stock_batch.custom_code }}{% endblock %}
 {% block header_actions %}
     {% if stock_batch.status == "ACTIVE" %}
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'barcode-print' %}?batch={{ stock_batch.pk }}">{% trans "Print Barcode / QR" %}</a>
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-print' %}?batch={{ stock_batch.pk }}">{% trans "Print Template Label" %}</a>
+        <a class="btn btn-primary" href="{% url 'barcode-print' %}?batch={{ stock_batch.pk }}">{% trans "Print Barcode / QR" %}</a>
+        <a class="btn" href="{% url 'label-print' %}?batch={{ stock_batch.pk }}">{% trans "Print Template Label" %}</a>
     {% endif %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'inventory-summary' %}">{% trans "Back to Inventory" %}</a>
+    <a class="btn" href="{% url 'inventory-summary' %}">{% trans "Back to Inventory" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Product" %}</span><strong class="mt-1.5 block text-lg">{{ stock_batch.product.name }}</strong></article>
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Expiry Status" %}</span><strong class="mt-1.5 block text-lg">{% if expiry_badge_class == "badge-danger" %}{% include "catalog/_status_pill.html" with tone="danger" label=expiry_status %}{% elif expiry_badge_class == "badge-warning" %}{% include "catalog/_status_pill.html" with tone="warning" label=expiry_status %}{% else %}{% include "catalog/_status_pill.html" with tone="success" label=expiry_status %}{% endif %}</strong></article>
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Received / Available" %}</span><strong class="mt-1.5 block text-[28px]">{{ stock_batch.quantity_received }} / {{ stock_batch.quantity_available }}</strong></article>
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Status" %}</span><strong class="mt-1.5 block text-lg">{{ stock_batch.get_status_display }}</strong></article>
+<section class="stat-grid mb-4">
+    <article class="stat-card"><span class="stat-label">{% trans "Product" %}</span><strong class="stat-value stat-value-sm">{{ stock_batch.product.name }}</strong></article>
+    <article class="stat-card"><span class="stat-label">{% trans "Expiry Status" %}</span><strong class="stat-value stat-value-sm">{% if expiry_badge_class == "badge-danger" %}{% include "catalog/_status_pill.html" with tone="danger" label=expiry_status %}{% elif expiry_badge_class == "badge-warning" %}{% include "catalog/_status_pill.html" with tone="warning" label=expiry_status %}{% else %}{% include "catalog/_status_pill.html" with tone="success" label=expiry_status %}{% endif %}</strong></article>
+    <article class="stat-card"><span class="stat-label">{% trans "Received / Available" %}</span><strong class="stat-value">{{ stock_batch.quantity_received }} / {{ stock_batch.quantity_available }}</strong></article>
+    <article class="stat-card"><span class="stat-label">{% trans "Status" %}</span><strong class="stat-value stat-value-sm">{{ stock_batch.get_status_display }}</strong></article>
 </section>
 
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Batch Detail" %}</h2>
+            <h2 class="panel-title">{% trans "Batch Detail" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Supplier, expiry, quantities, prices, codes, and receiving history." %}</p>
         </div>
     </header>
@@ -59,38 +59,38 @@
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Recent Stock Movements" %}</h2>
+            <h2 class="panel-title">{% trans "Recent Stock Movements" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Latest movement records for this batch." %}</p>
         </div>
         {% if dashboard_can_view_reports %}
-            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-movement-report' %}">{% trans "Open Movement Report" %}</a>
+            <a class="btn" href="{% url 'stock-movement-report' %}">{% trans "Open Movement Report" %}</a>
         {% endif %}
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+        <table class="data-table">
             <thead>
             <tr>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Time" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Type" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Quantity" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Reference" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "User" %}</th>
+                <th class="">{% trans "Time" %}</th>
+                <th class="">{% trans "Type" %}</th>
+                <th class="">{% trans "Quantity" %}</th>
+                <th class="">{% trans "Reference" %}</th>
+                <th class="">{% trans "User" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for movement in recent_movements %}
                 <tr class="hover:bg-surface-subtle">
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ movement.created_at|date:"Y-m-d H:i" }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% include "catalog/_status_pill.html" with tone="neutral" label=movement.get_movement_type_display %}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ movement.quantity }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ movement.reference_type }} {{ movement.reference_id }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ movement.created_by.username }}</td>
+                    <td class="">{{ movement.created_at|date:"Y-m-d H:i" }}</td>
+                    <td class="">{% include "catalog/_status_pill.html" with tone="neutral" label=movement.get_movement_type_display %}</td>
+                    <td class="font-mono">{{ movement.quantity }}</td>
+                    <td class="">{{ movement.reference_type }} {{ movement.reference_id }}</td>
+                    <td class="">{{ movement.created_by.username }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="5" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No stock movements found for this batch." %}</td></tr>
+                <tr><td colspan="5" class="cell-empty">{% trans "No stock movements found for this batch." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -98,10 +98,10 @@
 </section>
 
 <section class="mt-4 grid gap-4">
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Inventory Adjustment" %}</h2>
+    <article class="panel">
+        <h2 class="panel-title">{% trans "Inventory Adjustment" %}</h2>
         <p class="mb-3.5 mt-0 text-text-soft">{% trans "Positive adds stock; negative removes stock. A reason is required." %}</p>
-        <form class="grid gap-3.5" method="post">
+        <form class="form-stack" method="post">
             {% csrf_token %}
             {{ adjustment_form.delta_quantity.label_tag }}
             {{ adjustment_form.delta_quantity }}
@@ -109,14 +109,14 @@
             {{ adjustment_form.reason.label_tag }}
             {{ adjustment_form.reason }}
             {{ adjustment_form.reason.errors }}
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit" name="action" value="adjust">{% trans "Record Adjustment" %}</button>
+            <button class="btn btn-primary" type="submit" name="action" value="adjust">{% trans "Record Adjustment" %}</button>
         </form>
     </article>
 
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Damaged Stock" %}</h2>
+    <article class="panel">
+        <h2 class="panel-title">{% trans "Damaged Stock" %}</h2>
         <p class="mb-3.5 mt-0 text-text-soft">{% trans "Damage removes sellable stock from this batch and records a movement." %}</p>
-        <form class="grid gap-3.5" method="post">
+        <form class="form-stack" method="post">
             {% csrf_token %}
             {{ damage_form.quantity.label_tag }}
             {{ damage_form.quantity }}
@@ -124,19 +124,19 @@
             {{ damage_form.reason.label_tag }}
             {{ damage_form.reason }}
             {{ damage_form.reason.errors }}
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-danger bg-danger px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit" name="action" value="damage">{% trans "Record Damage" %}</button>
+            <button class="btn btn-danger" type="submit" name="action" value="damage">{% trans "Record Damage" %}</button>
         </form>
     </article>
 
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Expired Stock" %}</h2>
+    <article class="panel">
+        <h2 class="panel-title">{% trans "Expired Stock" %}</h2>
         <p class="mb-3.5 mt-0 text-text-soft">{% trans "Marking expired sets available stock to zero for this batch." %}</p>
-        <form class="grid gap-3.5" method="post">
+        <form class="form-stack" method="post">
             {% csrf_token %}
             {{ expired_form.reason.label_tag }}
             {{ expired_form.reason }}
             {{ expired_form.reason.errors }}
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-danger bg-danger px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit" name="action" value="expire">{% trans "Mark Expired" %}</button>
+            <button class="btn btn-danger" type="submit" name="action" value="expire">{% trans "Mark Expired" %}</button>
         </form>
     </article>
 </section>

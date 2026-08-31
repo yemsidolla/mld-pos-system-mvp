@@ -5,54 +5,54 @@
 {% block page_title %}{% trans "Stock Overview" %}{% endblock %}
 {% block page_subtitle %}{% trans "Search products and batches, then drill into stock adjustments and expiry control." %}{% endblock %}
 {% block header_actions %}
-    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan Search" %}</button>
+    <button class="btn btn-primary" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan Search" %}</button>
 {% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Inventory Lookup" %}</h2>
+            <h2 class="panel-title">{% trans "Inventory Lookup" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Scan or type a product name, product code, original barcode, batch number, or Melodu custom code." %}</p>
         </div>
     </header>
-    <form class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]" method="get">
+    <form class="toolbar toolbar-input" method="get">
         <input id="inventory-search" name="q" type="search" value="{{ query }}" placeholder="{% trans 'Search product, barcode, batch, or custom code' %}" autocomplete="off">
-        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Search" %}</button>
-        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan" %}</button>
-        {% if query %}<a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'inventory-summary' %}">{% trans "Reset" %}</a>{% endif %}
+        <button class="btn btn-primary" type="submit">{% trans "Search" %}</button>
+        <button class="btn" type="button" data-scan-target="#inventory-search" data-scan-context="inventory">{% trans "Scan" %}</button>
+        {% if query %}<a class="btn" href="{% url 'inventory-summary' %}">{% trans "Reset" %}</a>{% endif %}
     </form>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Product Stock Summary" %}</h2>
+            <h2 class="panel-title">{% trans "Product Stock Summary" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Total available stock by product." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+        <table class="data-table">
             <thead>
             <tr>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product Code" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Total Available" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Min Stock" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Reorder Gap" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Level" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Next Action" %}</th>
+                <th class="">{% trans "Product" %}</th>
+                <th class="">{% trans "Product Code" %}</th>
+                <th class="">{% trans "Total Available" %}</th>
+                <th class="">{% trans "Min Stock" %}</th>
+                <th class="">{% trans "Reorder Gap" %}</th>
+                <th class="">{% trans "Level" %}</th>
+                <th class="">{% trans "Next Action" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for product in products %}
                 <tr class="hover:bg-surface-subtle">
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.name }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.product_code }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.total_available|default:0 }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.min_stock }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ product.reorder_gap }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="">{{ product.name }}</td>
+                    <td class="">{{ product.product_code }}</td>
+                    <td class="">{{ product.total_available|default:0 }}</td>
+                    <td class="">{{ product.min_stock }}</td>
+                    <td class="">{{ product.reorder_gap }}</td>
+                    <td class="">
                         {% if product.stock_action_class == "badge-danger" %}
                             {% include "catalog/_status_pill.html" with tone="danger" label=product.stock_action_label %}
                         {% elif product.stock_action_class == "badge-warning" %}
@@ -61,56 +61,56 @@
                             {% include "catalog/_status_pill.html" with tone="success" label=product.stock_action_label %}
                         {% endif %}
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
+                    <td class="">
+                        <div class="toolbar">
+                            <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Stock" %}</a>
                             {% if dashboard_can_view_reports %}
-                                <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'expiry-report' %}">{% trans "Review Expiry" %}</a>
+                                <a class="btn" href="{% url 'expiry-report' %}">{% trans "Review Expiry" %}</a>
                             {% endif %}
                         </div>
                     </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="7" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No stock batches found." %}</td></tr>
+                <tr><td colspan="7" class="cell-empty">{% trans "No stock batches found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Batch Stock Detail" %}</h2>
+            <h2 class="panel-title">{% trans "Batch Stock Detail" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Batch-level inventory, expiry, and status." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+        <table class="data-table">
             <thead>
             <tr>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Batch" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product / Supplier" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Expiry State" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Received / Available" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Price / Cost" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Codes" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
+                <th class="">{% trans "Batch" %}</th>
+                <th class="">{% trans "Product / Supplier" %}</th>
+                <th class="">{% trans "Expiry State" %}</th>
+                <th class="">{% trans "Received / Available" %}</th>
+                <th class="">{% trans "Price / Cost" %}</th>
+                <th class="">{% trans "Codes" %}</th>
+                <th class="">{% trans "Status" %}</th>
+                <th class="">{% trans "Action" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for batch in batches %}
                 <tr class="hover:bg-surface-subtle">
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="">
                         <a href="{% url 'stock-batch-detail' batch.id %}">{{ batch.batch_no }}</a>
                         <br><span class="text-text-soft">{{ batch.received_at|date:"Y-m-d" }} · {{ batch.received_by.username }}</span>
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="">
                         {{ batch.product.name }}<br>
                         <span class="text-text-soft">{{ batch.product.product_code }} · {{ batch.supplier.name }}</span>
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="">
                         {% if batch.expiry_badge_class == "badge-danger" %}
                             {% include "catalog/_status_pill.html" with tone="danger" label=batch.expiry_status %}
                         {% elif batch.expiry_badge_class == "badge-warning" %}
@@ -128,8 +128,8 @@
                             {% endif %}
                         </span>
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ batch.quantity_received }} / {{ batch.quantity_available }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="font-mono">{{ batch.quantity_received }} / {{ batch.quantity_available }}</td>
+                    <td class="">
                         <span class="font-mono">{{ batch.selling_price }}</span>
                         {% if dashboard_can_view_costs %}
                             <br><span class="text-text-soft">{% trans "Cost" %}: {{ batch.actual_unit_cost }}</span>
@@ -137,11 +137,11 @@
                             <br><span class="cost-hidden text-text-soft">{% trans "Cost hidden" %}</span>
                         {% endif %}
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="">
                         <span class="font-mono">{{ batch.custom_code }}</span>
                         <br><span class="text-text-soft">{% trans "Original" %}: {{ batch.product.original_barcode|default:"-" }}</span>
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="">
                         {% if batch.status == "ACTIVE" %}
                             {% include "catalog/_status_pill.html" with tone="success" label=batch.get_status_display %}
                         {% elif batch.status == "SOLD_OUT" %}
@@ -152,17 +152,17 @@
                             {% include "catalog/_status_pill.html" with tone="warning" label=batch.get_status_display %}
                         {% endif %}
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-batch-detail' batch.id %}">{% trans "Open" %}</a>
+                    <td class="">
+                        <div class="toolbar">
+                            <a class="btn" href="{% url 'stock-batch-detail' batch.id %}">{% trans "Open" %}</a>
                             {% if batch.status == "ACTIVE" %}
-                                <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'barcode-print' %}?batch={{ batch.pk }}">{% trans "Print" %}</a>
+                                <a class="btn" href="{% url 'barcode-print' %}?batch={{ batch.pk }}">{% trans "Print" %}</a>
                             {% endif %}
                         </div>
                     </td>
                 </tr>
             {% empty %}
-                <tr><td colspan="8" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No stock batches found." %}</td></tr>
+                <tr><td colspan="8" class="cell-empty">{% trans "No stock batches found." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

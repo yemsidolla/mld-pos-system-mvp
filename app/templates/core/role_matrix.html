@@ -7,13 +7,13 @@
 {% block page_subtitle %}{% trans "Choose what each role can do. Changes apply on the next request and are audited." %}{% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Roles" %}</h2>
+            <h2 class="panel-title">{% trans "Roles" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Built-in roles can be retuned; add your own for special cases." %}</p>
         </div>
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'role-create' %}">{% icon "plus" 16 %} {% trans "New Role" %}</a>
+        <a class="btn btn-primary" href="{% url 'role-create' %}">{% icon "plus" 16 %} {% trans "New Role" %}</a>
     </header>
     <div class="flex flex-wrap gap-2">
         {% for role in roles %}
@@ -32,21 +32,21 @@
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Permission matrix" %}</h2>
+            <h2 class="panel-title">{% trans "Permission matrix" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Tick a capability to grant it to a role." %}</p>
         </div>
     </header>
     <p class="mb-3 mt-0 text-xs text-text-soft">{% icon "shield" 14 %} {% trans "The Owner role always holds every capability and cannot be limited." %}</p>
     <form method="post">
         {% csrf_token %}
-        <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-            <table class="w-full min-w-[720px] border-collapse [&_tbody_tr:not(.matrix-group):hover]:bg-surface-subtle">
+        <div class="table-wrap">
+            <table class="data-table [&_tbody_tr:not(.matrix-group):hover]:bg-surface-subtle">
                 <thead>
                     <tr>
-                        <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Capability" %}</th>
+                        <th class="">{% trans "Capability" %}</th>
                         {% for role in roles %}<th class="border-b border-border px-[9px] py-2 text-center text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{{ role.name }}</th>{% endfor %}
                     </tr>
                 </thead>
@@ -57,9 +57,9 @@
                         </tr>
                         {% for key, label in items %}
                             <tr class="hover:bg-surface-subtle">
-                                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ label }}</td>
+                                <td class="">{{ label }}</td>
                                 {% for role in roles %}
-                                    <td class="border-b border-border px-[9px] py-2.5 text-center align-middle [&_input]:size-[17px] [&_input]:accent-accent">
+                                    <td class="text-center [&_input]:size-[17px] [&_input]:accent-accent">
                                         <input type="checkbox" name="cap__{{ role.slug }}__{{ key }}"
                                             aria-label="{{ label }} — {{ role.name }}"
                                             {% if role.is_owner %}checked disabled{% elif key in role.capabilities %}checked{% endif %}>
@@ -71,8 +71,8 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-3.5 flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% icon "check" 16 %} {% trans "Save Permissions" %}</button>
+        <div class="toolbar mt-3.5">
+            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% trans "Save Permissions" %}</button>
         </div>
     </form>
 </section>

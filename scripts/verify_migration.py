@@ -38,10 +38,28 @@ ACCEPTED = {
     # .btn folds in `no-underline` because anchors need it. A <button> never
     # had text-decoration to begin with, so setting it to none changes nothing.
     ("button", "text-decoration-line", "<unset>", "none"),
+    # Same for the file-upload <label> styled as a button.
+    ("label", "text-decoration-line", "<unset>", "none"),
     # An empty-state cell now inherits vertical-align:middle from
     # `.data-table td`. The cell holds one centred line, so middle and
     # baseline paint identically.
     ("td", "vertical-align", "<unset>", "middle"),
+    # Compact buttons (btn + btn-sm) inherit three things from .btn that the
+    # canonical compact string never had. Each is inert on the 3 elements
+    # that exist: dashboard.css:352 already sets `font: inherit` on every
+    # button and :48 sets the body to --font-sans, so the computed family is
+    # unchanged; all 3 compact buttons hold a single text node and `gap`
+    # needs two flex children; and their labels are single words that cannot
+    # wrap. Re-check these if a compact button ever gains an icon.
+    ("button", "font-family", "<unset>", "var(--font-sans)"),
+    ("button", "gap", "<unset>", "calc(var(--spacing) * 1.5)"),
+    ("button", "white-space", "<unset>", "nowrap"),
+    # Same three, on the compact secondary <a> ("Clear"). Anchors inherit the
+    # body's --font-sans already; all 3 hold the single word "Clear", so
+    # neither gap nor nowrap can apply.
+    ("a", "font-family", "<unset>", "var(--font-sans)"),
+    ("a", "gap", "<unset>", "calc(var(--spacing) * 1.5)"),
+    ("a", "white-space", "<unset>", "nowrap"),
 }
 
 

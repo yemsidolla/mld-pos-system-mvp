@@ -10,12 +10,12 @@
             <button class="inline-flex size-9 min-h-0 cursor-pointer items-center justify-center border border-border-strong bg-surface p-0 text-[22px] font-[750] text-text hover:bg-surface-subtle" type="button" data-quick-create-close aria-label="{% trans 'Close quick add' %}">×</button>
         </header>
         <div class="mb-3 text-text-soft" data-quick-create-status>{% trans "Create the missing item without leaving this page." %}</div>
-        <form class="grid gap-3.5" data-quick-create-form>
+        <form class="form-stack" data-quick-create-form>
             <div data-quick-create-fields></div>
             <div class="rounded-md border border-alert-danger-border bg-alert-danger-bg px-3 py-2.5 text-danger" data-quick-create-errors aria-live="polite" hidden></div>
-            <div class="flex flex-wrap items-center gap-2">
-                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit" data-quick-create-submit>{% trans "Create" %}</button>
-                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create-close>{% trans "Cancel" %}</button>
+            <div class="toolbar">
+                <button class="btn btn-primary" type="submit" data-quick-create-submit>{% trans "Create" %}</button>
+                <button class="btn" type="button" data-quick-create-close>{% trans "Cancel" %}</button>
             </div>
         </form>
     </section>

@@ -5,60 +5,60 @@
 {% block page_title %}{{ title }}{% endblock %}
 {% block page_subtitle %}{{ subtitle }}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-list' %}">{% trans "Products" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{{ create_url }}">{{ create_label }}</a>
+    <a class="btn" href="{% url 'product-list' %}">{% trans "Products" %}</a>
+    <a class="btn" href="{% url 'batch-upload' %}">{% trans "Batch Upload" %}</a>
+    <a class="btn btn-primary" href="{{ create_url }}">{{ create_label }}</a>
 {% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Find Records" %}</h2>
+            <h2 class="panel-title">{% trans "Find Records" %}</h2>
             <p class="m-0 text-text-soft">{% blocktrans count count=item_count %}{{ count }} record found.{% plural %}{{ count }} records found.{% endblocktrans %}</p>
         </div>
     </header>
     {% include "dashboard/_list_filter.html" %}
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{{ title }}</h2>
+            <h2 class="panel-title">{{ title }}</h2>
             <p class="m-0 text-text-soft">{% trans "Create and update catalog master data without leaving the dashboard." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Name" %}</th>
+                    <th class="">{% trans "Name" %}</th>
                     {% for column in columns %}
-                        <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{{ column }}</th>
+                        <th class="">{{ column }}</th>
                     {% endfor %}
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
+                    <th class="">{% trans "Status" %}</th>
+                    <th class="">{% trans "Action" %}</th>
                 </tr>
             </thead>
             <tbody>
             {% for row in rows %}
                 <tr class="hover:bg-surface-subtle">
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><strong>{{ row.object.name }}</strong></td>
+                    <td class=""><strong>{{ row.object.name }}</strong></td>
                     {% for cell in row.cells %}
-                        <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ cell }}</td>
+                        <td class="">{{ cell }}</td>
                     {% endfor %}
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                    <td class="">
                         {% if row.object.is_active %}
                             {% include "catalog/_status_pill.html" with tone="success" label=_("Active") %}
                         {% else %}
                             {% include "catalog/_status_pill.html" with tone="danger" label=_("Inactive") %}
                         {% endif %}
                     </td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ row.edit_url }}">{% trans "Edit" %}</a></td>
+                    <td class=""><a class="btn" href="{{ row.edit_url }}">{% trans "Edit" %}</a></td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="{{ columns|length|add:'3' }}" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{{ empty_message }}</td>
+                    <td colspan="{{ columns|length|add:'3' }}" class="cell-empty">{{ empty_message }}</td>
                 </tr>
             {% endfor %}
             </tbody>

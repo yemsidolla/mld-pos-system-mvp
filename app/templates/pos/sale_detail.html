@@ -5,110 +5,110 @@
 {% block page_title %}{% trans "Sale" %} {{ sale.sale_no }}{% endblock %}
 {% block page_subtitle %}{{ sale.created_at }} · {{ sale.cashier.username }}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'sales-history' %}">{% trans "Back to Sales" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'sale-receipt' sale.id %}">{% trans "Receipt" %}</a>
+    <a class="btn" href="{% url 'sales-history' %}">{% trans "Back to Sales" %}</a>
+    <a class="btn btn-primary" href="{% url 'sale-receipt' sale.id %}">{% trans "Receipt" %}</a>
     {% if dashboard_is_admin %}
         <form class="m-0" method="post" action="{% url 'sale-reprint' sale.id %}">
             {% csrf_token %}
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="submit">{% trans "Reprint Receipt" %}</button>
+            <button class="btn" type="submit">{% trans "Reprint Receipt" %}</button>
         </form>
     {% endif %}
 {% endblock %}
 
 {% block content %}
-<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "Status" %}</span>
-        <strong class="mt-1.5 block text-lg">{{ sale.status }}</strong>
+<section class="stat-grid mb-4">
+    <article class="stat-card">
+        <span class="stat-label">{% trans "Status" %}</span>
+        <strong class="stat-value stat-value-sm">{{ sale.status }}</strong>
     </article>
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "Payment" %}</span>
-        <strong class="mt-1.5 block text-lg">{{ sale.payment_method }}</strong>
+    <article class="stat-card">
+        <span class="stat-label">{% trans "Payment" %}</span>
+        <strong class="stat-value stat-value-sm">{{ sale.payment_method }}</strong>
     </article>
     <article class="rounded-md border bg-surface p-4 {% if reprint_count %}border-alert-warning-border [&_span]:text-warning [&_strong]:text-warning{% else %}border-border{% endif %}">
-        <span class="block text-text-soft">{% trans "Receipt Reprints" %}</span>
-        <strong class="mt-1.5 block text-[28px]">{{ reprint_count }}</strong>
+        <span class="stat-label">{% trans "Receipt Reprints" %}</span>
+        <strong class="stat-value">{{ reprint_count }}</strong>
     </article>
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "Total" %}</span>
-        <strong class="mt-1.5 block text-[28px]">{{ sale.total_amount }}</strong>
+    <article class="stat-card">
+        <span class="stat-label">{% trans "Total" %}</span>
+        <strong class="stat-value">{{ sale.total_amount }}</strong>
     </article>
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "Final" %}</span>
-        <strong class="mt-1.5 block text-[28px]">{{ sale.final_amount }}</strong>
+    <article class="stat-card">
+        <span class="stat-label">{% trans "Final" %}</span>
+        <strong class="stat-value">{{ sale.final_amount }}</strong>
     </article>
 </section>
 
 {% if sale.cancel_reason %}
-    <section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Cancel Reason" %}</h2>
+    <section class="panel">
+        <h2 class="panel-title">{% trans "Cancel Reason" %}</h2>
         <p class="m-0">{{ sale.cancel_reason }}</p>
     </section>
 {% endif %}
 
 <section class="{% if sale.cancel_reason %}mt-4 {% endif %}rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Exception Tracking" %}</h2>
+            <h2 class="panel-title">{% trans "Exception Tracking" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Cancellation and receipt reprint events recorded in the audit log." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+        <table class="data-table">
             <thead><tr>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Time" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Action" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "User" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Details" %}</th>
+                <th class="">{% trans "Time" %}</th>
+                <th class="">{% trans "Action" %}</th>
+                <th class="">{% trans "User" %}</th>
+                <th class="">{% trans "Details" %}</th>
             </tr></thead>
             <tbody>
             {% for log in exception_logs %}
                 <tr class="hover:bg-surface-subtle">
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% include "catalog/_status_pill.html" with tone="neutral" label=log.get_action_display %}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ log.user.username|default:"-" }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle text-text-soft">{{ log.new_value|default:"-" }}</td>
+                    <td class="font-mono">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td class="">{% include "catalog/_status_pill.html" with tone="neutral" label=log.get_action_display %}</td>
+                    <td class="">{{ log.user.username|default:"-" }}</td>
+                    <td class="text-text-soft">{{ log.new_value|default:"-" }}</td>
                 </tr>
             {% empty %}
-                <tr><td colspan="4" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No cancellation or reprint events recorded." %}</td></tr>
+                <tr><td colspan="4" class="cell-empty">{% trans "No cancellation or reprint events recorded." %}</td></tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Sale Items" %}</h2>
+            <h2 class="panel-title">{% trans "Sale Items" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Each item is linked to the exact stock batch sold." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+        <table class="data-table">
             <thead>
             <tr>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Batch" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Qty" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Final Unit" %}</th>
-                {% if dashboard_can_view_costs %}<th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cost Basis" %}</th>{% endif %}
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Promotion" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Override" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Subtotal" %}</th>
+                <th class="">{% trans "Product" %}</th>
+                <th class="">{% trans "Batch" %}</th>
+                <th class="">{% trans "Qty" %}</th>
+                <th class="">{% trans "Final Unit" %}</th>
+                {% if dashboard_can_view_costs %}<th class="">{% trans "Cost Basis" %}</th>{% endif %}
+                <th class="">{% trans "Promotion" %}</th>
+                <th class="">{% trans "Override" %}</th>
+                <th class="">{% trans "Subtotal" %}</th>
             </tr>
             </thead>
             <tbody>
             {% for item in sale.items.all %}
                 <tr class="hover:bg-surface-subtle">
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.product.name }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.stock_batch.batch_no }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.quantity }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.final_unit_price }}</td>
-                    {% if dashboard_can_view_costs %}<td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.cost_basis_at_sale }}</td>{% endif %}
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% if item.promotion_name_at_sale %}{% include "catalog/_status_pill.html" with tone="success" label=item.promotion_name_at_sale %}{% else %}<span class="text-text-soft">-</span>{% endif %}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% if item.override_by %}{{ item.override_by.username }}<br><span class="text-text-soft">{{ item.override_reason }}</span>{% else %}<span class="text-text-soft">-</span>{% endif %}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.subtotal }}</td>
+                    <td class="">{{ item.product.name }}</td>
+                    <td class="">{{ item.stock_batch.batch_no }}</td>
+                    <td class="">{{ item.quantity }}</td>
+                    <td class="">{{ item.final_unit_price }}</td>
+                    {% if dashboard_can_view_costs %}<td class="">{{ item.cost_basis_at_sale }}</td>{% endif %}
+                    <td class="">{% if item.promotion_name_at_sale %}{% include "catalog/_status_pill.html" with tone="success" label=item.promotion_name_at_sale %}{% else %}<span class="text-text-soft">-</span>{% endif %}</td>
+                    <td class="">{% if item.override_by %}{{ item.override_by.username }}<br><span class="text-text-soft">{{ item.override_reason }}</span>{% else %}<span class="text-text-soft">-</span>{% endif %}</td>
+                    <td class="">{{ item.subtotal }}</td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -117,18 +117,18 @@
 </section>
 
 {% if sale.status == "COMPLETED" %}
-    <section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-        <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <section class="panel mt-4">
+        <header class="panel-header">
             <div>
-                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Cancel Sale" %}</h2>
+                <h2 class="panel-title">{% trans "Cancel Sale" %}</h2>
                 <p class="m-0 text-text-soft">{% trans "Cancellation restores stock to the original batches and requires a reason." %}</p>
             </div>
         </header>
-        <form class="grid gap-3.5" method="post" action="{% url 'sale-cancel' sale.id %}">
+        <form class="form-stack" method="post" action="{% url 'sale-cancel' sale.id %}">
             {% csrf_token %}
             {{ cancel_form.reason.label_tag }}
             {{ cancel_form.reason }}
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-danger bg-danger px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit" data-confirm-message="{% trans 'Cancel this completed sale?' %}">{% trans "Cancel Sale" %}</button>
+            <button class="btn btn-danger" type="submit" data-confirm-message="{% trans 'Cancel this completed sale?' %}">{% trans "Cancel Sale" %}</button>
         </form>
     </section>
 {% endif %}

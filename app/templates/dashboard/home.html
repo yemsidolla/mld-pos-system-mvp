@@ -6,10 +6,10 @@
 {% block page_subtitle %}{% trans "A calm control room for sales, inventory, receiving, and reports." %}{% endblock %}
 {% block header_actions %}
     {% if caps.can_pos %}
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'pos-sale' %}">{% icon "cart" 16 %} {% trans "Open POS" %}</a>
+        <a class="btn btn-primary" href="{% url 'pos-sale' %}">{% icon "cart" 16 %} {% trans "Open POS" %}</a>
     {% endif %}
     {% if caps.can_inventory %}
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-in' %}">{% icon "truck" 16 %} {% trans "Receive Stock" %}</a>
+        <a class="btn" href="{% url 'stock-in' %}">{% icon "truck" 16 %} {% trans "Receive Stock" %}</a>
     {% endif %}
 {% endblock %}
 
@@ -54,10 +54,10 @@
 
 <section class="grid grid-cols-1 gap-4">
     {% if caps.can_inventory %}
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <article class="panel">
+        <header class="panel-header">
             <div>
-                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Needs Attention" %}</h2>
+                <h2 class="panel-title">{% trans "Needs Attention" %}</h2>
                 <p class="m-0 text-text-soft">{% trans "Low stock and batches expiring soon." %}</p>
             </div>
         </header>
@@ -80,10 +80,10 @@
             <p class="px-3 py-[26px] text-center text-[13px] text-text-soft">{% icon "check" 16 %} {% trans "All clear — nothing needs attention." %}</p>
         {% endif %}
 
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <article class="panel">
+        <header class="panel-header">
             <div>
-                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Quick Actions" %}</h2>
+                <h2 class="panel-title">{% trans "Quick Actions" %}</h2>
                 <p class="m-0 text-text-soft">{% trans "Frequent workflows for today." %}</p>
             </div>
         </header>
@@ -128,30 +128,30 @@
     {% endif %}
 
     {% if caps.can_sales_history or caps.can_pos %}
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <article class="panel">
+        <header class="panel-header">
             <div>
-                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Recent Sales" %}</h2>
+                <h2 class="panel-title">{% trans "Recent Sales" %}</h2>
                 <p class="m-0 text-text-soft">{% trans "Latest completed sales." %}</p>
             </div>
             {% if caps.can_sales_history %}<a href="{% url 'sales-history' %}">{% trans "View all" %}</a>{% endif %}
         </header>
-        <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-            <table class="w-full min-w-[720px] border-collapse">
+        <div class="table-wrap">
+            <table class="data-table">
                 <thead><tr>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Sale" %}</th>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cashier" %}</th>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Total" %}</th>
+                    <th class="">{% trans "Sale" %}</th>
+                    <th class="">{% trans "Cashier" %}</th>
+                    <th class="">{% trans "Total" %}</th>
                 </tr></thead>
                 <tbody>
                 {% for sale in recent_sales %}
                     <tr class="hover:bg-surface-subtle">
-                        <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ sale.sale_no }}</td>
-                        <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ sale.cashier.username }}</td>
-                        <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ sale.final_amount }}</td>
+                        <td class="font-mono">{{ sale.sale_no }}</td>
+                        <td class="">{{ sale.cashier.username }}</td>
+                        <td class="font-mono">{{ sale.final_amount }}</td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="3" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No recent sales yet." %}</td></tr>
+                    <tr><td colspan="3" class="cell-empty">{% trans "No recent sales yet." %}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>
@@ -160,30 +160,30 @@
     {% endif %}
 
     {% if caps.can_catalog %}
-    <article class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <article class="panel">
+        <header class="panel-header">
             <div>
-                <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Recent Uploads" %}</h2>
+                <h2 class="panel-title">{% trans "Recent Uploads" %}</h2>
                 <p class="m-0 text-text-soft">{% trans "Latest batch upload previews and commits." %}</p>
             </div>
             <a href="{% url 'batch-upload' %}">{% trans "Open" %}</a>
         </header>
-        <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-            <table class="w-full min-w-[720px] border-collapse">
+        <div class="table-wrap">
+            <table class="data-table">
                 <thead><tr>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Target" %}</th>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "File" %}</th>
+                    <th class="">{% trans "Target" %}</th>
+                    <th class="">{% trans "Status" %}</th>
+                    <th class="">{% trans "File" %}</th>
                 </tr></thead>
                 <tbody>
                 {% for job in recent_uploads %}
                     <tr class="hover:bg-surface-subtle">
-                        <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ job.get_target_display }}</td>
-                        <td class="border-b border-border px-[9px] py-2.5 align-middle">{% include "catalog/_status_pill.html" with tone="info" label=job.status %}</td>
-                        <td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ job.original_filename }}</td>
+                        <td class="">{{ job.get_target_display }}</td>
+                        <td class="">{% include "catalog/_status_pill.html" with tone="info" label=job.status %}</td>
+                        <td class="font-mono">{{ job.original_filename }}</td>
                     </tr>
                 {% empty %}
-                    <tr><td colspan="3" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No upload jobs yet." %}</td></tr>
+                    <tr><td colspan="3" class="cell-empty">{% trans "No upload jobs yet." %}</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

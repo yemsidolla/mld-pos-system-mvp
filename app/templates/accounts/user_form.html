@@ -5,23 +5,23 @@
 {% block page_title %}{% if mode == "create" %}{% trans "New User" %}{% else %}{% trans "Edit User" %}: {{ target.username }}{% endif %}{% endblock %}
 {% block page_subtitle %}{% trans "Assign a dashboard role and manage account access." %}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'user-list' %}">{% trans "Back to Users" %}</a>
+    <a class="btn" href="{% url 'user-list' %}">{% trans "Back to Users" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+<section class="panel">
     {% if mode == "edit" %}
-        <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <header class="panel-header">
             <div>
-                <h2 class="m-0 mb-1 text-base font-semibold text-text">{{ target.username }}</h2>
+                <h2 class="panel-title">{{ target.username }}</h2>
                 <p class="m-0 text-text-soft">{% trans "Current role" %}: {{ target_role_label }}{% if target.is_superuser %} · {% trans "Django superuser" %}{% endif %}</p>
             </div>
         </header>
     {% endif %}
-    <form class="grid gap-3.5" method="post" autocomplete="off">
+    <form class="form-stack" method="post" autocomplete="off">
         {% csrf_token %}
-        {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text [&_small]:text-xs [&_small]:text-text-soft">
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="field-grid [&_small]:text-xs [&_small]:text-text-soft">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
@@ -39,7 +39,7 @@
                 <legend class="px-1.5 text-[13px] font-semibold">{% trans "Individual permissions" %}</legend>
                 <p class="text-text-soft">{% trans "Tick what this person may do. Differences from their role are saved as personal overrides." %}</p>
                 {% for group, items in capability_groups %}
-                    <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{{ group }}</p>
+                    <p class="section-label">{{ group }}</p>
                     <div class="mt-1 grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-x-4 gap-y-1">
                         {% for key, label in items %}
                             <label class="flex items-center gap-2 text-[13px] font-normal text-text">
@@ -51,11 +51,11 @@
                 {% endfor %}
             </fieldset>
         {% endif %}
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">
+        <div class="toolbar">
+            <button class="btn btn-primary" type="submit">
                 {% if mode == "create" %}{% trans "Create User" %}{% else %}{% trans "Save Changes" %}{% endif %}
             </button>
-            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'user-list' %}">{% trans "Cancel" %}</a>
+            <a class="btn" href="{% url 'user-list' %}">{% trans "Cancel" %}</a>
         </div>
     </form>
 </section>

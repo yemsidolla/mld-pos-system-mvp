@@ -18,8 +18,8 @@ col-filter-options, col-filter-actions. No JS queries these; utilities carry the
             {% for choice in field %}<label class="flex cursor-pointer items-center gap-2 px-0.5 py-[3px] text-[12.5px] font-normal text-text">{{ choice.tag }} {{ choice.choice_label }}</label>{% endfor %}
         </div>
         <div class="col-filter-actions mt-[9px] flex gap-1.5 border-t border-border pt-[9px]">
-            <button class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-2.5 py-1.5 text-xs font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Apply" %}</button>
-            <a class="inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{{ clear_url }}">{% trans "Clear" %}</a>
+            <button class="btn btn-sm btn-primary flex-1" type="submit">{% trans "Apply" %}</button>
+            <a class="btn btn-sm flex-1" href="{{ clear_url }}">{% trans "Clear" %}</a>
         </div>
     </div>
 </details>

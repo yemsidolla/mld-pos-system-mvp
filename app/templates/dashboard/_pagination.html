@@ -7,11 +7,11 @@ Shared pagination control. Expects:
 {% if page_obj.paginator.num_pages > 1 %}
 <nav class="flex flex-wrap items-center justify-center gap-3.5 px-0 pb-1 pt-3.5" aria-label="{% trans 'Pagination' %}">
     {% if page_obj.has_previous %}
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline max-[640px]:flex-[1_1_140px]" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Previous" %}</a>
+        <a class="btn max-[640px]:flex-[1_1_140px]" href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Previous" %}</a>
     {% endif %}
     <span class="font-mono text-xs text-text-soft">{% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}</span>
     {% if page_obj.has_next %}
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline max-[640px]:flex-[1_1_140px]" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Next" %}</a>
+        <a class="btn max-[640px]:flex-[1_1_140px]" href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}">{% trans "Next" %}</a>
     {% endif %}
 </nav>
 {% endif %}

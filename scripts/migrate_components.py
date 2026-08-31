@@ -59,6 +59,9 @@ RULES: list[tuple[str, str]] = [
     (f"{BTN} border-danger bg-danger {TAIL} text-white hover:brightness-95 hover:no-underline", "btn btn-danger"),
     (f"{BTN} border-border-strong bg-surface {TAIL} text-text no-underline hover:bg-surface-subtle hover:no-underline", "btn"),
     (f"{BTN} border-border-strong bg-surface {TAIL} text-text hover:bg-surface-subtle hover:no-underline", "btn"),
+    # File-upload <label> styled as a button: same skeleton but tinted, so
+    # `.btn` plus the tint utility (utilities beat components) is identical.
+    (f"{BTN} border-border-strong bg-surface-subtle {TAIL} text-text hover:bg-surface-subtle hover:no-underline", "btn bg-surface-subtle"),
     # Compact buttons (column filters, dense toolbars).
     ("inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-2.5 py-1.5 text-xs font-[750] text-white hover:bg-primary-hover hover:no-underline", "btn btn-sm btn-primary flex-1"),
     ("inline-flex min-h-8 flex-1 cursor-pointer items-center justify-center rounded-md border border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline", "btn btn-sm flex-1"),

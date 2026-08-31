@@ -6,7 +6,7 @@
 {% block page_subtitle %}{% trans "Simple HTML reports for sales, inventory, expiry, and staff performance." %}{% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
+<section class="panel">
     <div class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5">
         {% trans "Daily Closing Checklist" as t1 %}{% trans "Owner/manager close-of-day control steps." as d1 %}
         {% url 'daily-closing-checklist' as u1 %}

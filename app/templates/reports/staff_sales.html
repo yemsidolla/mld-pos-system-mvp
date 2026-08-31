@@ -5,21 +5,21 @@
 {% block page_title %}{% trans "Staff Sales Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Completed sale counts and totals by cashier." %}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'daily-sales-report' %}">{% trans "Daily Sales" %}</a>
+    <a class="btn" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
+    <a class="btn" href="{% url 'daily-sales-report' %}">{% trans "Daily Sales" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Report Definition" %}</h2>
+            <h2 class="panel-title">{% trans "Report Definition" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Completed sales count toward revenue. Cancellations, receipt reprints, and below-cost overrides are accountability signals." %}</p>
         </div>
     </header>
 </section>
 
-<section class="mb-4 mt-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+<section class="stat-grid mb-4 mt-4">
     {% trans "Staff" as lbl_staff %}
     {% include "reports/_metric_card.html" with label=lbl_staff value=summary.staff_count %}
     {% trans "Completed Sales" as lbl_completed %}
@@ -41,67 +41,67 @@
         {% include "reports/_metric_card.html" with label=lbl_margin value=summary.gross_margin %}
     {% endif %}
 </section>
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Cashier Accountability" %}</h2>
+            <h2 class="panel-title">{% trans "Cashier Accountability" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Use exception counts as review prompts, not payroll or accounting totals." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-    <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+    <table class="data-table">
         <thead>
             <tr>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Staff" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Completed" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cancelled" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Reprints" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Overrides" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Discounts" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Average Sale" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Total Sales" %}</th>
+                <th class="">{% trans "Staff" %}</th>
+                <th class="">{% trans "Completed" %}</th>
+                <th class="">{% trans "Cancelled" %}</th>
+                <th class="">{% trans "Reprints" %}</th>
+                <th class="">{% trans "Overrides" %}</th>
+                <th class="">{% trans "Discounts" %}</th>
+                <th class="">{% trans "Average Sale" %}</th>
+                <th class="">{% trans "Total Sales" %}</th>
                 {% if user_can_view_costs %}
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cost" %}</th>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Margin" %}</th>
+                    <th class="">{% trans "Cost" %}</th>
+                    <th class="">{% trans "Margin" %}</th>
                 {% endif %}
             </tr>
         </thead>
         <tbody>
         {% for row in rows %}
             <tr class="hover:bg-surface-subtle">
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.cashier__username }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.sale_count }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                <td class="">{{ row.cashier__username }}</td>
+                <td class="">{{ row.sale_count }}</td>
+                <td class="">
                     {% if row.cancelled_count %}
                         {% include "catalog/_status_pill.html" with tone="warning" label=row.cancelled_count %}
                     {% else %}
                         {% include "catalog/_status_pill.html" with tone="neutral" label=row.cancelled_count %}
                     {% endif %}
                 </td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                <td class="">
                     {% if row.reprint_count %}
                         {% include "catalog/_status_pill.html" with tone="warning" label=row.reprint_count %}
                     {% else %}
                         {% include "catalog/_status_pill.html" with tone="neutral" label=row.reprint_count %}
                     {% endif %}
                 </td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                <td class="">
                     {% if row.override_count %}
                         {% include "catalog/_status_pill.html" with tone="danger" label=row.override_count %}
                     {% else %}
                         {% include "catalog/_status_pill.html" with tone="neutral" label=row.override_count %}
                     {% endif %}
                 </td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.discount_total }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.average_sale|floatformat:2 }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.total_sales }}</td>
+                <td class="">{{ row.discount_total }}</td>
+                <td class="">{{ row.average_sale|floatformat:2 }}</td>
+                <td class="">{{ row.total_sales }}</td>
                 {% if user_can_view_costs %}
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.total_cost }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.gross_margin }}</td>
+                    <td class="">{{ row.total_cost }}</td>
+                    <td class="">{{ row.gross_margin }}</td>
                 {% endif %}
             </tr>
         {% empty %}
-            <tr><td colspan="{% if user_can_view_costs %}10{% else %}8{% endif %}" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No staff sales found." %}</td></tr>
+            <tr><td colspan="{% if user_can_view_costs %}10{% else %}8{% endif %}" class="cell-empty">{% trans "No staff sales found." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>

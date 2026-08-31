@@ -5,58 +5,58 @@
 {% block page_title %}{% trans "Receive Stock" %}{% endblock %}
 {% block page_subtitle %}{% trans "Receive stock into a new batch using the approved inventory service." %}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-create' %}">{% trans "New Product" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'supplier-create' %}">{% trans "New Supplier" %}</a>
-    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="button" data-scan-target="#stock-in-product-code" data-scan-select-target="#id_product" data-scan-select-match="product" data-scan-context="stock_in">{% trans "Scan Product" %}</button>
+    <a class="btn" href="{% url 'product-create' %}">{% trans "New Product" %}</a>
+    <a class="btn" href="{% url 'supplier-create' %}">{% trans "New Supplier" %}</a>
+    <button class="btn btn-primary" type="button" data-scan-target="#stock-in-product-code" data-scan-select-target="#id_product" data-scan-select-match="product" data-scan-context="stock_in">{% trans "Scan Product" %}</button>
 {% endblock %}
 
 {% block content %}
 {% if created_batch %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Batch Received" %}</h2>
+            <h2 class="panel-title">{% trans "Batch Received" %}</h2>
             <p class="m-0 text-text-soft">{% blocktrans with batch=created_batch.batch_no product=created_batch.product.name %}{{ product }} — batch {{ batch }} is ready. Print a label now or receive another batch.{% endblocktrans %}</p>
         </div>
     </header>
-    <div class="flex flex-wrap items-center gap-2">
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white no-underline hover:bg-primary-hover hover:no-underline" href="{% url 'barcode-print' %}?batch={{ created_batch.pk }}">{% trans "Print Barcode / QR" %}</a>
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-print' %}?batch={{ created_batch.pk }}">{% trans "Print Template Label" %}</a>
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-batch-detail' created_batch.pk %}">{% trans "View Batch" %}</a>
-        <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'stock-in' %}">{% trans "Receive Another Batch" %}</a>
+    <div class="toolbar">
+        <a class="btn btn-primary" href="{% url 'barcode-print' %}?batch={{ created_batch.pk }}">{% trans "Print Barcode / QR" %}</a>
+        <a class="btn" href="{% url 'label-print' %}?batch={{ created_batch.pk }}">{% trans "Print Template Label" %}</a>
+        <a class="btn" href="{% url 'stock-batch-detail' created_batch.pk %}">{% trans "View Batch" %}</a>
+        <a class="btn" href="{% url 'stock-in' %}">{% trans "Receive Another Batch" %}</a>
     </div>
 </section>
 {% endif %}
 <section class="{% if created_batch %}mt-4 {% endif %}rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Receive Stock" %}</h2>
+            <h2 class="panel-title">{% trans "Receive Stock" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Scan or choose the product, then enter supplier, expiry, quantity, and prices." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}
-        <div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}
     <p class="m-0 text-text-soft">{% trans "Actual Unit Cost is the price paid to the supplier. Landed Unit Cost adds shipping or handling (optional). These are recorded on the batch — separate from the product's Reference Cost." %}</p>
     <div class="scan-lookup mb-3.5 grid gap-3.5">
         <div>
             <label for="stock-in-product-code">{% trans "Scan Product Code or Barcode" %}</label>
-            <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
+            <div class="toolbar toolbar-input">
                 <input id="stock-in-product-code" type="text" autocomplete="off">
-                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#stock-in-product-code" data-scan-select-target="#id_product" data-scan-select-match="product" data-scan-context="stock_in">{% trans "Scan" %}</button>
+                <button class="btn" type="button" data-scan-target="#stock-in-product-code" data-scan-select-target="#id_product" data-scan-select-match="product" data-scan-context="stock_in">{% trans "Scan" %}</button>
             </div>
         </div>
     </div>
-    <form class="grid gap-3.5" method="post">
+    <form class="form-stack" method="post">
         {% csrf_token %}
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
+        <div class="field-grid">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
                     {% if field.name == "supplier" %}
-                        <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
+                        <div class="toolbar toolbar-input">
                             {{ field }}
-                            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create data-quick-create-type="supplier" data-quick-create-target="#id_supplier">{% trans "New Supplier" %}</button>
+                            <button class="btn" type="button" data-quick-create data-quick-create-type="supplier" data-quick-create-target="#id_supplier">{% trans "New Supplier" %}</button>
                         </div>
                     {% else %}
                         {{ field }}
@@ -66,8 +66,8 @@
                 </div>
             {% endfor %}
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit">{% trans "Receive Stock" %}</button>
+        <div class="toolbar">
+            <button class="btn btn-success" type="submit">{% trans "Receive Stock" %}</button>
         </div>
     </form>
 </section>

@@ -5,9 +5,9 @@
 {% block page_title %}{% trans "Print Labels" %}{% endblock %}
 {% block page_subtitle %}{% trans "Pick a template and one or more stock batches, preview, then print. For a quick single-batch barcode, use Barcode / QR Print." %}{% endblock %}
 {% block header_actions %}
-    <a class="no-print inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline print:hidden" href="{% url 'barcode-print' %}">{% trans "Barcode / QR Print" %}</a>
-    <a class="no-print inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline print:hidden" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
-    <button class="no-print inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline print:hidden" type="button" data-scan-target="#template-label-batch-code" data-scan-select-target="#id_stock_batches" data-scan-select-match="stock_batch" data-scan-context="label_print">{% trans "Scan Batch" %}</button>
+    <a class="btn no-print print:hidden" href="{% url 'barcode-print' %}">{% trans "Barcode / QR Print" %}</a>
+    <a class="btn no-print print:hidden" href="{% url 'label-template-list' %}">{% trans "Templates" %}</a>
+    <button class="btn btn-primary no-print print:hidden" type="button" data-scan-target="#template-label-batch-code" data-scan-select-target="#id_stock_batches" data-scan-select-match="stock_batch" data-scan-context="label_print">{% trans "Scan Batch" %}</button>
 {% endblock %}
 
 {% block extra_head %}
@@ -33,29 +33,29 @@
 {% endblock %}
 
 {% block content %}
-<section class="no-print rounded border border-border bg-surface p-[18px] shadow-panel print:hidden">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel no-print print:hidden">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Label Setup" %}</h2>
+            <h2 class="panel-title">{% trans "Label Setup" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Quantity is the number of copies per selected batch." %}</p>
         </div>
     </header>
-    <div class="rounded-r-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">
+    <div class="alert alert-warning">
         {% trans "Product and shelf labels print from active stock batches. Use Barcode / QR Print for a quick single-batch code label." %}
     </div>
-    {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
     <div class="scan-lookup mb-3.5 grid gap-3.5">
         <div>
             <label for="template-label-batch-code">{% trans "Scan Batch Code" %}</label>
-            <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
+            <div class="toolbar toolbar-input">
                 <input id="template-label-batch-code" type="text" autocomplete="off">
-                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#template-label-batch-code" data-scan-select-target="#id_stock_batches" data-scan-select-match="stock_batch" data-scan-context="label_print">{% trans "Scan" %}</button>
+                <button class="btn" type="button" data-scan-target="#template-label-batch-code" data-scan-select-target="#id_stock_batches" data-scan-select-match="stock_batch" data-scan-context="label_print">{% trans "Scan" %}</button>
             </div>
         </div>
     </div>
-    <form class="grid gap-3.5" method="post">
+    <form class="form-stack" method="post">
         {% csrf_token %}
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
+        <div class="field-grid">
             {% for field in form %}
                 <div>
                     {{ field.label_tag }}
@@ -65,15 +65,15 @@
                 </div>
             {% endfor %}
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit" name="action" value="print">{% trans "Print" %}</button>
+        <div class="toolbar">
+            <button class="btn btn-primary" type="submit" name="action" value="preview">{% trans "Preview" %}</button>
+            <button class="btn btn-success" type="submit" name="action" value="print">{% trans "Print" %}</button>
         </div>
     </form>
 </section>
 
 {% if template and labels %}
-<section class="no-print mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 print:hidden">
+<section class="stat-grid mb-4 no-print print:hidden">
     {% trans "Template Type" as lbl_type %}
     {% include "reports/_metric_card.html" with label=lbl_type value=template.get_template_type_display size="small" %}
     {% trans "Selected Batches" as lbl_batches %}
@@ -83,13 +83,13 @@
     {% trans "Total Labels" as lbl_total %}
     {% include "reports/_metric_card.html" with label=lbl_total value=labels|length %}
 </section>
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel print:border-0 print:p-0 print:shadow-none">
-    <header class="no-print mb-3.5 flex items-start justify-between gap-3.5 print:hidden">
+<section class="panel print:border-0 print:p-0 print:shadow-none">
+    <header class="panel-header no-print print:hidden">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Print Preview" %}</h2>
+            <h2 class="panel-title">{% trans "Print Preview" %}</h2>
             <p class="m-0 text-text-soft">{{ template.name }} · {{ template.paper_width_mm }}×{{ template.paper_height_mm }}mm · {% blocktrans count count=labels|length %}{{ count }} label.{% plural %}{{ count }} labels.{% endblocktrans %}</p>
         </div>
-        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
+        <button class="btn btn-success" type="button" onclick="window.print()">{% trans "Open Print Dialog" %}</button>
     </header>
     <div class="label-sheet">
         {% for batch in labels %}
