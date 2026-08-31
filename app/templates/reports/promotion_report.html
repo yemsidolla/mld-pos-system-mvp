@@ -5,21 +5,21 @@
 {% block page_title %}{% trans "Promotion & Below-cost Report" %}{% endblock %}
 {% block page_subtitle %}{% trans "Promotion impact and risky below-cost activity from completed sale-item snapshots." %}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'promotion-list' %}">{% trans "Manage Promotions" %}</a>
+    <a class="btn" href="{% url 'reports-index' %}">{% trans "All Reports" %}</a>
+    <a class="btn" href="{% url 'promotion-list' %}">{% trans "Manage Promotions" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Report Definition" %}</h2>
+            <h2 class="panel-title">{% trans "Report Definition" %}</h2>
             <p class="m-0 text-text-soft">{% trans "This report uses sale-item snapshots saved at checkout. It does not recalculate old sales from current promotion rules." %}</p>
         </div>
     </header>
 </section>
 
-<section class="mb-4 mt-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+<section class="stat-grid mb-4 mt-4">
     {% trans "Promotions Used" as lbl_promos %}
     {% include "reports/_metric_card.html" with label=lbl_promos value=summary.promotion_count %}
     {% trans "Lines" as lbl_lines %}
@@ -42,48 +42,48 @@
     {% endif %}
 </section>
 
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Promotion Impact" %}</h2>
+            <h2 class="panel-title">{% trans "Promotion Impact" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Grouped by the promotion name captured on the sale item." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-    <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+    <table class="data-table">
         <thead>
             <tr>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Promotion" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Lines" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Units" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Gross" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Discount" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Final" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Below Cost" %}</th>
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Overrides" %}</th>
+                <th class="">{% trans "Promotion" %}</th>
+                <th class="">{% trans "Lines" %}</th>
+                <th class="">{% trans "Units" %}</th>
+                <th class="">{% trans "Gross" %}</th>
+                <th class="">{% trans "Discount" %}</th>
+                <th class="">{% trans "Final" %}</th>
+                <th class="">{% trans "Below Cost" %}</th>
+                <th class="">{% trans "Overrides" %}</th>
                 {% if user_can_view_costs %}
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cost" %}</th>
-                    <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Margin" %}</th>
+                    <th class="">{% trans "Cost" %}</th>
+                    <th class="">{% trans "Margin" %}</th>
                 {% endif %}
             </tr>
         </thead>
         <tbody>
         {% for row in rows %}
             <tr class="hover:bg-surface-subtle">
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.promotion_name }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.line_count }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.quantity }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.gross_amount }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.discount_amount }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.final_amount }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                <td class="">{{ row.promotion_name }}</td>
+                <td class="">{{ row.line_count }}</td>
+                <td class="">{{ row.quantity }}</td>
+                <td class="">{{ row.gross_amount }}</td>
+                <td class="">{{ row.discount_amount }}</td>
+                <td class="">{{ row.final_amount }}</td>
+                <td class="">
                     {% if row.below_cost_count %}
                         {% include "catalog/_status_pill.html" with tone="danger" label=row.below_cost_count %}
                     {% else %}
                         {% include "catalog/_status_pill.html" with tone="neutral" label=row.below_cost_count %}
                     {% endif %}
                 </td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                <td class="">
                     {% if row.override_count %}
                         {% include "catalog/_status_pill.html" with tone="danger" label=row.override_count %}
                     {% else %}
@@ -91,44 +91,44 @@
                     {% endif %}
                 </td>
                 {% if user_can_view_costs %}
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.total_cost }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ row.gross_margin }}</td>
+                    <td class="">{{ row.total_cost }}</td>
+                    <td class="">{{ row.gross_margin }}</td>
                 {% endif %}
             </tr>
         {% empty %}
-            <tr><td colspan="{% if user_can_view_costs %}10{% else %}8{% endif %}" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No promotion sale items found." %}</td></tr>
+            <tr><td colspan="{% if user_can_view_costs %}10{% else %}8{% endif %}" class="cell-empty">{% trans "No promotion sale items found." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Below-cost Review" %}</h2>
+            <h2 class="panel-title">{% trans "Below-cost Review" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Most recent promoted lines where final unit price was below the saved cost basis." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-    <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+    <table class="data-table">
         <thead><tr>
-            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Sale" %}</th>
-            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Product" %}</th>
-            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Promotion" %}</th>
-            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Final Unit" %}</th>
-            {% if user_can_view_costs %}<th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Cost Basis" %}</th>{% endif %}
-            <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Override" %}</th>
+            <th class="">{% trans "Sale" %}</th>
+            <th class="">{% trans "Product" %}</th>
+            <th class="">{% trans "Promotion" %}</th>
+            <th class="">{% trans "Final Unit" %}</th>
+            {% if user_can_view_costs %}<th class="">{% trans "Cost Basis" %}</th>{% endif %}
+            <th class="">{% trans "Override" %}</th>
         </tr></thead>
         <tbody>
         {% for item in below_cost_items %}
             <tr class="hover:bg-surface-subtle">
-                <td class="border-b border-border px-[9px] py-2.5 align-middle"><a href="{% url 'sale-detail' item.sale.id %}">{{ item.sale.sale_no }}</a></td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.product.name }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.promotion_name_at_sale }}</td>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.final_unit_price }}</td>
-                {% if user_can_view_costs %}<td class="border-b border-border px-[9px] py-2.5 align-middle">{{ item.cost_basis_at_sale }}</td>{% endif %}
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">
+                <td class=""><a href="{% url 'sale-detail' item.sale.id %}">{{ item.sale.sale_no }}</a></td>
+                <td class="">{{ item.product.name }}</td>
+                <td class="">{{ item.promotion_name_at_sale }}</td>
+                <td class="">{{ item.final_unit_price }}</td>
+                {% if user_can_view_costs %}<td class="">{{ item.cost_basis_at_sale }}</td>{% endif %}
+                <td class="">
                     {% if item.override_by_id %}
                         {% trans "Override" as override_lbl %}
                         {% include "catalog/_status_pill.html" with tone="danger" label=override_lbl %}
@@ -139,7 +139,7 @@
                 </td>
             </tr>
         {% empty %}
-            <tr><td colspan="{% if user_can_view_costs %}6{% else %}5{% endif %}" class="border-b border-border px-[9px] py-6 text-center text-text-soft">{% trans "No promoted below-cost lines found." %}</td></tr>
+            <tr><td colspan="{% if user_can_view_costs %}6{% else %}5{% endif %}" class="cell-empty">{% trans "No promoted below-cost lines found." %}</td></tr>
         {% endfor %}
         </tbody>
     </table>

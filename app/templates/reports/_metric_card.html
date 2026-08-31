@@ -10,6 +10,6 @@ Expects:
               page (e.g. revenue) with an accent border, tint and value colour
 {% endcomment %}
 <article class="rounded-md border p-4 {% if emphasis %}border-accent bg-filter-bar [&_strong]:text-accent{% elif tone == 'success' %}border-alert-success-border bg-surface [&_span]:text-success [&_strong]:text-success{% elif tone == 'warning' %}border-alert-warning-border bg-surface [&_span]:text-warning [&_strong]:text-warning{% elif tone == 'danger' %}border-alert-danger-border bg-surface [&_span]:text-danger [&_strong]:text-danger{% else %}border-border bg-surface{% endif %}">
-    <span class="block text-text-soft">{{ label }}</span>
+    <span class="stat-label">{{ label }}</span>
     <strong class="mt-1.5 block {% if size == 'small' %}text-lg{% else %}text-[28px]{% endif %}">{{ value }}</strong>
 </article>

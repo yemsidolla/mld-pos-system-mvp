@@ -8,8 +8,8 @@ Expects:
   description — muted supporting line
   icon        — optional melodu icon name (omit for text-only cards)
 {% endcomment %}
-<a class="grid gap-0.5 rounded-md border border-border bg-surface p-4 text-text no-underline hover:border-primary hover:no-underline" href="{{ href }}">
+<a class="stat-card grid gap-0.5 text-text no-underline hover:border-primary hover:no-underline" href="{{ href }}">
     {% if icon %}{% icon icon 20 "action-ic mb-0.5 text-accent" %}{% endif %}
     <strong>{{ title }}</strong>
-    <span class="block text-text-soft">{{ description }}</span>
+    <span class="stat-label">{{ description }}</span>
 </a>

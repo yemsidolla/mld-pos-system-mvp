@@ -5,71 +5,71 @@
 {% block page_title %}{% trans "System Health" %}{% endblock %}
 {% block page_subtitle %}{% trans "Operational checks for database, disk, logs, and recent activity." %}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'live-logs' %}">{% trans "Live Logs" %}</a>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'admin:index' %}">{% trans "Django Admin" %}</a>
+    <a class="btn" href="{% url 'live-logs' %}">{% trans "Live Logs" %}</a>
+    <a class="btn" href="{% url 'admin:index' %}">{% trans "Django Admin" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+<section class="stat-grid mb-4">
     <article class="rounded-md border bg-surface p-4 {% if overall_status != 'OK' %}border-alert-warning-border text-warning [&_span]:text-warning [&_strong]:text-warning{% else %}border-border{% endif %}">
-        <span class="block text-text-soft">{% trans "Overall" %}</span>
-        <strong class="mt-1.5 block text-lg">{% if overall_badge_class == "badge-danger" %}{% include "catalog/_status_pill.html" with tone="danger" label=overall_status %}{% elif overall_badge_class == "badge-warning" %}{% include "catalog/_status_pill.html" with tone="warning" label=overall_status %}{% else %}{% include "catalog/_status_pill.html" with tone="success" label=overall_status %}{% endif %}</strong>
+        <span class="stat-label">{% trans "Overall" %}</span>
+        <strong class="stat-value stat-value-sm">{% if overall_badge_class == "badge-danger" %}{% include "catalog/_status_pill.html" with tone="danger" label=overall_status %}{% elif overall_badge_class == "badge-warning" %}{% include "catalog/_status_pill.html" with tone="warning" label=overall_status %}{% else %}{% include "catalog/_status_pill.html" with tone="success" label=overall_status %}{% endif %}</strong>
     </article>
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "Database" %}</span>
-        <strong class="mt-1.5 block text-lg">
+    <article class="stat-card">
+        <span class="stat-label">{% trans "Database" %}</span>
+        <strong class="stat-value stat-value-sm">
             {% if database_ok %}{% include "catalog/_status_pill.html" with tone="success" label=database_status|upper %}{% else %}{% include "catalog/_status_pill.html" with tone="danger" label=database_status|upper %}{% endif %}
         </strong>
     </article>
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "Logs" %}</span>
-        <strong class="mt-1.5 block text-lg">
+    <article class="stat-card">
+        <span class="stat-label">{% trans "Logs" %}</span>
+        <strong class="stat-value stat-value-sm">
             {% if log_writable_ok %}{% include "catalog/_status_pill.html" with tone="success" label=log_writable_status|upper %}{% else %}{% include "catalog/_status_pill.html" with tone="danger" label=log_writable_status|upper %}{% endif %}
         </strong>
     </article>
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "Disk Free" %}</span>
-        <strong class="mt-1.5 block font-mono text-lg">{{ disk_free_display }}</strong>
+    <article class="stat-card">
+        <span class="stat-label">{% trans "Disk Free" %}</span>
+        <strong class="stat-value stat-value-sm font-mono">{{ disk_free_display }}</strong>
     </article>
     <article class="rounded-md border bg-surface p-4 {% if disk_status == 'critical' %}border-alert-danger-border text-danger [&_span]:text-danger [&_strong]:text-danger{% elif disk_status == 'warning' %}border-alert-warning-border text-warning [&_span]:text-warning [&_strong]:text-warning{% else %}border-border{% endif %}">
-        <span class="block text-text-soft">{% trans "Disk Used" %}</span>
-        <strong class="mt-1.5 block font-mono text-lg">{{ disk_used_percent }}%</strong>
+        <span class="stat-label">{% trans "Disk Used" %}</span>
+        <strong class="stat-value stat-value-sm font-mono">{{ disk_used_percent }}%</strong>
     </article>
-    <article class="rounded-md border border-border bg-surface p-4">
-        <span class="block text-text-soft">{% trans "App Version" %}</span>
-        <strong class="mt-1.5 block font-mono text-lg">{{ app_version }}</strong>
+    <article class="stat-card">
+        <span class="stat-label">{% trans "App Version" %}</span>
+        <strong class="stat-value stat-value-sm font-mono">{{ app_version }}</strong>
     </article>
 </section>
 
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Health Details" %}</h2>
+            <h2 class="panel-title">{% trans "Health Details" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Human-readable checks for production troubleshooting. Review warnings before they become outages." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap">
+        <table class="data-table">
             <tbody>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Database Status" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle">{% if database_ok %}{% include "catalog/_status_pill.html" with tone="success" label=database_status %}{% else %}{% include "catalog/_status_pill.html" with tone="danger" label=database_status %}{% endif %}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "App Version" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ app_version }}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Disk Total" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ disk_total_display }}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Disk Used" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ disk_used_display }}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Disk Used Percent" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle"><span class="inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] {% if disk_status == 'critical' %}bg-pill-danger text-pill-danger-fg{% elif disk_status == 'warning' %}bg-pill-warning text-pill-warning-fg{% else %}bg-pill-success text-pill-success-fg{% endif %}">{{ disk_used_percent }}% · {{ disk_status|upper }}</span></td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Disk Free" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle font-mono">{{ disk_free_display }}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Log Writable Status" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle">{% if log_writable_ok %}{% include "catalog/_status_pill.html" with tone="success" label=log_writable_status %}{% else %}{% include "catalog/_status_pill.html" with tone="danger" label=log_writable_status %}{% endif %}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Last Sale Time" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle">{{ last_sale_time|default:"" }}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Last Stock-In Time" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle">{{ last_stock_in_time|default:"" }}</td></tr>
-            <tr class="hover:bg-surface-subtle"><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Last Error" %}</th><td class="border-b border-border px-[9px] py-2.5 align-middle">{{ last_error|default:"-" }}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Database Status" %}</th><td class="">{% if database_ok %}{% include "catalog/_status_pill.html" with tone="success" label=database_status %}{% else %}{% include "catalog/_status_pill.html" with tone="danger" label=database_status %}{% endif %}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "App Version" %}</th><td class="font-mono">{{ app_version }}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Disk Total" %}</th><td class="font-mono">{{ disk_total_display }}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Disk Used" %}</th><td class="font-mono">{{ disk_used_display }}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Disk Used Percent" %}</th><td class=""><span class="inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] {% if disk_status == 'critical' %}bg-pill-danger text-pill-danger-fg{% elif disk_status == 'warning' %}bg-pill-warning text-pill-warning-fg{% else %}bg-pill-success text-pill-success-fg{% endif %}">{{ disk_used_percent }}% · {{ disk_status|upper }}</span></td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Disk Free" %}</th><td class="font-mono">{{ disk_free_display }}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Log Writable Status" %}</th><td class="">{% if log_writable_ok %}{% include "catalog/_status_pill.html" with tone="success" label=log_writable_status %}{% else %}{% include "catalog/_status_pill.html" with tone="danger" label=log_writable_status %}{% endif %}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Last Sale Time" %}</th><td class="">{{ last_sale_time|default:"" }}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Last Stock-In Time" %}</th><td class="">{{ last_stock_in_time|default:"" }}</td></tr>
+            <tr class="hover:bg-surface-subtle"><th class="">{% trans "Last Error" %}</th><td class="">{{ last_error|default:"-" }}</td></tr>
             </tbody>
         </table>
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Operator Notes" %}</h2>
+            <h2 class="panel-title">{% trans "Operator Notes" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Safe production checks only. Secrets and full environment values must never be shown here." %}</p>
         </div>
     </header>
@@ -78,30 +78,30 @@
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Backup / Reset Safeguards" %}</h2>
+            <h2 class="panel-title">{% trans "Backup / Reset Safeguards" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Visibility only. Backups and resets must be run from the server console with the runbook." %}</p>
         </div>
     </header>
-    <div class="rounded-r-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">
+    <div class="alert alert-warning">
         {% trans "There is intentionally no dashboard reset button. Data reset remains owner-level, command-line, dry-run-first, backup-confirmed, and audited." %}
     </div>
-    <div class="mt-3.5 overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
+    <div class="table-wrap mt-3.5">
+        <table class="data-table">
             <tbody>
             <tr class="hover:bg-surface-subtle">
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Backup Commands" %}</th>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{% for command in backup_commands %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-neutral px-2.5 py-0.5 font-mono text-[11.5px] font-semibold tracking-[0.02em] text-pill-neutral-fg">{{ command }}</span> {% endfor %}</td>
+                <th class="">{% trans "Backup Commands" %}</th>
+                <td class="">{% for command in backup_commands %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-neutral px-2.5 py-0.5 font-mono text-[11.5px] font-semibold tracking-[0.02em] text-pill-neutral-fg">{{ command }}</span> {% endfor %}</td>
             </tr>
             <tr class="hover:bg-surface-subtle">
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Runbooks" %}</th>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{% for doc in backup_docs %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-neutral px-2.5 py-0.5 font-mono text-[11.5px] font-semibold tracking-[0.02em] text-pill-neutral-fg">{{ doc }}</span> {% endfor %}</td>
+                <th class="">{% trans "Runbooks" %}</th>
+                <td class="">{% for doc in backup_docs %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-neutral px-2.5 py-0.5 font-mono text-[11.5px] font-semibold tracking-[0.02em] text-pill-neutral-fg">{{ doc }}</span> {% endfor %}</td>
             </tr>
             <tr class="hover:bg-surface-subtle">
-                <th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Reset Safety" %}</th>
-                <td class="border-b border-border px-[9px] py-2.5 align-middle">{% trans "Requires ALLOW_DATA_RESET=1, exact reset phrase, backup acknowledgement, and command-line execution." %}</td>
+                <th class="">{% trans "Reset Safety" %}</th>
+                <td class="">{% trans "Requires ALLOW_DATA_RESET=1, exact reset phrase, backup acknowledgement, and command-line execution." %}</td>
             </tr>
             </tbody>
         </table>

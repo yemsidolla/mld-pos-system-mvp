@@ -5,78 +5,78 @@
 {% block page_title %}{% trans "Upload Preview" %} #{{ job.id }}{% endblock %}
 {% block page_subtitle %}{{ job.get_target_display }} · {{ job.original_filename }}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'batch-upload' %}">{% trans "Back" %}</a>
+    <a class="btn" href="{% url 'batch-upload' %}">{% trans "Back" %}</a>
     {% if job.status == "PREVIEW" %}
         <form method="post" action="{% url 'batch-upload-commit' job.id %}">
             {% csrf_token %}
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success bg-success px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit">{% trans "Commit Valid Rows" %}</button>
+            <button class="btn btn-success" type="submit">{% trans "Commit Valid Rows" %}</button>
         </form>
     {% endif %}
 {% endblock %}
 
 {% block content %}
-<section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Rows" %}</span><strong class="mt-1.5 block text-[28px]">{{ counts.rows }}</strong></article>
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Valid" %}</span><strong class="mt-1.5 block text-[28px]">{{ counts.valid }}</strong></article>
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Invalid" %}</span><strong class="mt-1.5 block text-[28px]">{{ counts.invalid }}</strong></article>
-    <article class="rounded-md border border-border bg-surface p-4"><span class="block text-text-soft">{% trans "Deleted" %}</span><strong class="mt-1.5 block text-[28px]">{{ counts.deleted }}</strong></article>
+<section class="stat-grid mb-4">
+    <article class="stat-card"><span class="stat-label">{% trans "Rows" %}</span><strong class="stat-value">{{ counts.rows }}</strong></article>
+    <article class="stat-card"><span class="stat-label">{% trans "Valid" %}</span><strong class="stat-value">{{ counts.valid }}</strong></article>
+    <article class="stat-card"><span class="stat-label">{% trans "Invalid" %}</span><strong class="stat-value">{{ counts.invalid }}</strong></article>
+    <article class="stat-card"><span class="stat-label">{% trans "Deleted" %}</span><strong class="stat-value">{{ counts.deleted }}</strong></article>
 </section>
 
 {% if job.status != "PREVIEW" %}
-    <section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-        <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Committed Summary" %}</h2>
+    <section class="panel">
+        <h2 class="panel-title">{% trans "Committed Summary" %}</h2>
         <p class="m-0 text-text-soft">{{ job.summary }}</p>
     </section>
 {% endif %}
 
 <section class="{% if job.status != 'PREVIEW' %}mt-4 {% endif %}rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Rows" %}</h2>
+            <h2 class="panel-title">{% trans "Rows" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Edit incorrect rows or delete rows that should be skipped before commit." %}</p>
         </div>
     </header>
     {% for item in row_view_models %}
         {% with row=item.row %}
-        <article class="mb-3 rounded border border-border bg-surface p-[18px] shadow-panel">
-            <header class="mb-3.5 flex items-start justify-between gap-3.5">
+        <article class="panel mb-3">
+            <header class="panel-header">
                 <div>
-                    <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Row" %} {{ row.row_number }}</h2>
+                    <h2 class="panel-title">{% trans "Row" %} {{ row.row_number }}</h2>
                     <p class="m-0">{% if item.status == 'Invalid' %}{% include "catalog/_status_pill.html" with tone="danger" label=item.status %}{% elif item.status == 'Warning' %}{% include "catalog/_status_pill.html" with tone="warning" label=item.status %}{% elif item.status == 'Valid' %}{% include "catalog/_status_pill.html" with tone="success" label=item.status %}{% else %}{% include "catalog/_status_pill.html" with tone="neutral" label=item.status %}{% endif %}</p>
                 </div>
                 <span class="text-text-soft">{{ row.committed_action }}</span>
             </header>
-            <form class="grid gap-3.5" method="post" action="{% url 'batch-upload-row-update' job.id row.id %}">
+            <form class="form-stack" method="post" action="{% url 'batch-upload-row-update' job.id row.id %}">
                 {% csrf_token %}
                 <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
                     {% for field in fields %}
                         <div>
                             <label for="row-{{ row.id }}-{{ field }}">{{ field }}</label>
-                            <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
+                            <div class="toolbar toolbar-input">
                                 <input id="row-{{ row.id }}-{{ field }}" name="{{ field }}" value="{{ row.normalized_data|get_item:field }}">
                                 {% if "code" in field or "barcode" in field or field == "product_code" %}
-                                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#row-{{ row.id }}-{{ field }}" data-scan-context="batch_upload">{% trans "Scan" %}</button>
+                                    <button class="btn" type="button" data-scan-target="#row-{{ row.id }}-{{ field }}" data-scan-context="batch_upload">{% trans "Scan" %}</button>
                                 {% endif %}
                             </div>
                         </div>
                     {% endfor %}
                 </div>
                 {% if row.validation_errors %}
-                    <div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ row.validation_errors }}</div>
+                    <div class="alert alert-danger">{{ row.validation_errors }}</div>
                 {% endif %}
                 {% if row.warnings %}
-                    <div class="rounded-r-md border border-alert-warning-border border-l-[3px] border-l-warning bg-alert-warning-bg px-3 py-2.5 text-warning">{{ row.warnings }}</div>
+                    <div class="alert alert-warning">{{ row.warnings }}</div>
                 {% endif %}
                 {% if job.status == "PREVIEW" and not row.is_deleted %}
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Save Row" %}</button>
+                    <div class="toolbar">
+                        <button class="btn btn-primary" type="submit">{% trans "Save Row" %}</button>
                     </div>
                 {% endif %}
             </form>
             {% if job.status == "PREVIEW" and not row.is_deleted %}
                 <form class="mt-2" method="post" action="{% url 'batch-upload-row-delete' job.id row.id %}">
                     {% csrf_token %}
-                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-danger bg-danger px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:brightness-95 hover:no-underline" type="submit">{% trans "Delete Row" %}</button>
+                    <button class="btn btn-danger" type="submit">{% trans "Delete Row" %}</button>
                 </form>
             {% endif %}
         </article>

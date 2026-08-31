@@ -5,19 +5,19 @@
 {% block page_title %}{% if mode == "create" %}{% trans "New Label Template" %}{% else %}{% trans "Edit" %}: {{ template.name }}{% endif %}{% endblock %}
 {% block page_subtitle %}{% trans "Choose paper size and which fields appear on the label." %}{% endblock %}
 {% block header_actions %}
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-template-list' %}">{% trans "Back to Templates" %}</a>
+    <a class="btn" href="{% url 'label-template-list' %}">{% trans "Back to Templates" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
+<section class="panel">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
     <p class="mb-3.5 mt-0 text-text-soft">{% trans "Saved templates are never overwritten by this form. If this template is marked default, only the previous default for the same type is unset." %}</p>
-    <form class="grid gap-3.5" method="post">
+    <form class="form-stack" method="post">
         {% csrf_token %}
         {% for group_title, fields in field_groups %}
             <section class="grid gap-3 border-t border-border pt-3.5 first-of-type:border-t-0 first-of-type:pt-0">
                 <h2 class="m-0 text-base font-semibold text-text">{{ group_title }}</h2>
-                <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text [&_small]:text-xs [&_small]:text-text-soft">
+                <div class="field-grid [&_small]:text-xs [&_small]:text-text-soft">
                     {% for field in fields %}
                         <div>
                             {{ field.label_tag }}
@@ -29,9 +29,9 @@
                 </div>
             </section>
             {% endfor %}
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% if mode == "create" %}{% trans "Create Template" %}{% else %}{% trans "Save Template" %}{% endif %}</button>
-            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'label-template-list' %}">{% trans "Cancel" %}</a>
+        <div class="toolbar">
+            <button class="btn btn-primary" type="submit">{% if mode == "create" %}{% trans "Create Template" %}{% else %}{% trans "Save Template" %}{% endif %}</button>
+            <a class="btn" href="{% url 'label-template-list' %}">{% trans "Cancel" %}</a>
         </div>
     </form>
 </section>

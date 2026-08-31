@@ -6,63 +6,63 @@
 {% block page_subtitle %}{% trans "Upload CSV or XLSX, validate rows, edit the preview, then commit safely." %}{% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Upload File" %}</h2>
+            <h2 class="panel-title">{% trans "Upload File" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Choose a target and upload a template-compatible CSV or XLSX file." %}</p>
         </div>
     </header>
-    {% if form.non_field_errors %}<div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>{% endif %}
-    <form class="grid gap-3.5" method="post" enctype="multipart/form-data">
+    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+    <form class="form-stack" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
             <div>{{ form.target.label_tag }}{{ form.target }}{{ form.target.errors }}</div>
             <div>{{ form.file.label_tag }}{{ form.file }}{{ form.file.errors }}</div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% trans "Upload And Preview" %}</button>
+        <div class="toolbar">
+            <button class="btn btn-primary" type="submit">{% trans "Upload And Preview" %}</button>
         </div>
     </form>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Templates" %}</h2>
+            <h2 class="panel-title">{% trans "Templates" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Download the schema for each supported upload target." %}</p>
         </div>
     </header>
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="toolbar">
         {% for value, label in targets %}
-            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'batch-upload-template' value %}">{{ label }}</a>
+            <a class="btn" href="{% url 'batch-upload-template' value %}">{{ label }}</a>
         {% endfor %}
     </div>
 </section>
 
-<section class="mt-4 rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel mt-4">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% trans "Recent Uploads" %}</h2>
+            <h2 class="panel-title">{% trans "Recent Uploads" %}</h2>
             <p class="m-0 text-text-soft">{% trans "Database-backed previews and committed jobs." %}</p>
         </div>
     </header>
-    <div class="overflow-x-auto [-webkit-overflow-scrolling:touch]">
-        <table class="w-full min-w-[720px] border-collapse">
-            <thead><tr><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "ID" %}</th><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Target" %}</th><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Status" %}</th><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "File" %}</th><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Uploaded By" %}</th><th class="border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft">{% trans "Date" %}</th></tr></thead>
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead><tr><th class="">{% trans "ID" %}</th><th class="">{% trans "Target" %}</th><th class="">{% trans "Status" %}</th><th class="">{% trans "File" %}</th><th class="">{% trans "Uploaded By" %}</th><th class="">{% trans "Date" %}</th></tr></thead>
             <tbody>
             {% for job in jobs %}
                 <tr class="hover:bg-surface-subtle">
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle"><a href="{% url 'batch-upload-detail' job.id %}">{{ job.id }}</a></td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ job.get_target_display }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{% include "catalog/_status_pill.html" with tone="neutral" label=job.status %}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ job.original_filename }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ job.uploaded_by.username }}</td>
-                    <td class="border-b border-border px-[9px] py-2.5 align-middle">{{ job.created_at }}</td>
+                    <td class=""><a href="{% url 'batch-upload-detail' job.id %}">{{ job.id }}</a></td>
+                    <td class="">{{ job.get_target_display }}</td>
+                    <td class="">{% include "catalog/_status_pill.html" with tone="neutral" label=job.status %}</td>
+                    <td class="">{{ job.original_filename }}</td>
+                    <td class="">{{ job.uploaded_by.username }}</td>
+                    <td class="">{{ job.created_at }}</td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="border-b border-border px-[9px] py-6 text-center text-text-soft">
+                    <td colspan="6" class="cell-empty">
                         <div class="grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft">
                             <strong class="text-sm text-text">{% trans "No upload jobs yet." %}</strong>
                             <span class="max-w-[420px]">{% trans "Upload a CSV or XLSX file above to create a preview job before committing data." %}</span>

@@ -5,25 +5,25 @@
 {% block page_title %}{% if mode == "create" %}{% trans "New Product" %}{% else %}{% trans "Edit Product" %}{% endif %}{% endblock %}
 {% block page_subtitle %}{% trans "Maintain product master data. Stock quantity remains controlled by batches." %}{% endblock %}
 {% block header_actions %}
-    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan barcode" %}</button>
-    <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-list' %}">{% trans "Back to products" %}</a>
+    <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan barcode" %}</button>
+    <a class="btn" href="{% url 'product-list' %}">{% trans "Back to products" %}</a>
 {% endblock %}
 
 {% block content %}
-<section class="rounded border border-border bg-surface p-[18px] shadow-panel">
-    <header class="mb-3.5 flex items-start justify-between gap-3.5">
+<section class="panel">
+    <header class="panel-header">
         <div>
-            <h2 class="m-0 mb-1 text-base font-semibold text-text">{% if mode == "create" %}{% trans "Create Product" %}{% else %}{{ product.name }}{% endif %}</h2>
+            <h2 class="panel-title">{% if mode == "create" %}{% trans "Create Product" %}{% else %}{{ product.name }}{% endif %}</h2>
             <p class="m-0 text-text-soft">{% trans "Use product code as the stable identifier. Original barcode must be unique when provided." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}
-        <div class="rounded-r-md border border-alert-danger-border border-l-[3px] border-l-danger bg-alert-danger-bg px-3 py-2.5 text-danger">{{ form.non_field_errors }}</div>
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}
-    <form class="grid gap-3.5" method="post" enctype="multipart/form-data">
+    <form class="form-stack" method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Identity" %}</p>
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
+        <p class="section-label">{% trans "Identity" %}</p>
+        <div class="field-grid">
             <div>
                 {{ form.product_code.label_tag }}
                 {{ form.product_code }}
@@ -32,9 +32,9 @@
             </div>
             <div>
                 {{ form.original_barcode.label_tag }}
-                <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
+                <div class="toolbar toolbar-input">
                     {{ form.original_barcode }}
-                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
+                    <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
                 </div>
                 {{ form.original_barcode.errors }}
                 {% if form.original_barcode.help_text %}<p class="m-0 text-text-soft">{{ form.original_barcode.help_text }}</p>{% endif %}
@@ -59,22 +59,22 @@
             </div>
         </div>
 
-        <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Classification" %}</p>
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
+        <p class="section-label">{% trans "Classification" %}</p>
+        <div class="field-grid">
             <div>
                 {{ form.category.label_tag }}
-                <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
+                <div class="toolbar toolbar-input">
                     {{ form.category }}
-                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% icon "plus" 16 %} {% trans "New category" %}</button>
+                    <button class="btn" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% icon "plus" 16 %} {% trans "New category" %}</button>
                 </div>
                 {{ form.category.errors }}
                 {% if form.category.help_text %}<p class="m-0 text-text-soft">{{ form.category.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.brand.label_tag }}
-                <div class="flex flex-wrap items-center gap-2 [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px]">
+                <div class="toolbar toolbar-input">
                     {{ form.brand }}
-                    <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% icon "plus" 16 %} {% trans "New brand" %}</button>
+                    <button class="btn" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% icon "plus" 16 %} {% trans "New brand" %}</button>
                 </div>
                 {{ form.brand.errors }}
                 {% if form.brand.help_text %}<p class="m-0 text-text-soft">{{ form.brand.help_text }}</p>{% endif %}
@@ -82,7 +82,7 @@
             <div>
                 {{ form.animal_types.label_tag }}
                 {{ form.animal_types }}
-                <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text hover:bg-surface-subtle hover:no-underline" type="button" data-quick-create data-quick-create-type="animal_type" data-quick-create-target="#id_animal_types" data-quick-create-field-name="animal_types">{% icon "plus" 16 %} {% trans "New animal type" %}</button>
+                <button class="btn" type="button" data-quick-create data-quick-create-type="animal_type" data-quick-create-target="#id_animal_types" data-quick-create-field-name="animal_types">{% icon "plus" 16 %} {% trans "New animal type" %}</button>
                 {{ form.animal_types.errors }}
                 {% if form.animal_types.help_text %}<p class="m-0 text-text-soft">{{ form.animal_types.help_text }}</p>{% endif %}
             </div>
@@ -100,8 +100,8 @@
             </div>
         </div>
 
-        <p class="mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft">{% trans "Pricing and controls" %}</p>
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mt-1 [&_ul]:mb-0 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text">
+        <p class="section-label">{% trans "Pricing and controls" %}</p>
+        <div class="field-grid">
             <div>
                 {{ form.unit.label_tag }}
                 {{ form.unit }}
@@ -138,9 +138,9 @@
                 {% if form.description.help_text %}<p class="m-0 text-text-soft">{{ form.description.help_text }}</p>{% endif %}
             </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-primary bg-primary px-[13px] py-[9px] font-sans text-sm font-[750] text-white hover:bg-primary-hover hover:no-underline" type="submit">{% icon "check" 16 %} {% if mode == "create" %}{% trans "Create product" %}{% else %}{% trans "Save product" %}{% endif %}</button>
-            <a class="inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline" href="{% url 'product-list' %}">{% trans "Cancel" %}</a>
+        <div class="toolbar">
+            <button class="btn btn-primary" type="submit">{% icon "check" 16 %} {% if mode == "create" %}{% trans "Create product" %}{% else %}{% trans "Save product" %}{% endif %}</button>
+            <a class="btn" href="{% url 'product-list' %}">{% trans "Cancel" %}</a>
         </div>
     </form>
 </section>
