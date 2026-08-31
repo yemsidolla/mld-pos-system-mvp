@@ -86,6 +86,13 @@ Tailwind CSS **v4.3.3** (standalone CLI, no Node) is available alongside
   and by `scripts/build_tailwind.sh`)
 - **Local workflow:** `docs/guides/TAILWIND_WORKFLOW.md`
 
+> **Usage rule (V8):** utilities are for one-off layout; **anything repeated
+> twice is a component.** The component classes live in `tailwind/input.css`
+> under `@layer components` and each codifies (via `@apply`) the exact utility
+> string it replaced, so a template swap is pixel-identical. Margins between
+> siblings stay out of components — compose them in the template
+> (`class="panel mt-4"`); utilities always beat components.
+
 `:root` custom properties in `dashboard.css` remain the authoritative token
 names. The Tailwind `@theme` block mirrors the same values into Tailwind
 namespaces so utilities exist. **Do not use Tailwind's default palette.**
@@ -189,6 +196,15 @@ semantic action colors for status pills — they are a separate scale.
   999px for pills/badges/avatars. (Legacy buttons/inputs use 6px — Debt §10.)
 - **Shadow:** `--shadow` only. No other drop shadows. No gradients, blur, or glow
   on the light surface. (The ink/auth surface may use the defined glow accents.)
+- **Breakpoints (V8 canonical scale):** three thresholds only — **640px**
+  (phone → tablet), **900px** (tablet → PC), **1280px** (PC → wide), plus
+  **1500px** as an opt-in wide-content tier. Declared as `--breakpoint-*`
+  tokens in `tailwind/input.css`, so `sm:` / `md:` / `lg:` / `xl:` (and their
+  `max-*` forms) exist and are the preferred spelling. Semantics differ from
+  the legacy arbitrary forms: `max-md:` is `width < 900px` (exclusive) while
+  `max-[900px]` is `<= 900px` (inclusive) — migrate deliberately, never by
+  find-and-replace. Legacy 860/1100 values map to 900/1280 in the Phase 7
+  sweep; the POS sale screen keeps its current thresholds until its own task.
 - **Motion:** 0.15–0.16s ease for layout transitions (sidebar, frame loading).
   Toasts auto-fade after 4s (success only). No decorative animation.
 
@@ -223,6 +239,19 @@ style, `stroke-width 1.8`, `currentColor`.
 
 Each component: what it is, the markup, variants, and rules. All are rendered
 live on the styleguide page.
+
+> **V8:** component classes are defined in `tailwind/input.css` under
+> `@layer components` (they supersede the same-named rules in `dashboard.css`
+> on every shared property — the components layer beats `layer(legacy)`
+> regardless of selector specificity). New names introduced by V8:
+> `.panel-title` / `.panel-sub` (the h2/p inside `.panel-header`),
+> `.stat-grid` / `.stat-card` / `.stat-label` / `.stat-value` / `.stat-value-sm`,
+> `.kpi-tile` / `.kpi-value`, `.table-wrap` + `.data-table`
+> (+ `.data-table-fit`, `.data-table-hover`, `.cell-empty`, `.cell-num`),
+> `.toolbar` (+ `.toolbar-input`), `.form-stack` / `.field-grid` /
+> `.section-label`, `.btn-sm` / `.btn-icon` / `.btn-ghost` (the last two are
+> standalone, not composed with `.btn`), `.empty-state`, `.link-subtle`.
+> `.btn-secondary` is retired: bare `.btn` IS the secondary look.
 
 ### 4.1 Buttons — `.btn`
 Base `.btn` (or any `<button>`). Variants: `.btn-primary` (blue, the main
@@ -567,3 +596,11 @@ Append one line per design-system task (the only thing that may edit this file).
   option to the report metric-card component (`_metric_card.html`) — accent
   border, tint and value colour — for the single most important number on a
   page (e.g. daily revenue). CSS + component + this log together.
+- 2026-08-31 — V8 Phase 1 layout contract: `@layer components` added to
+  `tailwind/input.css` codifying the canonical utility strings (buttons,
+  panel, stat/KPI cards, data table, toolbar, forms, alerts, pills, empty
+  state, links) via `@apply`; canonical breakpoint scale (640/900/1280 + 1500
+  opt-in) added to §2.6 and as `--breakpoint-*` tokens; usage rule added to
+  §2.0 ("anything repeated twice is a component"). Styleguide gained a V8
+  Components section rendering the full set. Templates intentionally
+  untouched — they migrate in Phase 3.

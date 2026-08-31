@@ -61,6 +61,18 @@
   --tracking-wide: 0.06em;
   --tracking-wider: 0.14em;
 
+  /* ---- Breakpoints (DESIGN_SYSTEM §2.6, V8 canonical scale) ----
+   * 640 phone -> tablet | 900 tablet -> PC | 1280 PC -> wide | 1500 opt-in.
+   * `--*: initial` above wiped Tailwind's defaults, so these lines are what
+   * make sm:/md:/lg:/xl: (and max-sm: etc.) exist at all. NOTE the semantics:
+   * named variants are exclusive ranges (max-md: means width < 900px) while
+   * the legacy arbitrary forms are inclusive (max-[900px] means <= 900px) —
+   * migrate deliberately (Phase 7), never by find-and-replace. */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 900px;
+  --breakpoint-lg: 1280px;
+  --breakpoint-xl: 1500px;
+
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
@@ -249,3 +261,184 @@
 
 /* :root token names (--bg, etc.) remain defined in dashboard.css only.
  * This file mirrors their values into @theme for utility classes. */
+
+/* =========================================================================
+ * V8 component layer (Phase 1 — the layout contract).
+ *
+ * Every class below codifies, via @apply, the EXACT utility string that the
+ * Tailwind migration left repeated across templates (the canonical strings
+ * were inventoried from all 57 templates before this block was written), so
+ * swapping a template from the utility string to the component class is
+ * pixel-identical by construction. Do not "improve" values here casually —
+ * that is a design-system change with its own task.
+ *
+ * Rules (DESIGN_SYSTEM §2.0): utilities are for one-off layout; anything
+ * repeated twice belongs here. Margins between siblings stay OUT of
+ * components — compose them in the template (`class="panel mt-4"`), which
+ * works because layer(components) loses to layer(utilities).
+ *
+ * The `components` slot in the layer order was reserved for this block by
+ * the Phase-2 cascade design; it beats layer(legacy) — dashboard.css — on
+ * every shared property regardless of selector specificity.
+ * ======================================================================= */
+@layer components {
+  /* ---- Buttons (§4.1). .btn alone is the secondary/default look. ---- */
+  .btn {
+    @apply inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline;
+  }
+  .btn-primary {
+    @apply border-primary bg-primary text-white hover:bg-primary-hover;
+  }
+  .btn-success {
+    @apply border-success bg-success text-white hover:bg-success hover:brightness-95;
+  }
+  .btn-danger {
+    @apply border-danger bg-danger text-white hover:bg-danger hover:brightness-95;
+  }
+  /* Compact button for popovers/dense toolbars; compose: "btn btn-sm btn-primary". */
+  .btn-sm {
+    @apply min-h-8 gap-1 px-2.5 py-1.5 text-xs;
+  }
+  /* Standalone (do NOT compose with .btn): square icon button (modal close). */
+  .btn-icon {
+    @apply inline-flex size-9 min-h-0 cursor-pointer items-center justify-center border border-border-strong bg-surface p-0 text-[22px] font-[750] text-text hover:bg-surface-subtle;
+  }
+  /* Standalone: reset-to-link button (clear filter, dismiss). */
+  .btn-ghost {
+    @apply inline-flex min-h-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-text-soft no-underline hover:text-danger hover:no-underline;
+  }
+
+  /* ---- Panel (§4.4): the page section container. ---- */
+  .panel {
+    @apply rounded border border-border bg-surface p-[18px] shadow-panel;
+  }
+  .panel-header {
+    @apply mb-3.5 flex items-start justify-between gap-3.5;
+  }
+  .panel-title {
+    @apply m-0 mb-1 text-base font-semibold text-text;
+  }
+  /* Dual role by design: subtitle under .panel-title AND form help text. */
+  .panel-sub {
+    @apply m-0 text-text-soft;
+  }
+
+  /* ---- Stat cards (§4.5) and the dashboard KPI tile. ---- */
+  .stat-grid {
+    @apply grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3;
+  }
+  .stat-card {
+    @apply rounded-md border border-border bg-surface p-4;
+  }
+  .stat-label {
+    @apply block text-text-soft;
+  }
+  .stat-value {
+    @apply mt-1.5 block text-[28px];
+  }
+  .stat-value-sm {
+    @apply text-lg;
+  }
+  .kpi-tile {
+    @apply grid gap-1 rounded border border-border bg-surface px-4 py-3.5;
+  }
+  .kpi-value {
+    @apply font-mono text-[26px] font-semibold leading-[1.1] text-text;
+  }
+
+  /* ---- Data table (§4.7). Cell styling is scoped to the table class so
+   * rows lose their per-cell class strings; alignment overrides stay
+   * utilities on the cell (utilities beat components). ---- */
+  .table-wrap {
+    @apply overflow-x-auto [-webkit-overflow-scrolling:touch];
+  }
+  .data-table {
+    @apply w-full min-w-[720px] border-collapse;
+  }
+  .data-table-fit {
+    @apply min-w-0;
+  }
+  .data-table th {
+    @apply border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft;
+  }
+  .data-table td {
+    @apply border-b border-border px-[9px] py-2.5 align-middle;
+  }
+  /* Opt-in row hover for list tables (detail tables stay static). */
+  .data-table-hover tbody tr {
+    @apply hover:bg-surface-subtle;
+  }
+  .cell-empty {
+    @apply border-b border-border px-[9px] py-6 text-center text-text-soft;
+  }
+  /* Currency/quantity columns: mono, slightly condensed. */
+  .cell-num {
+    @apply font-mono text-[0.95em] tracking-[-0.01em];
+  }
+
+  /* ---- Toolbar (§4-adjacent): action rows, filter bars, submit rows. ---- */
+  .toolbar {
+    @apply flex flex-wrap items-center gap-2;
+  }
+  /* Variant where the input/select stretches: compose "toolbar toolbar-input". */
+  .toolbar-input {
+    @apply [&_input]:min-w-0 [&_input]:flex-[1_1_220px] [&_select]:flex-[1_1_220px];
+  }
+
+  /* ---- Forms (§4.8). .field-grid styles Django widgets (the [&_ul] chain
+   * is CheckboxSelectMultiple; <small> is help text). ---- */
+  .form-stack {
+    @apply grid gap-3.5;
+  }
+  .field-grid {
+    @apply grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5 [&_ul]:mb-0 [&_ul]:mt-1 [&_ul]:flex [&_ul]:list-none [&_ul]:flex-wrap [&_ul]:gap-x-4 [&_ul]:gap-y-1.5 [&_ul]:p-0 [&_ul_li_label]:inline-flex [&_ul_li_label]:items-center [&_ul_li_label]:gap-[7px] [&_ul_li_label]:text-[13px] [&_ul_li_label]:font-medium [&_ul_li_label]:text-text [&_small]:text-xs [&_small]:text-text-soft;
+  }
+  /* Form section eyebrow (Identity / Pricing / ...). */
+  .section-label {
+    @apply mb-2 mt-3.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-text-soft;
+  }
+
+  /* ---- Alerts (§4.10): tone modifiers on one anatomy. ---- */
+  .alert {
+    @apply rounded-r-md border border-l-[3px] px-3 py-2.5;
+  }
+  .alert-danger {
+    @apply border-alert-danger-border border-l-danger bg-alert-danger-bg text-danger;
+  }
+  .alert-warning {
+    @apply border-alert-warning-border border-l-warning bg-alert-warning-bg text-warning;
+  }
+  .alert-neutral {
+    @apply border-border border-l-border bg-surface;
+  }
+
+  /* ---- Status pill (§4.2 / §2.4): pastel bg, dark text. ---- */
+  .pill {
+    @apply inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em];
+  }
+  .pill-neutral {
+    @apply bg-pill-neutral text-pill-neutral-fg;
+  }
+  .pill-success {
+    @apply bg-pill-success text-pill-success-fg;
+  }
+  .pill-warning {
+    @apply bg-pill-warning text-pill-warning-fg;
+  }
+  .pill-danger {
+    @apply bg-pill-danger text-pill-danger-fg;
+  }
+  .pill-info {
+    @apply bg-pill-info text-pill-info-fg;
+  }
+
+  /* ---- Empty state (§4.12): icon + message inside a colspan cell. ---- */
+  .empty-state {
+    @apply grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft;
+  }
+
+  /* ---- Quiet inline link (TOC/footer links). ---- */
+  .link-subtle {
+    @apply text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline;
+  }
+}
