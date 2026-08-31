@@ -11,6 +11,10 @@
 Styleguide markup uses Tailwind utilities mapped to Melodu tokens. Shared
 component class names (panel, btn, …) are intentionally not used here so this
 page proves the theme mapping. dashboard.css still styles the shell.
+
+The one exception is the final "V8 components" section, which uses ONLY the
+component classes — it exists to prove the contract templates migrate onto in
+Phase 3, so it must not be converted back to utilities.
 {% endcomment %}
 
 <nav class="sticky top-[76px] z-[5] mb-4 flex flex-wrap gap-x-3.5 gap-y-1.5 rounded border border-border bg-surface px-4 py-3 shadow-panel" id="sg-toc" aria-label="{% trans 'Style guide sections' %}">
@@ -435,7 +439,7 @@ proves the contract templates migrate onto in Phase 3.
         </div>
     </div>
 
-    <p class="section-label">{% trans "Data table — .table-wrap > .data-table (+ .data-table-hover, .data-table-fit, .cell-num, .cell-empty)" %}</p>
+    <p class="section-label">{% trans "Data table — .table-wrap wrapping .data-table (+ .data-table-hover, .data-table-fit, .cell-num, .cell-empty)" %}</p>
     <div class="table-wrap mb-4">
         <table class="data-table data-table-fit data-table-hover">
             <thead><tr><th>{% trans "Code" %}</th><th>{% trans "Name" %}</th><th class="text-right">{% trans "Price" %}</th><th>{% trans "Status" %}</th></tr></thead>
@@ -451,6 +455,6 @@ proves the contract templates migrate onto in Phase 3.
     <div class="empty-state mb-2">{% icon "package" 20 %} <span>{% trans "No products yet. Add your first one." %}</span></div>
     <p class="empty-state-inline mb-2">{% icon "check" 16 %} {% trans "All clear — nothing here yet." %}</p>
 
-    <p class="panel-sub">{% trans "Breakpoints: sm 640 · md 900 · lg 1280 · xl 1500 (max-md: is width < 900px — see DESIGN_SYSTEM §2.6)." %}</p>
+    <p class="panel-sub">{% trans "Breakpoints: sm 640 · md 900 · lg 1280 · xl 1500. Use phone: for the inclusive 640px rules — see DESIGN_SYSTEM §2.6." %}</p>
 </section>
 {% endblock %}

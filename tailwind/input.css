@@ -15,7 +15,7 @@
  * other by source order / specificity as normal.
  */
 
-@layer legacy, theme, base, components, utilities;
+@layer properties, legacy, theme, base, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
@@ -25,6 +25,11 @@
 
 /* html.sidebar-collapsed … → sidebar-collapsed:* utilities on descendants. */
 @custom-variant sidebar-collapsed (.sidebar-collapsed &);
+
+/* `phone:` == dashboard.css's `@media (max-width: 640px)`, INCLUSIVE of 640.
+ * Tailwind's own max-[640px] and max-sm: both compile to `width < 640px`, so
+ * at exactly 640px they would drop the legacy phone rules they replace. */
+@custom-variant phone (@media (width <= 640px));
 
 @theme {
   /* Drop Tailwind's default palette — Melodu tokens only. */
@@ -288,7 +293,7 @@
      * guards that this layer would otherwise silently kill: legacy's 42px
      * phone touch target and its not-allowed cursor both lose to a
      * components-layer rule on the same property. */
-    @apply inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline disabled:cursor-not-allowed disabled:opacity-[0.55] max-[640px]:min-h-[42px];
+    @apply inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline disabled:cursor-not-allowed disabled:opacity-[0.55] phone:min-h-[42px];
   }
   .btn-primary {
     @apply border-primary bg-primary text-white hover:bg-primary-hover;
@@ -305,7 +310,7 @@
    * min-h-8 also re-asserts over .btn's phone guard, which is correct:
    * compact buttons live inside popovers, not as primary tap targets. */
   .btn-sm {
-    @apply min-h-8 px-2.5 py-1.5 text-xs max-[640px]:min-h-8;
+    @apply min-h-8 px-2.5 py-1.5 text-xs phone:min-h-8;
   }
   /* Standalone (do NOT compose with .btn): square icon button (modal close). */
   .btn-icon {
@@ -375,10 +380,10 @@
     @apply min-w-0;
   }
   .data-table th {
-    @apply border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft max-[640px]:px-[7px] max-[640px]:py-2;
+    @apply border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft phone:px-[7px] phone:py-2;
   }
   .data-table td {
-    @apply border-b border-border px-[9px] py-2.5 align-middle max-[640px]:px-[7px] max-[640px]:py-2;
+    @apply border-b border-border px-[9px] py-2.5 align-middle phone:px-[7px] phone:py-2;
   }
   /* Opt-in row hover for list tables (detail tables stay static). The :not()
    * reset is load-bearing: dashboard.css has a live
@@ -388,8 +393,11 @@
   .data-table-hover tbody tr {
     @apply hover:bg-surface-subtle;
   }
-  .data-table:not(.data-table-hover) tbody tr {
-    @apply hover:bg-transparent;
+  /* Plain CSS, NOT @apply hover:* — Tailwind wraps hover utilities in
+   * `@media (hover:hover)`, but the legacy rule is ungated, so on touch
+   * devices sticky tap-hover would still paint every migrated row. */
+  .data-table:not(.data-table-hover) tbody tr:hover {
+    background-color: transparent;
   }
   .cell-empty {
     @apply border-b border-border px-[9px] py-6 text-center text-text-soft;

@@ -7,5 +7,10 @@
  *
  * Do not edit dashboard.css to add @layer by hand — this wrapper does it.
  */
-@layer legacy, theme, base, components, utilities;
+/* `properties` is Tailwind's @supports-guarded --tw-* fallback layer. It must
+ * be declared FIRST: this file loads before tailwind.css, so any layer name
+ * tailwind.css introduces later would otherwise be appended as the
+ * highest-precedence layer and outrank components in browsers that support
+ * cascade layers but not @property. */
+@layer properties, legacy, theme, base, components, utilities;
 @import url("./dashboard.css") layer(legacy);
