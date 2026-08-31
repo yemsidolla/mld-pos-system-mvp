@@ -14,7 +14,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Label Setup" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Scan a Melodu code or choose a stock batch." %}</p>
+            <p class="panel-sub">{% trans "Scan a Melodu code or choose a stock batch." %}</p>
         </div>
     </header>
     <div class="alert alert-warning">
@@ -37,7 +37,7 @@
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
-                    {% if field.help_text %}<p class="m-0 text-text-soft">{{ field.help_text }}</p>{% endif %}
+                    {% if field.help_text %}<p class="panel-sub">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -53,7 +53,7 @@
         <header class="panel-header">
             <div>
                 <h2 class="panel-title">{% trans "Selected Batch Check" %}</h2>
-                <p class="m-0 text-text-soft">{% trans "Confirm product, supplier, expiry, and generated code assets before printing." %}</p>
+                <p class="panel-sub">{% trans "Confirm product, supplier, expiry, and generated code assets before printing." %}</p>
             </div>
             <div class="toolbar">
                 <a class="btn" href="{% url 'stock-batch-detail' stock_batch.pk %}">{% trans "Open Batch" %}</a>

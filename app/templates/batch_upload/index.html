@@ -10,7 +10,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Upload File" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Choose a target and upload a template-compatible CSV or XLSX file." %}</p>
+            <p class="panel-sub">{% trans "Choose a target and upload a template-compatible CSV or XLSX file." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
@@ -30,7 +30,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Templates" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Download the schema for each supported upload target." %}</p>
+            <p class="panel-sub">{% trans "Download the schema for each supported upload target." %}</p>
         </div>
     </header>
     <div class="toolbar">
@@ -44,7 +44,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Recent Uploads" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Database-backed previews and committed jobs." %}</p>
+            <p class="panel-sub">{% trans "Database-backed previews and committed jobs." %}</p>
         </div>
     </header>
     <div class="table-wrap">

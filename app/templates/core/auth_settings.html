@@ -11,7 +11,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Authentication mode" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Set in the server environment; changing it needs a restart." %}</p>
+            <p class="panel-sub">{% trans "Set in the server environment; changing it needs a restart." %}</p>
         </div>
     </header>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
@@ -35,7 +35,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Login options" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Runtime settings you can change here." %}</p>
+            <p class="panel-sub">{% trans "Runtime settings you can change here." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}

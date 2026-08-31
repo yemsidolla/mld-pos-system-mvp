@@ -11,7 +11,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% if mode == "edit" %}{{ role.name }}{% else %}{% trans "Role details" %}{% endif %}</h2>
-            {% if role.is_owner %}<p class="m-0 text-text-soft">{% trans "The Owner role always holds every capability; only the name can change." %}</p>{% endif %}
+            {% if role.is_owner %}<p class="panel-sub">{% trans "The Owner role always holds every capability; only the name can change." %}</p>{% endif %}
         </div>
         <a class="btn" href="{% url 'role-matrix' %}">{% trans "Back" %}</a>
     </header>

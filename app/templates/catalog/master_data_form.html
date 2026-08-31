@@ -13,7 +13,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% if mode == "create" %}{{ title }}{% else %}{{ object.name }}{% endif %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Names should stay short and clear because they appear in filters, reports, and stock workflows." %}</p>
+            <p class="panel-sub">{% trans "Names should stay short and clear because they appear in filters, reports, and stock workflows." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}
@@ -27,7 +27,7 @@
                     {{ field.label_tag }}
                     {{ field }}
                     {{ field.errors }}
-                    {% if field.help_text %}<p class="m-0 text-text-soft">{{ field.help_text }}</p>{% endif %}
+                    {% if field.help_text %}<p class="panel-sub">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>

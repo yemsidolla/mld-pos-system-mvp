@@ -33,7 +33,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Find Promotions" %}</h2>
-            <p class="m-0 text-text-soft">{% blocktrans count count=promotion_count %}{{ count }} promotion found.{% plural %}{{ count }} promotions found.{% endblocktrans %}</p>
+            <p class="panel-sub">{% blocktrans count count=promotion_count %}{{ count }} promotion found.{% plural %}{{ count }} promotions found.{% endblocktrans %}</p>
         </div>
     </header>
     <form class="form-stack" method="get">

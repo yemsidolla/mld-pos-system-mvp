@@ -16,37 +16,37 @@
 {% block content %}
 <section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2.5 max-[640px]:grid-cols-1">
     {% if caps.can_sales_history %}
-        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+        <article class="kpi-tile">
             <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "cash" 15 %}{% trans "Sales Today" %}</span>
-            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.today_sales }}</strong>
+            <strong class="kpi-value">{{ stats.today_sales }}</strong>
             <span class="text-xs text-text-soft">{% trans "store-wide" %}</span>
         </article>
     {% elif caps.can_pos %}
-        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+        <article class="kpi-tile">
             <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "cash" 15 %}{% trans "Your Sales Today" %}</span>
-            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.today_sales }}</strong>
+            <strong class="kpi-value">{{ stats.today_sales }}</strong>
             <span class="text-xs text-text-soft">{% trans "completed by you" %}</span>
         </article>
-        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+        <article class="kpi-tile">
             <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "check" 15 %}{% trans "POS Ready" %}</span>
-            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{% trans "Yes" %}</strong>
+            <strong class="kpi-value">{% trans "Yes" %}</strong>
             <span class="text-xs text-text-soft">{% trans "scanner & cart online" %}</span>
         </article>
     {% endif %}
     {% if caps.can_inventory %}
-        <article class="grid gap-1 rounded border border-border bg-surface px-4 py-3.5">
+        <article class="kpi-tile">
             <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "package" 15 %}{% trans "Active Products" %}</span>
-            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.products }}</strong>
+            <strong class="kpi-value">{{ stats.products }}</strong>
             <span class="text-xs text-text-soft">{{ stats.active_batches }} {% trans "active batches" %}</span>
         </article>
         <article class="grid gap-1 rounded bg-surface px-4 py-3.5 {% if stats.low_stock_products %}border border-kpi-warning-border text-kpi-warning [&_span]:text-kpi-warning [&_strong]:text-kpi-warning{% else %}border border-border{% endif %}">
             <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "alert" 15 %}{% trans "Low Stock" %}</span>
-            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.low_stock_products }}</strong>
+            <strong class="kpi-value">{{ stats.low_stock_products }}</strong>
             <span class="text-xs text-text-soft">{% trans "at or below minimum" %}</span>
         </article>
         <article class="grid gap-1 rounded bg-surface px-4 py-3.5 {% if stats.expiring_batches %}border border-kpi-danger-border text-kpi-danger [&_span]:text-kpi-danger [&_strong]:text-kpi-danger{% else %}border border-border{% endif %}">
             <span class="flex items-center gap-1.5 text-xs text-text-soft">{% icon "clock" 15 %}{% trans "Expiring ≤30d" %}</span>
-            <strong class="font-mono text-[26px] font-semibold leading-[1.1] text-text">{{ stats.expiring_batches }}</strong>
+            <strong class="kpi-value">{{ stats.expiring_batches }}</strong>
             <span class="text-xs text-text-soft">{% trans "active batches" %}</span>
         </article>
     {% endif %}
@@ -58,7 +58,7 @@
         <header class="panel-header">
             <div>
                 <h2 class="panel-title">{% trans "Needs Attention" %}</h2>
-                <p class="m-0 text-text-soft">{% trans "Low stock and batches expiring soon." %}</p>
+                <p class="panel-sub">{% trans "Low stock and batches expiring soon." %}</p>
             </div>
         </header>
         {% if low_stock_list or expiring_list %}
@@ -84,7 +84,7 @@
         <header class="panel-header">
             <div>
                 <h2 class="panel-title">{% trans "Quick Actions" %}</h2>
-                <p class="m-0 text-text-soft">{% trans "Frequent workflows for today." %}</p>
+                <p class="panel-sub">{% trans "Frequent workflows for today." %}</p>
             </div>
         </header>
         <div class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5 max-[640px]:grid-cols-1">
@@ -132,7 +132,7 @@
         <header class="panel-header">
             <div>
                 <h2 class="panel-title">{% trans "Recent Sales" %}</h2>
-                <p class="m-0 text-text-soft">{% trans "Latest completed sales." %}</p>
+                <p class="panel-sub">{% trans "Latest completed sales." %}</p>
             </div>
             {% if caps.can_sales_history %}<a href="{% url 'sales-history' %}">{% trans "View all" %}</a>{% endif %}
         </header>
@@ -164,7 +164,7 @@
         <header class="panel-header">
             <div>
                 <h2 class="panel-title">{% trans "Recent Uploads" %}</h2>
-                <p class="m-0 text-text-soft">{% trans "Latest batch upload previews and commits." %}</p>
+                <p class="panel-sub">{% trans "Latest batch upload previews and commits." %}</p>
             </div>
             <a href="{% url 'batch-upload' %}">{% trans "Open" %}</a>
         </header>

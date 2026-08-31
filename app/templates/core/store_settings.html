@@ -10,7 +10,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Settings" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "These values appear on printed receipts and dashboard labels." %}</p>
+            <p class="panel-sub">{% trans "These values appear on printed receipts and dashboard labels." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}

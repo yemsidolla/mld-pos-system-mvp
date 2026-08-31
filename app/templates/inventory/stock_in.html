@@ -16,7 +16,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Batch Received" %}</h2>
-            <p class="m-0 text-text-soft">{% blocktrans with batch=created_batch.batch_no product=created_batch.product.name %}{{ product }} — batch {{ batch }} is ready. Print a label now or receive another batch.{% endblocktrans %}</p>
+            <p class="panel-sub">{% blocktrans with batch=created_batch.batch_no product=created_batch.product.name %}{{ product }} — batch {{ batch }} is ready. Print a label now or receive another batch.{% endblocktrans %}</p>
         </div>
     </header>
     <div class="toolbar">
@@ -27,17 +27,17 @@
     </div>
 </section>
 {% endif %}
-<section class="{% if created_batch %}mt-4 {% endif %}rounded border border-border bg-surface p-[18px] shadow-panel">
+<section class="panel{% if created_batch %} mt-4{% endif %}">
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Receive Stock" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Scan or choose the product, then enter supplier, expiry, quantity, and prices." %}</p>
+            <p class="panel-sub">{% trans "Scan or choose the product, then enter supplier, expiry, quantity, and prices." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}
         <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}
-    <p class="m-0 text-text-soft">{% trans "Actual Unit Cost is the price paid to the supplier. Landed Unit Cost adds shipping or handling (optional). These are recorded on the batch — separate from the product's Reference Cost." %}</p>
+    <p class="panel-sub">{% trans "Actual Unit Cost is the price paid to the supplier. Landed Unit Cost adds shipping or handling (optional). These are recorded on the batch — separate from the product's Reference Cost." %}</p>
     <div class="scan-lookup mb-3.5 grid gap-3.5">
         <div>
             <label for="stock-in-product-code">{% trans "Scan Product Code or Barcode" %}</label>
@@ -62,7 +62,7 @@
                         {{ field }}
                     {% endif %}
                     {{ field.errors }}
-                    {% if field.help_text %}<p class="m-0 text-text-soft">{{ field.help_text }}</p>{% endif %}
+                    {% if field.help_text %}<p class="panel-sub">{{ field.help_text }}</p>{% endif %}
                 </div>
             {% endfor %}
         </div>

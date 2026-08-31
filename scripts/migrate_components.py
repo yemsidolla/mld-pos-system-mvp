@@ -21,6 +21,8 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
+import tempfile
 import sys
 from pathlib import Path
 
@@ -74,6 +76,9 @@ RULES: list[tuple[str, str]] = [
     ("overflow-x-auto [-webkit-overflow-scrolling:touch]", "table-wrap"),
     ("w-full min-w-[720px] border-collapse", "data-table"),
     ("border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft", ""),
+    # Centre-aligned header variant: identical apart from the alignment,
+    # which stays an inline utility (utilities beat the component).
+    ("border-b border-border px-[9px] py-2 text-center text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft", "text-center"),
     ("border-b border-border px-[9px] py-2.5 align-middle", ""),
     ("border-b border-border px-[9px] py-6 text-center text-text-soft", "cell-empty"),
     ("font-mono text-[0.95em] tracking-[-0.01em]", "cell-num"),
@@ -92,6 +97,23 @@ RULES: list[tuple[str, str]] = [
     ("mt-1.5 block text-[28px]", "stat-value"),
     ("mt-1.5 block text-lg", "stat-value stat-value-sm"),
     ("block text-text-soft", "stat-label"),
+    # Panel help text / subtitle — 89 sites, the largest single miss in the
+    # first pass. MUST come after panel-title, whose consumed set also
+    # contains `m-0`; apply_rules removes tokens as rules fire.
+    ("m-0 text-text-soft", "panel-sub"),
+    # Status pills.
+    ("inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] bg-pill-neutral text-pill-neutral-fg", "pill pill-neutral"),
+    ("inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] bg-pill-success text-pill-success-fg", "pill pill-success"),
+    ("inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] bg-pill-warning text-pill-warning-fg", "pill pill-warning"),
+    ("inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] bg-pill-danger text-pill-danger-fg", "pill pill-danger"),
+    ("inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold tracking-[0.02em] bg-pill-info text-pill-info-fg", "pill pill-info"),
+    # Dashboard KPI tiles.
+    ("grid gap-1 rounded border border-border bg-surface px-4 py-3.5", "kpi-tile"),
+    ("font-mono text-[26px] font-semibold leading-[1.1] text-text", "kpi-value"),
+    # Neutral alert.
+    ("rounded-r-md border border-border border-l-[3px] border-l-border bg-surface px-3 py-2.5", "alert alert-neutral"),
+    # Modal close button (standalone, not a .btn variant).
+    ("inline-flex size-9 min-h-0 cursor-pointer items-center justify-center border border-border-strong bg-surface p-0 text-[22px] font-[750] text-text hover:bg-surface-subtle", "btn-icon"),
     # Quiet link.
     ("text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline", "link-subtle"),
 ]
@@ -127,7 +149,7 @@ def apply_rules(class_value: str, on_form: bool) -> tuple[str, list[str]]:
 PAIRS: list[dict] = []
 
 
-def migrate(path: Path, dry_run: bool) -> tuple[int, list[str]]:
+def migrate(path: Path, dry_run: bool, rel_to: Path | None = None) -> tuple[int, list[str]]:
     text = path.read_text(encoding="utf-8")
     changes = 0
     fired_all: list[str] = []
@@ -156,7 +178,7 @@ def migrate(path: Path, dry_run: bool) -> tuple[int, list[str]]:
         changes += 1
         fired_all.extend(fired)
         PAIRS.append({
-            "file": str(path.relative_to(TEMPLATES)),
+            "file": str(path.relative_to(rel_to or TEMPLATES)),
             "tag": tag_match.group(1).lower() if tag_match else "",
             "before": before,
             "after": after,
@@ -173,10 +195,48 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--batch", required=True, choices=sorted(BATCHES) + ["all"])
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument(
+        "--from-rev",
+        help="read templates from this git revision instead of the working "
+             "tree and only emit before/after pairs. Makes the migration's "
+             "equivalence proof reproducible after the migration has landed.",
+    )
     args = ap.parse_args()
 
     dirs = sorted({d for b in (BATCHES if args.batch == "all" else [args.batch]) for d in BATCHES[b]})
     total_files = total_changes = 0
+
+    if args.from_rev:
+        # Replay the transform over the pre-migration templates, in a temp
+        # tree, purely to regenerate the pairs. Nothing in the repo is touched.
+        listing = subprocess.run(
+            ["git", "ls-tree", "-r", "--name-only", args.from_rev, "app/templates"],
+            cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
+        with tempfile.TemporaryDirectory() as tmp:
+            for rel in listing:
+                if not rel.endswith(".html"):
+                    continue
+                name = Path(rel).name
+                batch_dir = Path(rel).parts[2] if len(Path(rel).parts) > 2 else ""
+                if name in SKIP or batch_dir not in dirs:
+                    continue
+                blob = subprocess.run(["git", "show", f"{args.from_rev}:{rel}"],
+                                      cwd=ROOT, capture_output=True, text=True, check=True).stdout
+                dest = Path(tmp) / Path(rel).relative_to("app/templates")
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(blob, encoding="utf-8")
+            for path in sorted(Path(tmp).rglob("*.html")):
+                changed, _ = migrate(path, dry_run=True, rel_to=Path(tmp))
+                if changed:
+                    total_files += 1
+                    total_changes += changed
+        print(f"\nreplayed {total_changes} rewrites across {total_files} templates "
+              f"from {args.from_rev}")
+        out = ROOT / "migration-pairs.json"
+        out.write_text(json.dumps(PAIRS, indent=1), encoding="utf-8")
+        print(f"wrote {len(PAIRS)} before/after pairs to {out.name}")
+        return 0
+
     for d in dirs:
         for path in sorted((TEMPLATES / d).rglob("*.html")):
             if path.name in SKIP:

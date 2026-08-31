@@ -37,7 +37,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Filters" %}</h2>
-            <p class="m-0 text-text-soft">{% blocktrans count count=summary.total_count %}{{ count }} entry found.{% plural %}{{ count }} entries found.{% endblocktrans %}</p>
+            <p class="panel-sub">{% blocktrans count count=summary.total_count %}{{ count }} entry found.{% plural %}{{ count }} entries found.{% endblocktrans %}</p>
         </div>
     </header>
     {% include "dashboard/_list_filter.html" %}
@@ -47,7 +47,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Activity" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Most recent actions first." %}</p>
+            <p class="panel-sub">{% trans "Most recent actions first." %}</p>
         </div>
     </header>
     <div class="table-wrap">
