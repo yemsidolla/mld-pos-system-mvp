@@ -399,6 +399,10 @@
   .data-table:not(.data-table-hover) tbody tr:hover {
     background-color: transparent;
   }
+  /* Selector, not plain `.cell-empty`: `.data-table td` is (0,1,1) and sits
+   * in this same layer, so a bare `.cell-empty` (0,1,0) LOSES its generous
+   * padding to the ancestor rule and empty states render cramped. */
+  .data-table td.cell-empty,
   .cell-empty {
     @apply border-b border-border px-[9px] py-6 text-center text-text-soft;
   }
