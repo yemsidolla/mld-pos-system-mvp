@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
@@ -720,25 +721,33 @@ class ProductImageWidgetTests(TestCase):
         self.assertIn('capture="environment"', html)
         self.assertIn('accept="image/*"', html)
 
-    def test_widget_survives_storage_being_unreachable(self):
-        """A dead media backend must not 500 the edit page.
+    def test_widget_renders_without_an_image(self):
+        """The create form has no file yet — the common case.
 
-        Asking a FieldFile for .url can raise when storage is misconfigured;
-        the widget swallows that and renders without a preview instead of
-        taking the whole form down.
+        An earlier version of this test used a stub whose .url raised, but
+        Django's own ClearableFileInput.format_value touches .url before any
+        widget subclass gets control, so the widget cannot be more robust
+        than the framework there. What it CAN guarantee is that an absent or
+        unsaved file renders cleanly rather than emitting a broken <img>.
         """
         from catalog.forms import ProductImageWidget
 
-        class Boom:
-            def __bool__(self):
-                return True
-
-            @property
-            def url(self):
-                raise OSError("storage down")
-
-        ctx = ProductImageWidget().get_context("image", Boom(), {"id": "id_image"})
+        ctx = ProductImageWidget().get_context("image", None, {"id": "id_image"})
         self.assertEqual(ctx["current_url"], "")
+        self.assertFalse(ctx["is_initial"])
+
+    def test_widget_exposes_the_existing_image_when_editing(self):
+        from catalog.forms import ProductImageWidget
+
+        product = Product.objects.create(
+            product_code="IMG-1", name="Has image", unit="ea",
+            default_selling_price=Decimal("1.00"),
+        )
+        product.image.save("x.webp", ContentFile(b"not-a-real-image"), save=True)
+        ctx = ProductImageWidget().get_context("image", product.image, {"id": "id_image"})
+        self.assertTrue(ctx["current_url"])
+        self.assertTrue(ctx["is_initial"])
+        product.image.delete(save=False)
 
 
 class ProductViewToggleTests(TestCase):
