@@ -3,6 +3,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 
 from accounts.views import user_create_view, user_edit_view, user_list_view
 from audit.views import audit_log_list_view
@@ -85,6 +86,12 @@ from system_logs.views import live_logs_view, system_health_view
 
 
 urlpatterns = [
+    # The bare domain had no route at all, so https://melodu-pos.khlovepet.com/
+    # answered 404 — and with DEBUG on, that 404 published the whole URLconf.
+    # Send the front door to the dashboard, which itself redirects to the login
+    # page when there is no session. 302 rather than 301: a permanent redirect
+    # would be cached in browsers indefinitely and is painful to take back.
+    path("", RedirectView.as_view(pattern_name="dashboard-home", permanent=False), name="root"),
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
     path("dashboard/login/", dashboard_login_view, name="dashboard-login"),
