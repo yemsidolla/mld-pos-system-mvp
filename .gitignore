@@ -39,3 +39,13 @@ data/garage/data/*
 
 # Local Tailwind standalone CLI binary (scripts/build_tailwind.sh)
 .tools/
+
+# Host-local files that live only on a deploy box.
+# The deploy-agent refuses to build a dirty worktree, and untracked files count
+# as dirty — leaving these unignored blocks every automated deploy. On mld-pos
+# these are docker-compose.lan.yml (the LAN override that publishes the
+# 192.168.1.212 bindings nginx proxies to, pinned via COMPOSE_FILE in .env) and
+# the timestamped copies taken before maintenance.
+docker-compose.lan.yml
+*.bak
+*.bak-*

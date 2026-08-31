@@ -19,7 +19,15 @@
 set -uo pipefail
 
 REPO="${DEPLOY_AGENT_REPO:-/opt/mld-pos-system-mvp}"
-COMPOSE="${DEPLOY_AGENT_COMPOSE:-docker-compose.prod.yml}"
+# Compose file selection — colon-separated, the same syntax as COMPOSE_FILE.
+# The default is EMPTY on purpose. With no -f, compose reads the COMPOSE_FILE
+# pin from the repo's own .env, and that pin is load-bearing: it adds
+# docker-compose.lan.yml, the override that publishes the 192.168.1.212:<port>
+# binding nginx proxies to. An explicit -f OVERRIDES the pin and silently drops
+# it — a bare `-f docker-compose.prod.yml` took production down for six days in
+# Aug 2026, and an in-container probe cannot see that failure. Set this only to
+# deploy a box whose .env is not pinned.
+COMPOSE_FILES="${DEPLOY_AGENT_COMPOSE:-}"
 LIVE="${DEPLOY_AGENT_LIVE:-0}"
 STATE_DIR="${DEPLOY_AGENT_STATE_DIR:-/var/lib/mld-deploy-agent}"
 ALERT_CMD="${DEPLOY_AGENT_ALERT_CMD:-}"          # optional notifier; run as: CMD "<message>"
@@ -48,10 +56,20 @@ QUARANTINE="$STATE_DIR/quarantine"
 # agents on one worktree can swap a torn build.
 LOCK="${DEPLOY_AGENT_LOCK:-$STATE_DIR/lock}"
 
+DCF=()           # -f arguments; empty means "honour the COMPOSE_FILE pin in .env"
+DC_SHOW="docker compose"
+if [ -n "$COMPOSE_FILES" ]; then
+  IFS=':' read -ra _CF <<< "$COMPOSE_FILES"
+  for _f in "${_CF[@]}"; do
+    [ -n "$_f" ] || continue
+    DCF+=(-f "$_f"); DC_SHOW="$DC_SHOW -f $_f"
+  done
+fi
+
 SWAPPED=0        # 1 once the new container is running (till is now affected on failure)
 DONE=0           # 1 once we reach a terminal, handled state (success or handled failure)
 
-RECOVER="cd $REPO && git checkout main && docker compose -f $COMPOSE build web && docker compose -f $COMPOSE up -d --no-deps --force-recreate web"
+RECOVER="cd $REPO && git checkout main && $DC_SHOW build web && $DC_SHOW up -d --no-deps --force-recreate web"
 
 # TERM then KILL: coreutils timeout without --kill-after waits FOREVER on a
 # child that ignores SIGTERM (docker compose routinely does). Every bound in
@@ -114,7 +132,7 @@ probe() {
     [ "${ps[0]}" -ne 0 ] && return 1
     return "${ps[1]}"
   else
-    bounded "$T_PROBE" docker compose -f "$COMPOSE" exec -T web python -c \
+    bounded "$T_PROBE" docker compose ${DCF[@]+"${DCF[@]}"} exec -T web python -c \
       "import json,urllib.request,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://127.0.0.1:8000/health/',timeout=5)).get('status')=='ok' else 1)" \
       2>/dev/null
   fi
@@ -127,6 +145,28 @@ healthy() {  # 124 = the probe HUNG (wedged docker/engine): fail now, not after 
     rc=$?; [ "$rc" -eq 124 ] && { log "  probe timed out (rc=124); not retrying a wedged probe"; return 1; }
   done
   return 1
+}
+
+# ---- published-port guard ----
+# The in-container probe cannot tell a healthy container apart from one nginx
+# can no longer reach: `web` publishes BOTH 127.0.0.1:8001 and
+# 192.168.1.212:8001, and only docker-compose.lan.yml provides the second — the
+# one nginx on 192.168.1.99 proxies to. Losing it is invisible to every other
+# check in this script, so snapshot the bindings before the swap and assert they
+# survive it. Advisory: if the bindings cannot be read, log and carry on rather
+# than block a deploy on the guard itself.
+web_ports() {  # -> sorted "hostip:hostport->containerport" lines, one per binding
+  local cid
+  cid="$(bounded 30 docker compose ${DCF[@]+"${DCF[@]}"} ps -q web 2>/dev/null | head -n1)"
+  [ -n "$cid" ] || return 1
+  bounded 30 docker inspect --format '{{json .NetworkSettings.Ports}}' "$cid" 2>/dev/null \
+    | python3 -c 'import json,sys
+d = json.load(sys.stdin) or {}
+out = set()
+for cport, binds in d.items():
+    for b in (binds or []):
+        out.add("%s:%s->%s" % (b.get("HostIp", ""), b.get("HostPort", ""), cport))
+print("\n".join(sorted(out)))' 2>/dev/null
 }
 
 # ---- single-flight ----
@@ -147,6 +187,7 @@ TARGET="$(git rev-parse origin/main)"
 if [ -f "$QUARANTINE" ] && [ "$(cat "$QUARANTINE" 2>/dev/null)" = "$TARGET" ]; then DONE=1; exit 0; fi
 
 log "main advanced ${GOOD:0:8} -> ${TARGET:0:8}"
+[ -n "$HEALTH_URL" ] || log "  note: DEPLOY_AGENT_HEALTH_URL unset; health is probed inside the container only (port guard still applies)"
 
 # Migration guard — fail CLOSED if the diff itself errors.
 if ! MIGDIFF="$(git diff --name-only "$GOOD" "$TARGET" -- '*/migrations/*.py')"; then
@@ -184,18 +225,39 @@ if ! bounded "$T_BACKUP" scripts/backup_db.sh >>"$LOG" 2>&1; then
 fi
 # Build failure is plausibly the COMMIT's fault (Dockerfile, deps) — quarantine
 # so a broken commit does not rebuild every cron tick.
-if ! bounded "$T_BUILD" docker compose -f "$COMPOSE" build web >>"$LOG" 2>&1; then
+if ! bounded "$T_BUILD" docker compose ${DCF[@]+"${DCF[@]}"} build web >>"$LOG" 2>&1; then
   back_to_main; alert WARN "Deploy failed: build error/timeout for ${TARGET:0:8}. Till unaffected (old container still serving)."; quarantine_set "$TARGET"; DONE=1; exit 1
+fi
+
+# Snapshot the published bindings while the OLD container is still up, so the
+# post-swap comparison has a baseline. Taken before SWAPPED=1: the till is
+# still unaffected here.
+if ! PORTS_BEFORE="$(web_ports)" || [ -z "$PORTS_BEFORE" ]; then
+  PORTS_BEFORE=""
+  log "  WARN: could not read published ports before swap; port guard disabled for this run"
 fi
 
 # Point of no easy return: swap the running container to the new image.
 # ONLY web, --no-deps: postgres health must not block the swap, and an
 # automated deploy must never restart the database or media store.
 SWAPPED=1
-if ! bounded "$T_SWAP" docker compose -f "$COMPOSE" up -d --no-deps --force-recreate web >>"$LOG" 2>&1; then
+if ! bounded "$T_SWAP" docker compose ${DCF[@]+"${DCF[@]}"} up -d --no-deps --force-recreate web >>"$LOG" 2>&1; then
   alert CRITICAL "Deploy of ${TARGET:0:8} failed/timed out during container swap — TILL MAY BE DOWN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
-if ! bounded "$T_STATIC" docker compose -f "$COMPOSE" exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1; then
+# A swap that succeeds but drops a published binding leaves a container that is
+# healthy from the inside and unreachable from nginx — the six-day outage shape.
+# Treat it exactly like an unhealthy deploy.
+if [ -n "$PORTS_BEFORE" ]; then
+  PORTS_AFTER="$(web_ports)" || PORTS_AFTER=""
+  LOST="$(comm -23 <(printf '%s\n' "$PORTS_BEFORE") <(printf '%s\n' "$PORTS_AFTER") | tr '\n' ' ')"
+  if [ -n "${LOST// /}" ]; then
+    alert CRITICAL "Deploy of ${TARGET:0:8} LOST published port(s) [${LOST% }] — container is up but nginx cannot reach it. Check COMPOSE_FILE in $REPO/.env still pins the LAN override. Recover: $RECOVER"
+    back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
+  fi
+  log "  published ports intact after swap: $(printf '%s' "$PORTS_AFTER" | tr '\n' ' ')"
+fi
+
+if ! bounded "$T_STATIC" docker compose ${DCF[@]+"${DCF[@]}"} exec -T web python manage.py collectstatic --noinput >>"$LOG" 2>&1; then
   alert CRITICAL "Deploy of ${TARGET:0:8}: collectstatic FAILED/timed out after swap — TILL LIKELY BROKEN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
 
