@@ -16,9 +16,11 @@ Run with --check to fail if the generated block is stale (for CI).
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
+from xml.etree import ElementTree
 
 TABLER_VERSION = "v3.31.0"
 ROOT = Path(__file__).resolve().parent.parent
@@ -34,7 +36,7 @@ MAPPING = {
     # --- V7 set: same names, now the real Tabler glyphs ---
     "activity": "activity",
     "alert": "alert-triangle",
-    "barcode": "barcode",
+    "barcode": "qrcode",  # not `barcode`: shares scan's bracket silhouette, and 1-unit bars fill solid
     "camera": "camera",
     "cart": "shopping-cart",
     "cash": "cash",
@@ -54,12 +56,12 @@ MAPPING = {
     "receipt": "receipt",
     "scan": "scan",
     "search": "search",
-    "settings": "settings",
-    "shield": "shield-check",
+    "settings": "adjustments",  # not `settings`: the 12-lobe cog smudges below 16px
+    "shield": "shield",  # not `shield-check`: its open outline fragments below 16px
     "sidebar": "layout-sidebar",
     "tag": "tag",
     "trend-up": "trending-up",
-    "truck": "truck-delivery",
+    "truck": "truck",  # not `truck-delivery`: the broken cargo wall reads as noise at 17px
     "upload": "upload",
     "user": "user",
     "users": "users",
@@ -82,6 +84,22 @@ MAPPING = {
 }
 
 
+ALLOWED_TAGS = {"path", "circle", "rect", "line", "polyline", "polygon", "ellipse"}
+ALLOWED_ATTRS = {
+    "d", "cx", "cy", "r", "rx", "ry", "x", "y", "x1", "y1", "x2", "y2",
+    "width", "height", "points", "transform", "fill", "stroke",
+    "stroke-width", "stroke-linecap", "stroke-linejoin",
+}
+
+
+def ET_OK(fragment: str) -> bool:
+    try:
+        ElementTree.fromstring(fragment)
+    except ElementTree.ParseError:
+        return False
+    return True
+
+
 def inner_markup(svg_path: Path) -> str:
     """Reduce a Tabler SVG to the inner shapes the {% icon %} tag wraps.
 
@@ -89,30 +107,48 @@ def inner_markup(svg_path: Path) -> str:
     owned by the template tag, so only child elements are kept. Tabler ships
     some icons with a transparent 24x24 guide rect; it is dropped.
     """
-    raw = svg_path.read_text()
+    raw = svg_path.read_text(encoding="utf-8")
     raw = re.sub(r"<!--.*?-->", "", raw, flags=re.S)
     open_tag = re.search(r"<svg\b[^>]*>", raw, flags=re.S)
     if not open_tag:
         raise SystemExit(f"{svg_path.name}: no <svg> element")
-    inner = raw[open_tag.end() : raw.rindex("</svg>")]
+    close = raw.rfind("</svg>")
+    if close == -1:
+        raise SystemExit(f"{svg_path.name}: no closing </svg>")
+    inner = raw[open_tag.end() : close]
     inner = re.sub(r'<path\s+stroke="none"[^>]*/>', "", inner)
     inner = re.sub(r"\s+", " ", inner).strip()
     inner = re.sub(r"\s*/>", "/>", inner)
     inner = inner.replace("> <", "><")
     if not inner:
         raise SystemExit(f"{svg_path.name}: reduced to nothing")
-    if "'" in inner:
-        raise SystemExit(f"{svg_path.name}: single quote would break the literal")
+
+    # The result is handed to mark_safe(), so assert its shape rather than
+    # trusting the source: only geometry elements, only geometry attributes.
+    # A future Tabler icon carrying <style>, <script>, an href or an on*
+    # handler must fail the build, not be injected into every page.
+    if not ET_OK(f"<g>{inner}</g>"):
+        raise SystemExit(f"{svg_path.name}: reduced markup is not well-formed XML")
+    for tag in re.findall(r"<\s*([A-Za-z][\w-]*)", inner):
+        if tag not in ALLOWED_TAGS:
+            raise SystemExit(f"{svg_path.name}: disallowed element <{tag}>")
+    for attr in re.findall(r"([A-Za-z][\w:-]*)\s*=", inner):
+        if attr not in ALLOWED_ATTRS:
+            raise SystemExit(f"{svg_path.name}: disallowed attribute {attr!r}")
     return inner
 
 
 def build_block() -> str:
-    lines = [BEGIN, f"    # Tabler Icons (MIT) {TABLER_VERSION} — vendor/tabler-icons/"]
+    lines = [
+        BEGIN,
+        f"    # Tabler Icons {TABLER_VERSION} — MIT, Copyright (c) 2020-2024 Pawel Kuna.",
+        "    # Full licence text: vendor/tabler-icons/LICENSE",
+    ]
     for name in sorted(MAPPING):
         svg = VENDOR / f"{MAPPING[name]}.svg"
         if not svg.exists():
             raise SystemExit(f"missing vendored icon: {svg.relative_to(ROOT)}")
-        lines.append(f"    {name!r}: '{inner_markup(svg)}',")
+        lines.append(f"    {name!r}: {inner_markup(svg)!r},")
     lines.append(END)
     return "\n".join(lines)
 
@@ -124,7 +160,7 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    src = TARGET.read_text()
+    src = TARGET.read_text(encoding="utf-8")
     block = build_block()
     pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END), re.S)
     if not pattern.search(src):
@@ -141,7 +177,11 @@ def main() -> int:
         print(f"melodu_icons.py is up to date ({len(MAPPING)} icons)")
         return 0
 
-    TARGET.write_text(updated)
+    # Write via a sibling temp file + os.replace: a half-written
+    # melodu_icons.py would break every page that loads the tag library.
+    tmp = TARGET.with_suffix(".py.tmp")
+    tmp.write_text(updated, encoding="utf-8")
+    os.replace(tmp, TARGET)
     print(f"wrote {len(MAPPING)} icons to {TARGET.relative_to(ROOT)}")
     return 0
 

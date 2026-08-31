@@ -1,6 +1,10 @@
 import os
+import re
+import subprocess
+import sys
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import mock
 
@@ -17,6 +21,7 @@ from django.utils.translation import gettext, override
 
 from accounts.models import StaffProfile
 from audit.models import AuditLog
+from core.templatetags.melodu_icons import ICONS, icon
 from batch_upload.models import BatchUploadJob, BatchUploadRow
 from catalog.models import Product, Supplier
 from core.models import StoreSetting
@@ -1015,3 +1020,75 @@ class DevAuthBypassMiddlewareTests(TestCase):
         mw(request)
         self.assertTrue(request.user.is_authenticated)
         self.assertEqual(request.user, admin)
+
+
+class IconSetTests(SimpleTestCase):
+    """Guards for the generated Tabler icon set (DESIGN_SYSTEM §3).
+
+    An unknown icon name renders an EMPTY STRING — no exception, no log, no
+    template error. A broken name is therefore invisible in tests and in
+    production, and only shows up as a blank space someone eventually
+    notices. These tests are the only thing standing between a rename and a
+    silently iconless UI.
+    """
+
+    ROOT = Path(settings.BASE_DIR).resolve().parent
+    TEMPLATE_DIR = Path(settings.BASE_DIR) / "templates"
+
+    def _names_from_templates(self):
+        """Every literal name in {% icon "x" %} and icon="x" include params."""
+        found = {}
+        for path in self.TEMPLATE_DIR.rglob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            for pattern in (r"{%\s*icon\s+[\"']([\w-]+)[\"']", r"\bicon=[\"']([\w-]+)[\"']"):
+                for name in re.findall(pattern, text):
+                    found.setdefault(name, path.name)
+        return found
+
+    def _names_from_python(self):
+        """Names emitted by the nav context processor and friends."""
+        found = {}
+        for path in Path(settings.BASE_DIR).rglob("*.py"):
+            if path.name in {"melodu_icons.py", "tests.py"}:
+                continue
+            for name in re.findall(r"[\"']icon[\"']\s*:\s*[\"']([\w-]+)[\"']", path.read_text(encoding="utf-8")):
+                found.setdefault(name, path.name)
+        return found
+
+    def test_every_referenced_icon_name_exists(self):
+        referenced = {**self._names_from_templates(), **self._names_from_python()}
+        self.assertGreater(len(referenced), 20, "icon scan found suspiciously few names")
+        missing = {n: where for n, where in referenced.items() if n not in ICONS}
+        self.assertEqual(
+            missing, {}, f"icon name(s) render as empty string: {missing}"
+        )
+
+    def test_every_icon_renders_non_empty_svg(self):
+        for name in ICONS:
+            with self.subTest(icon=name):
+                markup = icon(name)
+                self.assertIn("<svg", markup)
+                self.assertIn("</svg>", markup)
+                # A name present but mapped to nothing is as broken as a
+                # missing one, and just as invisible.
+                self.assertRegex(markup, r"<(path|circle|rect|line|polyline|polygon|ellipse)\b")
+
+    def test_unknown_icon_is_empty_string(self):
+        # Documents the failure mode the tests above exist to catch.
+        self.assertEqual(icon("definitely-not-an-icon"), "")
+
+    def test_generated_block_is_not_stale(self):
+        """`sync_icons.py --check` must pass, or someone hand-edited the dict."""
+        script = self.ROOT / "scripts" / "sync_icons.py"
+        if not script.exists():  # pragma: no cover - source checkout only
+            self.skipTest("sync_icons.py not present in this build context")
+        result = subprocess.run(
+            [sys.executable, str(script), "--check"],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            result.returncode,
+            0,
+            f"icon set is stale or hand-edited — run scripts/sync_icons.py\n{result.stderr}",
+        )
