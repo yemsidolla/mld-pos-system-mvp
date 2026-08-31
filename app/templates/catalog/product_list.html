@@ -42,7 +42,38 @@
         </div>
         {% endif %}
 
-        <div class="table-wrap">
+                {% comment %}
+        Grid / table toggle. Both views render the SAME page_obj from the same
+        queryset, so filters, sorting and pagination are untouched by the
+        switch — it is presentation only, and there is no second code path to
+        keep in sync. The choice is remembered per browser in localStorage.
+        {% endcomment %}
+        <script>
+          // Before paint: pagination and filtering are full page loads, so
+          // without this the table flashes before the grid on every one.
+          try {
+            if (localStorage.getItem("melodu-product-view") === "grid") {
+              document.documentElement.classList.add("product-view-grid");
+            }
+          } catch (e) {}
+        </script>
+        <div class="toolbar mb-2 justify-end" data-view-toggle>
+            <div class="inline-flex overflow-hidden rounded-md border border-border-strong" role="group" aria-label="{% trans 'Product view' %}">
+                <button class="view-btn inline-flex cursor-pointer items-center gap-1.5 border-0 bg-surface px-2.5 py-1.5 text-xs font-[750] text-text hover:bg-surface-subtle aria-pressed:bg-ink aria-pressed:text-accent-bright phone:min-h-[42px]"
+                        type="button" data-view="grid" aria-pressed="false">{% icon "grid" 14 %} {% trans "Cards" %}</button>
+                <button class="view-btn inline-flex cursor-pointer items-center gap-1.5 border-0 border-l border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text hover:bg-surface-subtle aria-pressed:bg-ink aria-pressed:text-accent-bright phone:min-h-[42px]"
+                        type="button" data-view="table" aria-pressed="true">{% icon "list" 14 %} {% trans "Table" %}</button>
+            </div>
+        </div>
+        <div class="product-grid hidden grid-cols-2 gap-2.5 min-[560px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" data-view-panel="grid">
+            {% for product in products %}
+                {% include "catalog/_product_card.html" with product=product %}
+            {% empty %}
+                {% include "catalog/_products_empty.html" with wrapper="col-span-full" %}
+            {% endfor %}
+        </div>
+        <div data-view-panel="table">
+<div class="table-wrap">
         <table class="data-table">
             <thead>
                 <tr>
@@ -53,7 +84,15 @@
                             <summary class="inline-flex cursor-pointer list-none rounded px-[3px] py-px text-text-soft hover:bg-surface-subtle hover:text-accent [&::-webkit-details-marker]:hidden" aria-label="{% trans 'Search products' %}">{% icon "search" 14 %}</summary>
                             <div class="col-filter-pop absolute right-0 top-[calc(100%+4px)] z-30 w-[210px] rounded border border-border-strong bg-surface p-2.5 text-left text-sm font-normal normal-case tracking-normal shadow">
                                 <p class="col-filter-title mb-1.5 mt-0 text-[11px] text-text-soft">{% trans "Search name, code, or barcode" %}</p>
-                                <input class="col-filter-search mb-2 w-full" id="id_q_column" type="text" name="q" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Contains…' %}">
+                                {% comment %}
+                                No name= on purpose. Two successful controls
+                                named "q" in one GET form means Django reads
+                                the LAST one, so this input silently overrode
+                                the main Search box with its stale value and
+                                searching appeared to do nothing. It now feeds
+                                #id_q, which is the single source of truth.
+                                {% endcomment %}
+                                <input class="col-filter-search mb-2 w-full" id="id_q_column" type="text" value="{{ form.q.value|default:'' }}" placeholder="{% trans 'Contains…' %}" data-col-filter-for="id_q">
                                 <div class="col-filter-actions mt-[9px] flex gap-1.5 border-t border-border pt-[9px]">
                                     <button class="btn btn-sm btn-primary flex-1" type="submit">{% trans "Apply" %}</button>
                                     <a class="btn btn-sm flex-1" href="{{ clear_url }}">{% trans "Clear" %}</a>
@@ -97,9 +136,9 @@
                 <tr class="hover:bg-surface-subtle">
                     <td class="w-[58px] min-w-[58px]">
                         {% if product.image_thumb %}
-                            <img class="product-thumb inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image_thumb.url }}" alt="{{ product.name }}">
+                            <img class="product-thumb inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image_thumb.url }}" alt="" loading="lazy" decoding="async" width="46" height="46">
                         {% elif product.image %}
-                            <img class="product-thumb inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image.url }}" alt="{{ product.name }}">
+                            <img class="product-thumb inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image.url }}" alt="" loading="lazy" decoding="async" width="46" height="46">
                         {% else %}
                             <span class="product-thumb product-thumb-empty inline-flex size-[46px] items-center justify-center rounded-md border border-border bg-surface-subtle text-text-soft" aria-label="{% trans 'No product image' %}">{% icon "package" 18 %}</span>
                         {% endif %}
@@ -128,18 +167,15 @@
             {% empty %}
                 <tr>
                     <td colspan="10" class="cell-empty">
-                        <div class="grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft">
-                            <strong class="text-sm text-text">{% trans "No products match these filters." %}</strong>
-                            <span class="max-w-[420px]">{% trans "Clear the filters or create a new product for this catalog item." %}</span>
-                            <a class="btn" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
-                        </div>
+                        {% include "catalog/_products_empty.html" %}
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
         </div>
+        </div>
     </form>
-    {% include "dashboard/_pagination.html" %}
+        {% include "dashboard/_pagination.html" %}
 </section>
 {% endblock %}

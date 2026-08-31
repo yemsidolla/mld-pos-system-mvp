@@ -1,6 +1,8 @@
 import re
 
 from django import forms
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import Q
@@ -82,6 +84,44 @@ class ProductFilterForm(forms.Form):
             animal_choices = list(Product.AnimalType.choices)
         self.fields["animal_type"].choices = animal_choices
         self.fields["tag"].queryset = ProductTag.objects.filter(is_active=True).order_by("name")
+
+
+class ProductImageWidget(forms.ClearableFileInput):
+    """Renders the image field as a drop zone with a live preview.
+
+    Subclasses ClearableFileInput rather than replacing it so Django's own
+    clear-checkbox contract (name, id, initial handling) keeps working — the
+    template just presents it differently. The <input> stays a real file
+    input, so the field submits with JavaScript disabled.
+    """
+
+    # NOT `template_name`: Django resolves widget templates through the FORM
+    # RENDERER, which has its own loader and does not see the project's
+    # TEMPLATES["DIRS"]. Setting FORM_RENDERER = TemplatesSetting globally
+    # would change how every widget in the app is rendered, so this renders
+    # the template explicitly through the normal loader instead — same
+    # result, no blast radius.
+    widget_template = "widgets/product_image.html"
+
+    def render(self, name, value, attrs=None, renderer=None):
+        context = self.get_context(name, value, attrs)
+        return mark_safe(render_to_string(self.widget_template, context))
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        # `value` is a FieldFile on edit and None on create. Only a saved file
+        # has a URL, and asking for .url on an unsaved one raises.
+        url = ""
+        if value and getattr(value, "url", None):
+            try:
+                url = value.url
+            except Exception:  # storage unreachable — degrade to no preview
+                url = ""
+        context["current_url"] = url
+        context["is_initial"] = self.is_initial(value)
+        context["checkbox_name"] = self.clear_checkbox_name(name)
+        context["checkbox_id"] = self.clear_checkbox_id(self.clear_checkbox_name(name))
+        return context
 
 
 class ProductForm(forms.ModelForm):
@@ -219,6 +259,7 @@ class ProductForm(forms.ModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "tags": forms.SelectMultiple(attrs={"size": 6}),
+            "image": ProductImageWidget,
         }
         help_texts = {
             "default_cost_price": "Fallback cost used only when no batch or supplier reference cost is available.",

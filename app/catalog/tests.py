@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
@@ -694,3 +695,101 @@ class ProductColumnFilterTests(TestCase):
     def test_no_filter_bar_when_nothing_selected(self):
         response = self.client.get(reverse("product-list"))
         self.assertEqual(response.context["active_filters"], [])
+
+
+class ProductImageWidgetTests(TestCase):
+    """The media panel must stay a real, submitting file input.
+
+    The whole design is progressive enhancement: media.js adds preview and
+    drag-and-drop on top of a working <input type="file">. If the widget ever
+    stops rendering that input — or stops honouring Django's clear-checkbox
+    contract — uploads break silently for anyone whose JS did not load.
+    """
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser(
+            "imgowner", "imgowner@example.com", "Pw12345678"
+        )
+        self.client.force_login(self.user)
+
+    def test_create_form_renders_a_real_file_input(self):
+        html = self.client.get(reverse("product-create")).content.decode()
+        self.assertIn('type="file"', html)
+        self.assertIn('name="image"', html)
+        self.assertIn("data-media-field", html)
+        self.assertIn('accept="image/*"', html)
+        # NOT capture=: it removes the gallery and Files options on Android
+        # and iOS, so a photo already on the phone could not be uploaded.
+        self.assertNotIn("capture=", html)
+
+    def test_widget_renders_without_an_image(self):
+        """The create form has no file yet — the common case.
+
+        An earlier version of this test used a stub whose .url raised, but
+        Django's own ClearableFileInput.format_value touches .url before any
+        widget subclass gets control, so the widget cannot be more robust
+        than the framework there. What it CAN guarantee is that an absent or
+        unsaved file renders cleanly rather than emitting a broken <img>.
+        """
+        from catalog.forms import ProductImageWidget
+
+        ctx = ProductImageWidget().get_context("image", None, {"id": "id_image"})
+        self.assertEqual(ctx["current_url"], "")
+        self.assertFalse(ctx["is_initial"])
+
+    def test_widget_exposes_the_existing_image_when_editing(self):
+        from catalog.forms import ProductImageWidget
+
+        product = Product.objects.create(
+            product_code="IMG-1", name="Has image", unit="ea",
+            default_selling_price=Decimal("1.00"),
+        )
+        product.image.save("x.webp", ContentFile(b"not-a-real-image"), save=True)
+        ctx = ProductImageWidget().get_context("image", product.image, {"id": "id_image"})
+        self.assertTrue(ctx["current_url"])
+        self.assertTrue(ctx["is_initial"])
+        product.image.delete(save=False)
+
+
+class ProductViewToggleTests(TestCase):
+    """Cards and table must be the SAME data, differently presented.
+
+    The value of the toggle is that there is no second code path: one
+    queryset, one paginator, one set of filters. If the grid ever starts
+    rendering from something else, filters and pagination silently disagree
+    between views — which is worse than not having the grid.
+    """
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser(
+            "gridowner", "gridowner@example.com", "Pw12345678"
+        )
+        self.client.force_login(self.user)
+        category = Category.objects.create(name="Dog food")
+        for i in range(3):
+            Product.objects.create(
+                product_code=f"GRID-{i}",
+                name=f"Grid product {i}",
+                category=category,
+                unit="bag",
+                default_selling_price=Decimal("9.50"),
+            )
+
+    def test_both_views_render_from_the_same_page(self):
+        html = self.client.get(reverse("product-list")).content.decode()
+        self.assertIn('data-view-panel="grid"', html)
+        self.assertIn('data-view-panel="table"', html)
+        # Every product appears in both panels of the one response.
+        for i in range(3):
+            self.assertEqual(html.count(f"GRID-{i}"), 2, f"GRID-{i} should appear in both views")
+
+    def test_filters_apply_to_the_grid_too(self):
+        html = self.client.get(reverse("product-list"), {"q": "Grid product 1"}).content.decode()
+        self.assertEqual(html.count("GRID-1"), 2)
+        self.assertNotIn("GRID-0", html)
+
+    def test_table_is_the_default_view(self):
+        """Bulk work is faster in a table; browsing is opt-in."""
+        html = self.client.get(reverse("product-list")).content.decode()
+        self.assertIn('data-view="table" aria-pressed="true"', html)
+        self.assertIn('data-view="grid" aria-pressed="false"', html)
