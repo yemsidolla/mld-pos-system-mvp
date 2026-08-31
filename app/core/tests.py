@@ -1139,6 +1139,22 @@ class SidebarNavigationTests(TestCase):
         # logic elsewhere is unaffected by the move.
         self.assertTrue(utility <= {i["url_name"] for i in ctx["dashboard_nav_items"]})
 
+    def test_no_multiline_hash_comments_in_templates(self):
+        """Django only strips SINGLE-LINE {# #}; multi-line ones RENDER.
+
+        A multi-line {# ... #} is not a syntax error and not a test failure —
+        it silently prints the comment text into the page. This caught exactly
+        that in base.html during V8 Phase 4, so it is pinned here.
+        """
+        offenders = []
+        for path in Path(settings.BASE_DIR).joinpath("templates").rglob("*.html"):
+            for match in re.finditer(r"\{#(.*?)#\}", path.read_text(encoding="utf-8"), re.S):
+                if "\n" in match.group(1):
+                    offenders.append(f"{path.name}: {match.group(1)[:60].strip()!r}")
+        self.assertEqual(
+            offenders, [], "use {% comment %} for multi-line comments; {# #} renders"
+        )
+
     def test_cashier_sees_no_utility_row(self):
         cashier = get_user_model().objects.create_user("navcashier", "c@example.com", "Pw12345678")
         self.client.force_login(cashier)

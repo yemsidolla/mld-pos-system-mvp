@@ -7,9 +7,11 @@
     <title>{% block title %}{% trans "Dashboard" %}{% endblock %} | Melodu POS</title>
     <link rel="stylesheet" href="{% static 'core/css/cascade.css' %}">
     <link rel="stylesheet" href="{% static 'core/css/tailwind.css' %}">
-    {# Applied before paint so a collapsed sidebar or group never flashes open.
-       The accordion's full behaviour lives in nav.js; this only pre-marks the
-       groups so the first frame is already correct. #}
+    {% comment %}
+    Applied before paint so a collapsed sidebar or group never flashes open.
+    The accordion's full behaviour lives in nav.js; this only pre-marks the
+    groups so the first frame is already correct.
+    {% endcomment %}
     <script>
       if (localStorage.getItem("melodu-sidebar") === "collapsed") document.documentElement.classList.add("sidebar-collapsed");
       try {
@@ -39,9 +41,18 @@
     <div class="sidebar-body min-h-0 flex-auto overflow-y-auto px-3.5 pb-3 pt-1 [scrollbar-color:var(--ink-border)_transparent] [scrollbar-width:thin] rail:px-2 sidebar-collapsed:px-2 sidebar-collapsed:pb-3 sidebar-collapsed:pt-1">
         <nav class="nav-groups grid gap-4">
             {% for group in dashboard_nav_groups %}
-                <div class="nav-group sidebar-collapsed:mt-2.5 sidebar-collapsed:first:mt-0">
-                    <p class="nav-group-title mb-1 mt-0 px-2.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-text-dim rail:hidden sidebar-collapsed:hidden">{{ group.label }}</p>
-                    <div class="nav-list grid gap-1">
+                <div class="nav-group rail:mt-2.5 sidebar-collapsed:mt-2.5 sidebar-collapsed:first:mt-0" data-nav-group="{{ group.label|slugify }}">
+                    {% comment %}
+                    A real <button> so the group is keyboard-operable and its
+                    state is announced. The rail and collapsed states have no
+                    room for headers, so it is hidden there and the group is
+                    forced open by CSS — never leaving items unreachable.
+                    {% endcomment %}
+                    <button class="nav-group-title flex w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent px-2.5 py-1 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-text-dim hover:text-[#f1f7ff] rail:hidden sidebar-collapsed:hidden" type="button" data-nav-group-toggle aria-expanded="true" aria-controls="navgroup-{{ forloop.counter }}">
+                        <span>{{ group.label }}</span>
+                        {% icon "chevron-down" 14 "nav-chevron transition-transform duration-[160ms]" %}
+                    </button>
+                    <div class="nav-list grid gap-1" id="navgroup-{{ forloop.counter }}">
                         {% for item in group.items %}
                             <a class="nav-item flex min-h-[38px] items-center gap-[9px] rounded-sm px-2.5 py-2 font-medium text-ink-text no-underline hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] hover:no-underline [&.active]:bg-ink-soft [&.active]:text-accent-bright [&_.nav-ic]:opacity-75 [&.active_.nav-ic]:opacity-100 rail:justify-center sidebar-collapsed:justify-center rail:px-0 sidebar-collapsed:px-0 rail:py-2.5 sidebar-collapsed:py-2.5 sidebar-collapsed:[&_.nav-ic]:opacity-90 {% if request.resolver_match.url_name == item.url_name %}active{% endif %}" href="{{ item.href }}" title="{{ item.label }}">
                                 {% if item.icon %}{% icon item.icon 17 "nav-ic" %}{% endif %}
@@ -55,9 +66,11 @@
     </div>
     <div class="sidebar-footer grid flex-none gap-2 border-t border-ink-border px-3.5 pb-[18px] pt-2.5 rail:px-2 sidebar-collapsed:px-2 sidebar-collapsed:pb-3.5 sidebar-collapsed:pt-2.5">
         {% if dashboard_utility_items %}
-            {# Diagnostics (System Health, Live Logs, Style Guide) dock here as
-               icons: needed occasionally, but they were padding out the
-               everyday Administration list. #}
+            {% comment %}
+            Diagnostics (System Health, Live Logs, Style Guide) dock here as
+            icons: needed occasionally, but they were padding out the everyday
+            Administration list.
+            {% endcomment %}
             <div class="utility-row flex flex-wrap gap-1 rail:justify-center sidebar-collapsed:justify-center">
                 {% for item in dashboard_utility_items %}
                     <a class="nav-item compact inline-grid size-8 cursor-pointer place-items-center rounded-sm text-ink-text no-underline hover:bg-[rgba(125,211,252,0.08)] hover:text-[#f1f7ff] hover:no-underline [&.active]:bg-ink-soft [&.active]:text-accent-bright [&_.nav-ic]:opacity-75 {% if request.resolver_match.url_name == item.url_name %}active{% endif %}"
