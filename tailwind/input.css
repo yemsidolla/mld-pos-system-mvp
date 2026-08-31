@@ -18,7 +18,7 @@
 @layer legacy, theme, base, components, utilities;
 
 @import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
 
 /* Scan Django templates for class names. */
 @source "../app/templates";
@@ -284,7 +284,11 @@
 @layer components {
   /* ---- Buttons (§4.1). .btn alone is the secondary/default look. ---- */
   .btn {
-    @apply inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline;
+    /* max-[640px] (inclusive) and the disabled pair fold in dashboard.css
+     * guards that this layer would otherwise silently kill: legacy's 42px
+     * phone touch target and its not-allowed cursor both lose to a
+     * components-layer rule on the same property. */
+    @apply inline-flex min-h-[38px] cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border-strong bg-surface px-[13px] py-[9px] font-sans text-sm font-[750] text-text no-underline hover:bg-surface-subtle hover:no-underline disabled:cursor-not-allowed disabled:opacity-[0.55] max-[640px]:min-h-[42px];
   }
   .btn-primary {
     @apply border-primary bg-primary text-white hover:bg-primary-hover;
@@ -295,13 +299,17 @@
   .btn-danger {
     @apply border-danger bg-danger text-white hover:bg-danger hover:brightness-95;
   }
-  /* Compact button for popovers/dense toolbars; compose: "btn btn-sm btn-primary". */
+  /* Compact button for popovers/dense toolbars; compose:
+   * "btn btn-sm btn-primary". Stretching is layout, so the column-filter
+   * Apply/Clear pair composes flex-1 in the template (as with margins).
+   * min-h-8 also re-asserts over .btn's phone guard, which is correct:
+   * compact buttons live inside popovers, not as primary tap targets. */
   .btn-sm {
-    @apply min-h-8 gap-1 px-2.5 py-1.5 text-xs;
+    @apply min-h-8 px-2.5 py-1.5 text-xs max-[640px]:min-h-8;
   }
   /* Standalone (do NOT compose with .btn): square icon button (modal close). */
   .btn-icon {
-    @apply inline-flex size-9 min-h-0 cursor-pointer items-center justify-center border border-border-strong bg-surface p-0 text-[22px] font-[750] text-text hover:bg-surface-subtle;
+    @apply inline-flex size-9 min-h-0 cursor-pointer items-center justify-center border border-border-strong bg-surface p-0 text-[22px] font-[750] text-text hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-[0.55];
   }
   /* Standalone: reset-to-link button (clear filter, dismiss). */
   .btn-ghost {
@@ -310,7 +318,15 @@
 
   /* ---- Panel (§4.4): the page section container. ---- */
   .panel {
-    @apply rounded border border-border bg-surface p-[18px] shadow-panel;
+    /* print: keeps dashboard.css's @media print flattening, which a
+     * components-layer rule on the same properties would otherwise kill. */
+    @apply rounded border border-border bg-surface p-[18px] shadow-panel print:border-0 print:p-0 print:shadow-none;
+  }
+  /* Neutralises legacy `.panel + .panel { margin-top: 16px }`, which would
+   * otherwise inject margin the canonical utility string never had. Spacing
+   * composes in the template (`class="panel mt-4"`) — utilities beat this. */
+  .panel + .panel {
+    @apply mt-0;
   }
   .panel-header {
     @apply mb-3.5 flex items-start justify-between gap-3.5;
@@ -359,14 +375,21 @@
     @apply min-w-0;
   }
   .data-table th {
-    @apply border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft;
+    @apply border-b border-border px-[9px] py-2 text-left text-[11px] font-semibold uppercase tracking-[0.07em] text-text-soft max-[640px]:px-[7px] max-[640px]:py-2;
   }
   .data-table td {
-    @apply border-b border-border px-[9px] py-2.5 align-middle;
+    @apply border-b border-border px-[9px] py-2.5 align-middle max-[640px]:px-[7px] max-[640px]:py-2;
   }
-  /* Opt-in row hover for list tables (detail tables stay static). */
+  /* Opt-in row hover for list tables (detail tables stay static). The :not()
+   * reset is load-bearing: dashboard.css has a live
+   * `.data-table tbody tr:hover` rule keyed on this same class name, so
+   * without it EVERY migrated table would hover and the opt-in would be a
+   * fiction. */
   .data-table-hover tbody tr {
     @apply hover:bg-surface-subtle;
+  }
+  .data-table:not(.data-table-hover) tbody tr {
+    @apply hover:bg-transparent;
   }
   .cell-empty {
     @apply border-b border-border px-[9px] py-6 text-center text-text-soft;
@@ -408,6 +431,9 @@
   .alert-warning {
     @apply border-alert-warning-border border-l-warning bg-alert-warning-bg text-warning;
   }
+  .alert-success {
+    @apply border-alert-success-border border-l-success bg-alert-success-bg text-success;
+  }
   .alert-neutral {
     @apply border-border border-l-border bg-surface;
   }
@@ -434,7 +460,13 @@
 
   /* ---- Empty state (§4.12): icon + message inside a colspan cell. ---- */
   .empty-state {
-    @apply grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft;
+    /* text-left cancels legacy `.empty-state { text-align: center }`, which
+     * the grid form never had; the inline variant keeps it. */
+    @apply grid justify-items-center gap-2 px-3 py-6.5 text-left text-[13px] text-text-soft;
+  }
+  /* The second canonical anatomy: icon and text on one line, inside a <p>. */
+  .empty-state-inline {
+    @apply block px-3 py-[26px] text-center text-[13px] text-text-soft;
   }
 
   /* ---- Quiet inline link (TOC/footer links). ---- */

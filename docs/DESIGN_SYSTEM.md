@@ -243,15 +243,25 @@ live on the styleguide page.
 > **V8:** component classes are defined in `tailwind/input.css` under
 > `@layer components` (they supersede the same-named rules in `dashboard.css`
 > on every shared property — the components layer beats `layer(legacy)`
-> regardless of selector specificity). New names introduced by V8:
+> regardless of selector specificity). Because that precedence cuts both ways,
+> the components fold in the legacy guards they would otherwise kill (phone
+> touch targets, `:disabled`, print flattening, dense phone table padding) and
+> neutralise the legacy rules that would otherwise leak in (`.panel + .panel`
+> margin, unconditional `.data-table` row hover, `.empty-state` centring).
+> Names the layer defines — some new, some superseding same-named legacy
+> rules (`.btn*`, `.panel*`, `.pill*`, `.alert*`, `.data-table`,
+> `.empty-state`, `.form-stack`):
 > `.panel-title` / `.panel-sub` (the h2/p inside `.panel-header`),
 > `.stat-grid` / `.stat-card` / `.stat-label` / `.stat-value` / `.stat-value-sm`,
 > `.kpi-tile` / `.kpi-value`, `.table-wrap` + `.data-table`
 > (+ `.data-table-fit`, `.data-table-hover`, `.cell-empty`, `.cell-num`),
 > `.toolbar` (+ `.toolbar-input`), `.form-stack` / `.field-grid` /
 > `.section-label`, `.btn-sm` / `.btn-icon` / `.btn-ghost` (the last two are
-> standalone, not composed with `.btn`), `.empty-state`, `.link-subtle`.
+> standalone, not composed with `.btn`), `.empty-state` (+ the one-line
+> `.empty-state-inline`), `.alert-neutral`, `.link-subtle`.
 > `.btn-secondary` is retired: bare `.btn` IS the secondary look.
+> Stretching is layout, so compose it in the template — the column-filter
+> Apply/Clear pair is `class="btn btn-sm btn-primary flex-1"`.
 
 ### 4.1 Buttons — `.btn`
 Base `.btn` (or any `<button>`). Variants: `.btn-primary` (blue, the main
@@ -602,5 +612,10 @@ Append one line per design-system task (the only thing that may edit this file).
   state, links) via `@apply`; canonical breakpoint scale (640/900/1280 + 1500
   opt-in) added to §2.6 and as `--breakpoint-*` tokens; usage rule added to
   §2.0 ("anything repeated twice is a component"). Styleguide gained a V8
-  Components section rendering the full set. Templates intentionally
-  untouched — they migrate in Phase 3.
+  Components section rendering the full set. App templates otherwise
+  untouched — they migrate in Phase 3. Also fixes a latent build-hygiene bug:
+  `@import "tailwindcss/utilities.css"` now uses `source(none)`, so only the
+  explicit `@source ../app/templates` is scanned; ten utilities that were
+  emitted because Tailwind auto-detected the words in non-template files
+  (`.container`, `.grow`, `.transition`, …) are gone. Verified none is used
+  as a bare class in any template.

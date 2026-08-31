@@ -399,9 +399,10 @@ proves the contract templates migrate onto in Phase 3.
     </div>
 
     <p class="section-label">{% trans "Alerts — .alert + tone" %}</p>
-    <div class="mb-4 grid gap-2">
+    <div class="form-stack mb-4">
         <div class="alert alert-danger">{% trans "Error — could not complete." %}</div>
         <div class="alert alert-warning">{% trans "Warning — check this." %}</div>
+        <div class="alert alert-success">{% trans "Success — saved." %}</div>
         <div class="alert alert-neutral">{% trans "Note — nothing urgent." %}</div>
     </div>
 
@@ -446,8 +447,9 @@ proves the contract templates migrate onto in Phase 3.
         </table>
     </div>
 
-    <p class="section-label">{% trans "Empty state — .empty-state" %}</p>
+    <p class="section-label">{% trans "Empty state — .empty-state (stacked) and .empty-state-inline (one line)" %}</p>
     <div class="empty-state mb-2">{% icon "package" 20 %} <span>{% trans "No products yet. Add your first one." %}</span></div>
+    <p class="empty-state-inline mb-2">{% icon "check" 16 %} {% trans "All clear — nothing here yet." %}</p>
 
     <p class="panel-sub">{% trans "Breakpoints: sm 640 · md 900 · lg 1280 · xl 1500 (max-md: is width < 900px — see DESIGN_SYSTEM §2.6)." %}</p>
 </section>
