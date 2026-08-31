@@ -1,6 +1,8 @@
 import re
 
 from django import forms
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
 from django.db.models import Q
@@ -93,7 +95,17 @@ class ProductImageWidget(forms.ClearableFileInput):
     input, so the field submits with JavaScript disabled.
     """
 
-    template_name = "widgets/product_image.html"
+    # NOT `template_name`: Django resolves widget templates through the FORM
+    # RENDERER, which has its own loader and does not see the project's
+    # TEMPLATES["DIRS"]. Setting FORM_RENDERER = TemplatesSetting globally
+    # would change how every widget in the app is rendered, so this renders
+    # the template explicitly through the normal loader instead — same
+    # result, no blast radius.
+    widget_template = "widgets/product_image.html"
+
+    def render(self, name, value, attrs=None, renderer=None):
+        context = self.get_context(name, value, attrs)
+        return mark_safe(render_to_string(self.widget_template, context))
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
