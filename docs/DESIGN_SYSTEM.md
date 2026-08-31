@@ -218,8 +218,18 @@ semantic action colors for status pills — they are a separate scale.
 ## 3. Iconography
 
 Inline SVG via the `{% icon %}` tag — `app/core/templatetags/melodu_icons.py`.
-**No icon webfont, no external dependency.** 24×24 stroke icons, Tabler outline
-style, `stroke-width 1.8`, `currentColor`.
+**No icon webfont, no external dependency, no CDN** — the PWA installs and
+runs offline, so every glyph ships in the HTML. 24×24 stroke icons,
+`stroke-width 1.8`, `currentColor`.
+
+The set is **Tabler Icons (MIT)**, vendored at a pinned tag under
+`vendor/tabler-icons/`. The `ICONS` dict is **generated** — never edit it by
+hand and never hand-draw a path (the V7 set was a hand-drawn imitation of
+Tabler; V8 replaced it with the real thing, so there is still exactly one
+icon set). To add an icon: add the name to `MAPPING` in
+`scripts/sync_icons.py`, drop the SVG into `vendor/tabler-icons/` from the
+pinned tag, run `python3 scripts/sync_icons.py`. `--check` fails if the
+generated block is stale.
 
 ```django
 {% load melodu_icons %}
@@ -228,14 +238,17 @@ style, `stroke-width 1.8`, `currentColor`.
 {% icon "home" 17 "nav-ic" %} {# size + extra class #}
 ```
 
-- Add an icon by adding one entry to the `ICONS` dict; never hand-draw paths in a
+- Add an icon via `scripts/sync_icons.py` (above); never hand-draw paths in a
   template, never pull a second icon set.
 - Icons inherit color and are `aria-hidden` (decorative). Icon-only buttons need
   an `aria-label`.
-- Current set (32, alphabetical): activity, alert, barcode, camera, cart, cash,
-  category, chart, check, clock, dollar, hold, home, logout, logs, package,
-  percent, plus, printer, receipt, scan, search, settings, shield, sidebar, tag,
-  trend-up, truck, upload, user, users, x. (The live styleguide is the source of
+- Current set (46). The 32 V7 names are unchanged, so no template moved:
+  activity, alert, barcode, camera, cart, cash, category, chart, check, clock,
+  dollar, hold, home, logout, logs, package, percent, plus, printer, receipt,
+  scan, search, settings, shield, sidebar, tag, trend-up, truck, upload, user,
+  users, x. V8 added: calendar, chevron-down, chevron-left, chevron-right,
+  dots, edit, eye, filter, grid, list, photo, photo-plus, refresh, trash.
+  (The live styleguide renders whatever is in the dict — it is the source of
   truth for this list.)
 
 ---
@@ -640,3 +653,13 @@ Append one line per design-system task (the only thing that may edit this file).
   defeat the ungated legacy rule on touch devices. `cascade.css` now declares
   `properties` first so Tailwind's `@supports` fallback layer cannot outrank
   components in browsers with layers but without `@property`.
+- 2026-08-31 — V8 Phase 2 iconography: adopted **Tabler Icons (MIT)** as the
+  real source for the icon set, vendored at `v3.31.0` under
+  `vendor/tabler-icons/` and generated into `melodu_icons.py` by
+  `scripts/sync_icons.py`. The V7 set was 32 icons hand-drawn *in the Tabler
+  style*; this replaces the imitation with the originals, so §3's "never pull
+  a second icon set" still holds — there is still exactly one. All 32 names
+  are unchanged, so no template moved. 14 names added for the phases ahead
+  (chevrons, grid/list, photo/photo-plus, edit/trash/eye/filter, dots,
+  refresh, calendar). Still inline SVG at stroke-width 1.8: no webfont, no
+  CDN, offline-safe.
