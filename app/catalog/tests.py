@@ -739,3 +739,47 @@ class ProductImageWidgetTests(TestCase):
 
         ctx = ProductImageWidget().get_context("image", Boom(), {"id": "id_image"})
         self.assertEqual(ctx["current_url"], "")
+
+
+class ProductViewToggleTests(TestCase):
+    """Cards and table must be the SAME data, differently presented.
+
+    The value of the toggle is that there is no second code path: one
+    queryset, one paginator, one set of filters. If the grid ever starts
+    rendering from something else, filters and pagination silently disagree
+    between views — which is worse than not having the grid.
+    """
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser(
+            "gridowner", "gridowner@example.com", "Pw12345678"
+        )
+        self.client.force_login(self.user)
+        category = Category.objects.create(name="Dog food")
+        for i in range(3):
+            Product.objects.create(
+                product_code=f"GRID-{i}",
+                name=f"Grid product {i}",
+                category=category,
+                unit="bag",
+                default_selling_price=Decimal("9.50"),
+            )
+
+    def test_both_views_render_from_the_same_page(self):
+        html = self.client.get(reverse("product-list")).content.decode()
+        self.assertIn('data-view-panel="grid"', html)
+        self.assertIn('data-view-panel="table"', html)
+        # Every product appears in both panels of the one response.
+        for i in range(3):
+            self.assertEqual(html.count(f"GRID-{i}"), 2, f"GRID-{i} should appear in both views")
+
+    def test_filters_apply_to_the_grid_too(self):
+        html = self.client.get(reverse("product-list"), {"q": "Grid product 1"}).content.decode()
+        self.assertEqual(html.count("GRID-1"), 2)
+        self.assertNotIn("GRID-0", html)
+
+    def test_table_is_the_default_view(self):
+        """Bulk work is faster in a table; browsing is opt-in."""
+        html = self.client.get(reverse("product-list")).content.decode()
+        self.assertIn('data-view="table" aria-pressed="true"', html)
+        self.assertIn('data-view="grid" aria-pressed="false"', html)

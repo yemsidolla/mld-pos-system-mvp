@@ -1,0 +1,36 @@
+{% load i18n melodu_icons %}
+{% comment %}
+Product card (V8 Phase 6). The browsing view of the catalogue.
+
+Deliberately image-led — this is the Taobao lesson applied where it belongs.
+The POS sale screen stays dense and fast; browsing a catalogue is visual
+work and benefits from seeing the product.
+
+Uses image_thumb when present (96px WebP, generated on upload) and falls
+back to the full image, so a card grid does not pull full-size originals.
+{% endcomment %}
+<article class="product-card group relative grid gap-2 rounded-md border border-border bg-surface p-2.5 hover:border-border-strong hover:shadow">
+    <div class="relative aspect-square overflow-hidden rounded bg-surface-subtle">
+        {% if product.image_thumb %}
+            <img class="size-full object-cover" src="{{ product.image_thumb.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
+        {% elif product.image %}
+            <img class="size-full object-cover" src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
+        {% else %}
+            <span class="grid size-full place-items-center text-text-soft" aria-label="{% trans 'No product image' %}">{% icon "package" 28 %}</span>
+        {% endif %}
+        {% if not product.is_active %}
+            <span class="absolute left-1.5 top-1.5">{% include "catalog/_status_pill.html" with tone="danger" label=_("Inactive") %}</span>
+        {% endif %}
+    </div>
+    <div class="grid gap-0.5">
+        {# Two lines then ellipsis: names vary wildly in length and a ragged
+           grid is harder to scan than a clipped one. #}
+        <strong class="line-clamp-2 text-[13px] leading-[1.3] text-text" title="{{ product.name }}">{{ product.name }}</strong>
+        <span class="font-mono text-[11px] text-text-soft">{{ product.product_code }}</span>
+        <span class="text-sm font-semibold text-text">{{ product.default_selling_price }}</span>
+    </div>
+    {# The whole card is a link target, with the real controls layered above
+       it — so a tap anywhere opens the product, but Edit still works. #}
+    <a class="absolute inset-0 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
+       href="{% url 'product-edit' product.id %}" aria-label="{{ product.name }}"></a>
+</article>

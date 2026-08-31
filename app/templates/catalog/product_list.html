@@ -42,7 +42,29 @@
         </div>
         {% endif %}
 
-        <div class="table-wrap">
+                {% comment %}
+        Grid / table toggle. Both views render the SAME page_obj from the same
+        queryset, so filters, sorting and pagination are untouched by the
+        switch — it is presentation only, and there is no second code path to
+        keep in sync. The choice is remembered per browser in localStorage.
+        {% endcomment %}
+        <div class="toolbar mb-2 justify-end" data-view-toggle>
+            <div class="inline-flex overflow-hidden rounded-md border border-border-strong" role="group" aria-label="{% trans 'Product view' %}">
+                <button class="view-btn inline-flex cursor-pointer items-center gap-1.5 border-0 bg-surface px-2.5 py-1.5 text-xs font-[750] text-text hover:bg-surface-subtle aria-pressed:bg-ink aria-pressed:text-accent-bright"
+                        type="button" data-view="grid" aria-pressed="false">{% icon "grid" 14 %} {% trans "Cards" %}</button>
+                <button class="view-btn inline-flex cursor-pointer items-center gap-1.5 border-0 border-l border-border-strong bg-surface px-2.5 py-1.5 text-xs font-[750] text-text hover:bg-surface-subtle aria-pressed:bg-ink aria-pressed:text-accent-bright"
+                        type="button" data-view="table" aria-pressed="true">{% icon "list" 14 %} {% trans "Table" %}</button>
+            </div>
+        </div>
+        <div class="product-grid hidden grid-cols-2 gap-2.5 min-[560px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" data-view-panel="grid">
+            {% for product in products %}
+                {% include "catalog/_product_card.html" with product=product %}
+            {% empty %}
+                <p class="empty-state col-span-full">{% icon "package" 20 %} <span>{% trans "No products match these filters." %}</span></p>
+            {% endfor %}
+        </div>
+        <div data-view-panel="table">
+<div class="table-wrap">
         <table class="data-table">
             <thead>
                 <tr>
@@ -140,6 +162,7 @@
         </table>
         </div>
     </form>
-    {% include "dashboard/_pagination.html" %}
+    </div>
+        {% include "dashboard/_pagination.html" %}
 </section>
 {% endblock %}

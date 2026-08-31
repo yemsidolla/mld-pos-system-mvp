@@ -97,3 +97,59 @@
     bindAll(document);
     document.addEventListener("melodu:navigated", function () { bindAll(document); });
 })();
+
+/* Product list view toggle (V8 Phase 6) — cards vs table.
+ *
+ * Presentation only: both panels are already in the DOM, rendered from the
+ * same queryset, so filters, sorting and pagination are untouched and there
+ * is no second code path to keep in sync. The choice is per browser.
+ *
+ * Table is the default. Bulk work (editing many rows, comparing codes) is
+ * faster in a table, so a first-time user gets the workhorse view and opts
+ * into browsing, not the other way round.
+ */
+(function () {
+    "use strict";
+
+    var KEY = "melodu-product-view";
+
+    function apply(root, view) {
+        root.querySelectorAll("[data-view-panel]").forEach(function (panel) {
+            var match = panel.getAttribute("data-view-panel") === view;
+            panel.classList.toggle("hidden", !match);
+            // The grid needs `grid`, not the block default, when shown.
+            if (panel.getAttribute("data-view-panel") === "grid") {
+                panel.classList.toggle("grid", match);
+            }
+        });
+        root.querySelectorAll("[data-view]").forEach(function (button) {
+            button.setAttribute("aria-pressed", button.getAttribute("data-view") === view ? "true" : "false");
+        });
+    }
+
+    function bind(root) {
+        var toggle = root.querySelector("[data-view-toggle]");
+        if (!toggle || toggle.dataset.viewBound === "1") return;
+        toggle.dataset.viewBound = "1";
+
+        var stored;
+        try {
+            stored = localStorage.getItem(KEY);
+        } catch (e) { /* private mode */ }
+        apply(root, stored === "grid" ? "grid" : "table");
+
+        toggle.addEventListener("click", function (event) {
+            var button = event.target.closest("[data-view]");
+            if (!button) return;
+            var view = button.getAttribute("data-view");
+            apply(root, view);
+            try {
+                localStorage.setItem(KEY, view);
+            } catch (e) { /* private mode */ }
+        });
+    }
+
+    bind(document);
+    // Same partial-navigation rebind as the media field above.
+    document.addEventListener("melodu:navigated", function () { bind(document); });
+})();
