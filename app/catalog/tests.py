@@ -694,3 +694,48 @@ class ProductColumnFilterTests(TestCase):
     def test_no_filter_bar_when_nothing_selected(self):
         response = self.client.get(reverse("product-list"))
         self.assertEqual(response.context["active_filters"], [])
+
+
+class ProductImageWidgetTests(TestCase):
+    """The media panel must stay a real, submitting file input.
+
+    The whole design is progressive enhancement: media.js adds preview and
+    drag-and-drop on top of a working <input type="file">. If the widget ever
+    stops rendering that input — or stops honouring Django's clear-checkbox
+    contract — uploads break silently for anyone whose JS did not load.
+    """
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_superuser(
+            "imgowner", "imgowner@example.com", "Pw12345678"
+        )
+        self.client.force_login(self.user)
+
+    def test_create_form_renders_a_real_file_input(self):
+        html = self.client.get(reverse("product-create")).content.decode()
+        self.assertIn('type="file"', html)
+        self.assertIn('name="image"', html)
+        self.assertIn("data-media-field", html)
+        # Phones should open the camera rather than a file browser.
+        self.assertIn('capture="environment"', html)
+        self.assertIn('accept="image/*"', html)
+
+    def test_widget_survives_storage_being_unreachable(self):
+        """A dead media backend must not 500 the edit page.
+
+        Asking a FieldFile for .url can raise when storage is misconfigured;
+        the widget swallows that and renders without a preview instead of
+        taking the whole form down.
+        """
+        from catalog.forms import ProductImageWidget
+
+        class Boom:
+            def __bool__(self):
+                return True
+
+            @property
+            def url(self):
+                raise OSError("storage down")
+
+        ctx = ProductImageWidget().get_context("image", Boom(), {"id": "id_image"})
+        self.assertEqual(ctx["current_url"], "")

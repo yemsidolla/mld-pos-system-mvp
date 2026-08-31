@@ -45,14 +45,8 @@
                 {{ form.name.errors }}
                 {% if form.name.help_text %}<p class="panel-sub">{{ form.name.help_text }}</p>{% endif %}
             </div>
-            <div>
+            <div class="md:col-span-full">
                 {{ form.image.label_tag }}
-                {% if product.image %}
-                    <div class="my-1.5 mb-2 flex items-center gap-2.5">
-                        <img class="size-[72px] rounded-md border border-border bg-surface-subtle object-cover" src="{{ product.image.url }}" alt="{{ product.name }}">
-                        <span class="text-text-soft">{% trans "Current image" %}</span>
-                    </div>
-                {% endif %}
                 {{ form.image }}
                 {{ form.image.errors }}
                 {% if form.image.help_text %}<p class="panel-sub">{{ form.image.help_text }}</p>{% endif %}

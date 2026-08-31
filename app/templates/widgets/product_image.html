@@ -1,0 +1,45 @@
+{% load i18n melodu_icons %}
+{% comment %}
+Product image field (V8 Phase 5). Replaces the bare <input type="file">.
+
+Progressive enhancement on purpose: the <input> is a real, working file input
+that submits with the form even if JavaScript never runs. media.js only adds
+the preview, the drag-and-drop target and the remove control on top of it —
+so an old till browser still uploads, it just looks plainer.
+
+capture="environment" makes a phone open the rear camera directly, which is
+how product photos actually get taken in the shop.
+{% endcomment %}
+<div class="media-field" data-media-field>
+    <label class="media-drop group grid cursor-pointer justify-items-center gap-2 rounded-md border border-dashed border-border-strong bg-surface-subtle px-4 py-6 text-center hover:border-primary hover:bg-surface"
+           for="{{ widget.attrs.id }}" data-media-drop>
+        <span class="media-preview hidden" data-media-preview>
+            <img class="size-[120px] rounded-md border border-border bg-surface object-cover" alt="" data-media-preview-img>
+        </span>
+        {% if current_url %}
+            <span class="media-current grid justify-items-center gap-1.5" data-media-current>
+                <img class="size-[120px] rounded-md border border-border bg-surface object-cover" src="{{ current_url }}" alt="{% trans 'Current product image' %}">
+                <span class="text-xs text-text-soft">{% trans "Current image" %}</span>
+            </span>
+        {% endif %}
+        <span class="media-empty grid justify-items-center gap-1.5{% if current_url %} hidden{% endif %}" data-media-empty>
+            {% icon "photo-plus" 28 %}
+            <span class="text-sm font-semibold text-text">{% trans "Add a photo" %}</span>
+        </span>
+        <span class="text-xs text-text-soft">
+            {% trans "Drag an image here, or click to choose. Photos are resized and converted automatically." %}
+        </span>
+        <input class="sr-only" type="{{ widget.type }}" name="{{ widget.name }}" id="{{ widget.attrs.id }}"
+               accept="image/*" capture="environment" data-media-input>
+    </label>
+    <div class="media-actions toolbar mt-2 hidden" data-media-actions>
+        <button class="btn btn-sm" type="button" data-media-clear>{% icon "trash" 14 %} {% trans "Remove" %}</button>
+        <span class="media-name text-xs text-text-soft" data-media-name></span>
+    </div>
+    {% if is_initial and not widget.required %}
+        <label class="toolbar mt-2 text-xs text-text-soft">
+            <input type="checkbox" name="{{ checkbox_name }}" id="{{ checkbox_id }}">
+            {% trans "Delete the current image" %}
+        </label>
+    {% endif %}
+</div>

@@ -84,6 +84,34 @@ class ProductFilterForm(forms.Form):
         self.fields["tag"].queryset = ProductTag.objects.filter(is_active=True).order_by("name")
 
 
+class ProductImageWidget(forms.ClearableFileInput):
+    """Renders the image field as a drop zone with a live preview.
+
+    Subclasses ClearableFileInput rather than replacing it so Django's own
+    clear-checkbox contract (name, id, initial handling) keeps working — the
+    template just presents it differently. The <input> stays a real file
+    input, so the field submits with JavaScript disabled.
+    """
+
+    template_name = "widgets/product_image.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        # `value` is a FieldFile on edit and None on create. Only a saved file
+        # has a URL, and asking for .url on an unsaved one raises.
+        url = ""
+        if value and getattr(value, "url", None):
+            try:
+                url = value.url
+            except Exception:  # storage unreachable — degrade to no preview
+                url = ""
+        context["current_url"] = url
+        context["is_initial"] = self.is_initial(value)
+        context["checkbox_name"] = self.clear_checkbox_name(name)
+        context["checkbox_id"] = self.clear_checkbox_id(self.clear_checkbox_name(name))
+        return context
+
+
 class ProductForm(forms.ModelForm):
     animal_types = forms.ModelMultipleChoiceField(
         queryset=AnimalTypeOption.objects.none(),
@@ -219,6 +247,7 @@ class ProductForm(forms.ModelForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "tags": forms.SelectMultiple(attrs={"size": 6}),
+            "image": ProductImageWidget,
         }
         help_texts = {
             "default_cost_price": "Fallback cost used only when no batch or supplier reference cost is available.",
