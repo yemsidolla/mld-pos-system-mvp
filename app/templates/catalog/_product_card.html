@@ -12,11 +12,13 @@ back to the full image, so a card grid does not pull full-size originals.
 <article class="product-card group relative grid gap-2 rounded-md border border-border bg-surface p-2.5 hover:border-border-strong hover:shadow">
     <div class="relative aspect-square overflow-hidden rounded bg-surface-subtle">
         {% if product.image_thumb %}
-            <img class="size-full object-cover" src="{{ product.image_thumb.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
+            <img class="size-full object-cover" src="{{ product.image_thumb.url }}" alt="" loading="lazy" decoding="async">
         {% elif product.image %}
-            <img class="size-full object-cover" src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
+            <img class="size-full object-cover" src="{{ product.image.url }}" alt="" loading="lazy" decoding="async">
         {% else %}
-            <span class="grid size-full place-items-center text-text-soft" aria-label="{% trans 'No product image' %}">{% icon "package" 28 %}</span>
+            {# No aria-label: ARIA forbids it on a bare span and browsers drop
+               it. The card already names the product below. #}
+            <span class="grid size-full place-items-center text-text-soft">{% icon "package" 28 %}</span>
         {% endif %}
         {% if not product.is_active %}
             <span class="absolute left-1.5 top-1.5">{% include "catalog/_status_pill.html" with tone="danger" label=_("Inactive") %}</span>
@@ -27,14 +29,17 @@ back to the full image, so a card grid does not pull full-size originals.
         Two lines then ellipsis: names vary wildly in length and a ragged grid
         is harder to scan than a clipped one.
         {% endcomment %}
-        <strong class="line-clamp-2 text-[13px] leading-[1.3] text-text" title="{{ product.name }}">{{ product.name }}</strong>
-        <span class="font-mono text-[11px] text-text-soft">{{ product.product_code }}</span>
+        <strong class="line-clamp-2 text-[13px] leading-[1.3] text-text">
+            {# Stretched link: the name is the real link and its ::after covers
+               the card, so the whole card is clickable while the accessible
+               name stays just the product — and the code, unit and price
+               remain readable in the accessibility tree. Any control added
+               inside the card needs `relative z-10` to sit above the ::after. #}
+            <a class="text-text no-underline after:absolute after:inset-0 after:rounded-md hover:no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
+               href="{% url 'product-edit' product.id %}" title="{{ product.name }}">{{ product.name }}</a>
+        </strong>
+        <span class="font-mono text-[11px] text-text-soft">{{ product.product_code }} · {{ product.unit }}</span>
         <span class="text-sm font-semibold text-text">{{ product.default_selling_price }}</span>
     </div>
-    {% comment %}
-    The whole card is a link target, with the real controls layered above it —
-    so a tap anywhere opens the product, but Edit still works.
-    {% endcomment %}
-    <a class="absolute inset-0 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus"
-       href="{% url 'product-edit' product.id %}" aria-label="{{ product.name }}"></a>
+
 </article>

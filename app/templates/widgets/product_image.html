@@ -7,18 +7,24 @@ that submits with the form even if JavaScript never runs. media.js only adds
 the preview, the drag-and-drop target and the remove control on top of it —
 so an old till browser still uploads, it just looks plainer.
 
-capture="environment" makes a phone open the rear camera directly, which is
-how product photos actually get taken in the shop.
+NOT capture="environment". That looks right for a shop, but it makes Android
+Chrome and iOS Safari open the camera and REMOVE the gallery and Files
+options — so a supplier photo already on the phone could not be uploaded at
+all, and the panel's own "click to choose" text would be a lie. The normal
+picker still offers the camera as one of its options.
 {% endcomment %}
 <div class="media-field" data-media-field>
-    <label class="media-drop group grid cursor-pointer justify-items-center gap-2 rounded-md border border-dashed border-border-strong bg-surface-subtle px-4 py-6 text-center hover:border-primary hover:bg-surface"
+    {# focus-within moves the ring to the visible affordance — the real input
+       is sr-only, which clips the browser's own ring inside a 1x1 box, so
+       tabbing here would otherwise be an invisible stop. #}
+    <label class="media-drop group grid cursor-pointer justify-items-center gap-2 rounded-md border border-dashed border-border-strong bg-surface-subtle px-4 py-6 text-center hover:border-primary hover:bg-surface focus-within:border-primary focus-within:bg-surface focus-within:outline focus-within:outline-2 focus-within:outline-focus"
            for="{{ widget.attrs.id }}" data-media-drop>
         <span class="media-preview hidden" data-media-preview>
             <img class="size-[120px] rounded-md border border-border bg-surface object-cover" alt="" data-media-preview-img>
         </span>
         {% if current_url %}
             <span class="media-current grid justify-items-center gap-1.5" data-media-current>
-                <img class="size-[120px] rounded-md border border-border bg-surface object-cover" src="{{ current_url }}" alt="{% trans 'Current product image' %}">
+                <img class="size-[120px] rounded-md border border-border bg-surface object-cover" src="{{ current_url }}" alt="" width="120" height="120">
                 <span class="text-xs text-text-soft">{% trans "Current image" %}</span>
             </span>
         {% endif %}
@@ -30,15 +36,15 @@ how product photos actually get taken in the shop.
             {% trans "Drag an image here, or click to choose. Photos are resized and converted automatically." %}
         </span>
         <input class="sr-only" type="{{ widget.type }}" name="{{ widget.name }}" id="{{ widget.attrs.id }}"
-               accept="image/*" capture="environment" data-media-input>
+               accept="image/*" data-media-input>
     </label>
-    <div class="media-actions toolbar mt-2 hidden" data-media-actions>
-        <button class="btn btn-sm" type="button" data-media-clear>{% icon "trash" 14 %} {% trans "Remove" %}</button>
+    <div class="media-actions toolbar mt-2 hidden" data-media-actions role="status" aria-live="polite">
+        <button class="btn" type="button" data-media-clear>{% icon "trash" 14 %} {% trans "Remove" %}</button>
         <span class="media-name text-xs text-text-soft" data-media-name></span>
     </div>
     {% if is_initial and not widget.required %}
         <label class="toolbar mt-2 text-xs text-text-soft">
-            <input type="checkbox" name="{{ checkbox_name }}" id="{{ checkbox_id }}">
+            <input type="checkbox" name="{{ checkbox_name }}" id="{{ checkbox_id }}" data-media-clear-checkbox>
             {% trans "Delete the current image" %}
         </label>
     {% endif %}

@@ -1,0 +1,15 @@
+{% load i18n melodu_icons %}
+{% comment %}
+Shared empty state for the product list — used by BOTH the card grid and the
+table, so a filtered-to-nothing result gives the same guidance and the same
+"New Product" way out in either view. Previously the grid showed one bare
+line and dropped the CTA.
+
+Caller passes `wrapper` for view-specific layout (the grid needs to span all
+columns; the table sits inside a colspan cell).
+{% endcomment %}
+<div class="grid justify-items-center gap-2 px-3 py-6.5 text-[13px] text-text-soft {{ wrapper }}">
+    <strong class="text-sm text-text">{% trans "No products match these filters." %}</strong>
+    <span class="max-w-[420px]">{% trans "Clear the filters or create a new product for this catalog item." %}</span>
+    <a class="btn" href="{% url 'product-create' %}">{% icon "plus" 16 %} {% trans "New Product" %}</a>
+</div>

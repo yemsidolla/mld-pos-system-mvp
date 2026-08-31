@@ -717,9 +717,10 @@ class ProductImageWidgetTests(TestCase):
         self.assertIn('type="file"', html)
         self.assertIn('name="image"', html)
         self.assertIn("data-media-field", html)
-        # Phones should open the camera rather than a file browser.
-        self.assertIn('capture="environment"', html)
         self.assertIn('accept="image/*"', html)
+        # NOT capture=: it removes the gallery and Files options on Android
+        # and iOS, so a photo already on the phone could not be uploaded.
+        self.assertNotIn("capture=", html)
 
     def test_widget_renders_without_an_image(self):
         """The create form has no file yet — the common case.

@@ -519,3 +519,10 @@
   .nav-group[data-collapsed="true"] .nav-list { display: grid; }
 }
 .sidebar-collapsed .nav-group[data-collapsed="true"] .nav-list { display: grid; }
+
+/* Pre-paint product view. Set on <html> by an inline script in the product
+ * list before first paint, so the stored choice does not flash the wrong
+ * panel on every page load, filter and page turn. Outside @layer so it beats
+ * the `hidden` utility that both panels ship with. */
+.product-view-grid [data-view-panel="grid"] { display: grid; }
+.product-view-grid [data-view-panel="table"] { display: none; }
