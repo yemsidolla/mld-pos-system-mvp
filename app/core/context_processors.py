@@ -103,9 +103,14 @@ def dashboard_context(request):
         )
     if user_can_view_audit:
         admin_items.append({"label": "Audit Logs", "icon": "shield", "url_name": "audit-log-list", "href": "/dashboard/audit-logs/"})
+    # System Health / Live Logs / Style Guide are diagnostics, not daily work.
+    # They move to the sidebar footer beside Django Admin (V8) so the everyday
+    # list stays scannable; they remain in nav_items so permissions, the
+    # mobile nav and active-link marking are unaffected.
+    utility_items = []
     if user and can_view_system(user):
-        admin_items.append({"label": "System Health", "icon": "activity", "url_name": "system-health", "href": "/dashboard/system-health/"})
-        admin_items.append({"label": "Live Logs", "icon": "logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
+        utility_items.append({"label": "System Health", "icon": "activity", "url_name": "system-health", "href": "/dashboard/system-health/"})
+        utility_items.append({"label": "Live Logs", "icon": "logs", "url_name": "live-logs", "href": "/dashboard/live-logs/"})
     if user and is_owner(user):
         admin_items.append({"label": "Role Permissions", "icon": "shield", "url_name": "role-matrix", "href": "/dashboard/roles/"})
         admin_items.append(
@@ -117,11 +122,11 @@ def dashboard_context(request):
             }
         )
     if is_admin:
-        admin_items.append({"label": "Style Guide", "icon": "category", "url_name": "styleguide", "href": "/dashboard/styleguide/"})
+        utility_items.append({"label": "Style Guide", "icon": "category", "url_name": "styleguide", "href": "/dashboard/styleguide/"})
     if admin_items:
         nav_groups.append({"label": "Administration", "items": admin_items})
 
-    nav_items = [item for group in nav_groups for item in group["items"]]
+    nav_items = [item for group in nav_groups for item in group["items"]] + utility_items
 
     # Mobile bottom nav: a curated, role-weighted set of the most-used
     # destinations (max 5), rather than the first five sidebar items. Built from
@@ -146,6 +151,7 @@ def dashboard_context(request):
     return {
         "app_version": getattr(settings, "APP_VERSION", "dev"),
         "dashboard_nav_groups": nav_groups,
+        "dashboard_utility_items": utility_items,
         "dashboard_nav_items": nav_items,
         "dashboard_mobile_nav_items": mobile_nav_items,
         "dashboard_is_admin": is_admin,

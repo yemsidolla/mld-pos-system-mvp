@@ -80,3 +80,80 @@
         navigate(window.location.href, false);
     });
 })();
+
+/* Sidebar group accordion (V8).
+ *
+ * Lives here rather than in dashboard.js because it has to cooperate with the
+ * partial navigation above: clicking a sidebar link swaps only .app-frame, so
+ * the sidebar DOM is never re-rendered and a naive accordion would keep the
+ * previously-active group open forever. openActiveGroup() is therefore called
+ * on every navigation, not just on load.
+ *
+ * State is per group label in localStorage. Collapsed is the exception, not
+ * the default: a group the user never touched stays open.
+ */
+(function () {
+    "use strict";
+
+    var KEY = "melodu-nav-collapsed";
+    var sidebar = document.querySelector(".app-sidebar");
+    if (!sidebar) return;
+
+    function readCollapsed() {
+        try {
+            return JSON.parse(localStorage.getItem(KEY)) || {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function writeCollapsed(state) {
+        try {
+            localStorage.setItem(KEY, JSON.stringify(state));
+        } catch (e) { /* private mode */ }
+    }
+
+    function applyGroup(group, collapsed) {
+        group.setAttribute("data-collapsed", collapsed ? "true" : "false");
+        var toggle = group.querySelector("[data-nav-group-toggle]");
+        if (toggle) toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    }
+
+    function restore() {
+        var state = readCollapsed();
+        sidebar.querySelectorAll("[data-nav-group]").forEach(function (group) {
+            applyGroup(group, state[group.getAttribute("data-nav-group")] === true);
+        });
+    }
+
+    /* The group holding the current page must never be collapsed — otherwise
+     * the active item is invisible and the user cannot see where they are. */
+    function openActiveGroup() {
+        var active = sidebar.querySelector(".nav-list .nav-item.active");
+        if (!active) return;
+        var group = active.closest("[data-nav-group]");
+        if (!group || group.getAttribute("data-collapsed") !== "true") return;
+        var state = readCollapsed();
+        delete state[group.getAttribute("data-nav-group")];
+        writeCollapsed(state);
+        applyGroup(group, false);
+    }
+
+    sidebar.addEventListener("click", function (event) {
+        var toggle = event.target.closest("[data-nav-group-toggle]");
+        if (!toggle) return;
+        var group = toggle.closest("[data-nav-group]");
+        if (!group) return;
+        var collapsed = group.getAttribute("data-collapsed") !== "true";
+        applyGroup(group, collapsed);
+        var state = readCollapsed();
+        var name = group.getAttribute("data-nav-group");
+        if (collapsed) state[name] = true; else delete state[name];
+        writeCollapsed(state);
+    });
+
+    restore();
+    openActiveGroup();
+    // markActiveNav() runs on every partial navigation; re-open afterwards.
+    document.addEventListener("melodu:navigated", openActiveGroup);
+})();

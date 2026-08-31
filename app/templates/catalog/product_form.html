@@ -14,7 +14,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% if mode == "create" %}{% trans "Create Product" %}{% else %}{{ product.name }}{% endif %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Use product code as the stable identifier. Original barcode must be unique when provided." %}</p>
+            <p class="panel-sub">{% trans "Use product code as the stable identifier. Original barcode must be unique when provided." %}</p>
         </div>
     </header>
     {% if form.non_field_errors %}
@@ -28,7 +28,7 @@
                 {{ form.product_code.label_tag }}
                 {{ form.product_code }}
                 {{ form.product_code.errors }}
-                {% if form.product_code.help_text %}<p class="m-0 text-text-soft">{{ form.product_code.help_text }}</p>{% endif %}
+                {% if form.product_code.help_text %}<p class="panel-sub">{{ form.product_code.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.original_barcode.label_tag }}
@@ -37,13 +37,13 @@
                     <button class="btn" type="button" data-scan-target="#id_original_barcode" data-scan-context="products">{% icon "scan" 16 %} {% trans "Scan" %}</button>
                 </div>
                 {{ form.original_barcode.errors }}
-                {% if form.original_barcode.help_text %}<p class="m-0 text-text-soft">{{ form.original_barcode.help_text }}</p>{% endif %}
+                {% if form.original_barcode.help_text %}<p class="panel-sub">{{ form.original_barcode.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.name.label_tag }}
                 {{ form.name }}
                 {{ form.name.errors }}
-                {% if form.name.help_text %}<p class="m-0 text-text-soft">{{ form.name.help_text }}</p>{% endif %}
+                {% if form.name.help_text %}<p class="panel-sub">{{ form.name.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.image.label_tag }}
@@ -55,7 +55,7 @@
                 {% endif %}
                 {{ form.image }}
                 {{ form.image.errors }}
-                {% if form.image.help_text %}<p class="m-0 text-text-soft">{{ form.image.help_text }}</p>{% endif %}
+                {% if form.image.help_text %}<p class="panel-sub">{{ form.image.help_text }}</p>{% endif %}
             </div>
         </div>
 
@@ -68,7 +68,7 @@
                     <button class="btn" type="button" data-quick-create data-quick-create-type="category" data-quick-create-target="#id_category">{% icon "plus" 16 %} {% trans "New category" %}</button>
                 </div>
                 {{ form.category.errors }}
-                {% if form.category.help_text %}<p class="m-0 text-text-soft">{{ form.category.help_text }}</p>{% endif %}
+                {% if form.category.help_text %}<p class="panel-sub">{{ form.category.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.brand.label_tag }}
@@ -77,26 +77,26 @@
                     <button class="btn" type="button" data-quick-create data-quick-create-type="brand" data-quick-create-target="#id_brand">{% icon "plus" 16 %} {% trans "New brand" %}</button>
                 </div>
                 {{ form.brand.errors }}
-                {% if form.brand.help_text %}<p class="m-0 text-text-soft">{{ form.brand.help_text }}</p>{% endif %}
+                {% if form.brand.help_text %}<p class="panel-sub">{{ form.brand.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.animal_types.label_tag }}
                 {{ form.animal_types }}
                 <button class="btn" type="button" data-quick-create data-quick-create-type="animal_type" data-quick-create-target="#id_animal_types" data-quick-create-field-name="animal_types">{% icon "plus" 16 %} {% trans "New animal type" %}</button>
                 {{ form.animal_types.errors }}
-                {% if form.animal_types.help_text %}<p class="m-0 text-text-soft">{{ form.animal_types.help_text }}</p>{% endif %}
+                {% if form.animal_types.help_text %}<p class="panel-sub">{{ form.animal_types.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.life_stage.label_tag }}
                 {{ form.life_stage }}
                 {{ form.life_stage.errors }}
-                {% if form.life_stage.help_text %}<p class="m-0 text-text-soft">{{ form.life_stage.help_text }}</p>{% endif %}
+                {% if form.life_stage.help_text %}<p class="panel-sub">{{ form.life_stage.help_text }}</p>{% endif %}
             </div>
             <div class="col-span-full">
                 {{ form.tags.label_tag }}
                 {{ form.tags }}
                 {{ form.tags.errors }}
-                {% if form.tags.help_text %}<p class="m-0 text-text-soft">{{ form.tags.help_text }}</p>{% endif %}
+                {% if form.tags.help_text %}<p class="panel-sub">{{ form.tags.help_text }}</p>{% endif %}
             </div>
         </div>
 
@@ -106,36 +106,36 @@
                 {{ form.unit.label_tag }}
                 {{ form.unit }}
                 {{ form.unit.errors }}
-                {% if form.unit.help_text %}<p class="m-0 text-text-soft">{{ form.unit.help_text }}</p>{% endif %}
+                {% if form.unit.help_text %}<p class="panel-sub">{{ form.unit.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.default_cost_price.label_tag }}
                 {{ form.default_cost_price }}
                 {{ form.default_cost_price.errors }}
-                {% if form.default_cost_price.help_text %}<p class="m-0 text-text-soft">{{ form.default_cost_price.help_text }}</p>{% endif %}
+                {% if form.default_cost_price.help_text %}<p class="panel-sub">{{ form.default_cost_price.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.default_selling_price.label_tag }}
                 {{ form.default_selling_price }}
                 {{ form.default_selling_price.errors }}
-                {% if form.default_selling_price.help_text %}<p class="m-0 text-text-soft">{{ form.default_selling_price.help_text }}</p>{% endif %}
+                {% if form.default_selling_price.help_text %}<p class="panel-sub">{{ form.default_selling_price.help_text }}</p>{% endif %}
             </div>
             <div>
                 {{ form.min_stock.label_tag }}
                 {{ form.min_stock }}
                 {{ form.min_stock.errors }}
-                {% if form.min_stock.help_text %}<p class="m-0 text-text-soft">{{ form.min_stock.help_text }}</p>{% endif %}
+                {% if form.min_stock.help_text %}<p class="panel-sub">{{ form.min_stock.help_text }}</p>{% endif %}
             </div>
             <div>
                 <label for="{{ form.is_active.id_for_label }}">{{ form.is_active }} {% trans "Active" %}</label>
                 {{ form.is_active.errors }}
-                {% if form.is_active.help_text %}<p class="m-0 text-text-soft">{{ form.is_active.help_text }}</p>{% endif %}
+                {% if form.is_active.help_text %}<p class="panel-sub">{{ form.is_active.help_text }}</p>{% endif %}
             </div>
             <div class="col-span-full">
                 {{ form.description.label_tag }}
                 {{ form.description }}
                 {{ form.description.errors }}
-                {% if form.description.help_text %}<p class="m-0 text-text-soft">{{ form.description.help_text }}</p>{% endif %}
+                {% if form.description.help_text %}<p class="panel-sub">{{ form.description.help_text }}</p>{% endif %}
             </div>
         </div>
         <div class="toolbar">

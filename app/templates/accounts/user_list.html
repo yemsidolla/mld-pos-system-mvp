@@ -13,7 +13,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Staff Accounts" %}</h2>
-            <p class="m-0 text-text-soft">{% blocktrans count count=rows|length %}{{ count }} account.{% plural %}{{ count }} accounts.{% endblocktrans %}</p>
+            <p class="panel-sub">{% blocktrans count count=rows|length %}{{ count }} account.{% plural %}{{ count }} accounts.{% endblocktrans %}</p>
         </div>
     </header>
     <div class="table-wrap">

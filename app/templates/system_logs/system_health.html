@@ -45,7 +45,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Health Details" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Human-readable checks for production troubleshooting. Review warnings before they become outages." %}</p>
+            <p class="panel-sub">{% trans "Human-readable checks for production troubleshooting. Review warnings before they become outages." %}</p>
         </div>
     </header>
     <div class="table-wrap">
@@ -70,10 +70,10 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Operator Notes" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Safe production checks only. Secrets and full environment values must never be shown here." %}</p>
+            <p class="panel-sub">{% trans "Safe production checks only. Secrets and full environment values must never be shown here." %}</p>
         </div>
     </header>
-    <div class="rounded-r-md border border-border border-l-[3px] border-l-border bg-surface px-3 py-2.5">
+    <div class="alert alert-neutral">
         {% trans "Use Live Logs for recent sanitized errors, and use the deployment runbook for server-level checks." %}
     </div>
 </section>
@@ -82,7 +82,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Backup / Reset Safeguards" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Visibility only. Backups and resets must be run from the server console with the runbook." %}</p>
+            <p class="panel-sub">{% trans "Visibility only. Backups and resets must be run from the server console with the runbook." %}</p>
         </div>
     </header>
     <div class="alert alert-warning">
@@ -93,11 +93,11 @@
             <tbody>
             <tr class="hover:bg-surface-subtle">
                 <th class="">{% trans "Backup Commands" %}</th>
-                <td class="">{% for command in backup_commands %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-neutral px-2.5 py-0.5 font-mono text-[11.5px] font-semibold tracking-[0.02em] text-pill-neutral-fg">{{ command }}</span> {% endfor %}</td>
+                <td class="">{% for command in backup_commands %}<span class="pill pill-neutral font-mono">{{ command }}</span> {% endfor %}</td>
             </tr>
             <tr class="hover:bg-surface-subtle">
                 <th class="">{% trans "Runbooks" %}</th>
-                <td class="">{% for doc in backup_docs %}<span class="inline-block whitespace-nowrap rounded-full bg-pill-neutral px-2.5 py-0.5 font-mono text-[11.5px] font-semibold tracking-[0.02em] text-pill-neutral-fg">{{ doc }}</span> {% endfor %}</td>
+                <td class="">{% for doc in backup_docs %}<span class="pill pill-neutral font-mono">{{ doc }}</span> {% endfor %}</td>
             </tr>
             <tr class="hover:bg-surface-subtle">
                 <th class="">{% trans "Reset Safety" %}</th>

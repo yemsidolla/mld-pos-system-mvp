@@ -20,7 +20,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Log Stream" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Auto-refreshes every 5 seconds. Sensitive values are redacted before display." %}</p>
+            <p class="panel-sub">{% trans "Auto-refreshes every 5 seconds. Sensitive values are redacted before display." %}</p>
         </div>
     </header>
     <div class="alert alert-warning">
@@ -32,7 +32,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Errors" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Newest entries appear first." %}</p>
+            <p class="panel-sub">{% trans "Newest entries appear first." %}</p>
         </div>
     </header>
     <pre class="log-block error-log max-h-[420px] overflow-auto rounded-md bg-log-error-bg p-3.5 text-white [overflow-wrap:anywhere] whitespace-pre-wrap">{% for line in error_lines %}{{ line }}
@@ -43,7 +43,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Application" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Newest entries appear first." %}</p>
+            <p class="panel-sub">{% trans "Newest entries appear first." %}</p>
         </div>
     </header>
     <pre class="log-block max-h-[420px] overflow-auto rounded-md bg-log-bg p-3.5 text-white [overflow-wrap:anywhere] whitespace-pre-wrap">{% for line in app_lines %}{{ line }}

@@ -14,10 +14,10 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Operating Rule" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "This is an operational checklist, not accounting, tax filing, payroll, or a final financial close." %}</p>
+            <p class="panel-sub">{% trans "This is an operational checklist, not accounting, tax filing, payroll, or a final financial close." %}</p>
         </div>
     </header>
-    <div class="rounded-r-md border border-border border-l-[3px] border-l-border bg-surface px-3 py-2.5">
+    <div class="alert alert-neutral">
         {% trans "Use the links below to review evidence. Do not change historical sales to force a closing total." %}
     </div>
 </section>
@@ -28,7 +28,7 @@
             <header class="panel-header">
                 <div>
                     <h2 class="panel-title">{{ section.title }}</h2>
-                    <p class="m-0 text-text-soft">{% trans "Mark this complete outside the system after reviewing the evidence." %}</p>
+                    <p class="panel-sub">{% trans "Mark this complete outside the system after reviewing the evidence." %}</p>
                 </div>
             </header>
             <ul class="m-0 grid list-none gap-2.5 p-0">
@@ -44,7 +44,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Evidence Links" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Open these pages during closing review." %}</p>
+            <p class="panel-sub">{% trans "Open these pages during closing review." %}</p>
         </div>
     </header>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-2.5">

@@ -15,7 +15,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Find Records" %}</h2>
-            <p class="m-0 text-text-soft">{% blocktrans count count=item_count %}{{ count }} record found.{% plural %}{{ count }} records found.{% endblocktrans %}</p>
+            <p class="panel-sub">{% blocktrans count count=item_count %}{{ count }} record found.{% plural %}{{ count }} records found.{% endblocktrans %}</p>
         </div>
     </header>
     {% include "dashboard/_list_filter.html" %}
@@ -25,7 +25,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{{ title }}</h2>
-            <p class="m-0 text-text-soft">{% trans "Create and update catalog master data without leaving the dashboard." %}</p>
+            <p class="panel-sub">{% trans "Create and update catalog master data without leaving the dashboard." %}</p>
         </div>
     </header>
     <div class="table-wrap">

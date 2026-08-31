@@ -14,10 +14,10 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Report Definition" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Completed sales count as revenue. Cancelled sales are exception records and do not add to revenue." %}</p>
+            <p class="panel-sub">{% trans "Completed sales count as revenue. Cancelled sales are exception records and do not add to revenue." %}</p>
         </div>
     </header>
-    <div class="rounded-r-md border border-border border-l-[3px] border-l-border bg-surface px-3 py-2.5">
+    <div class="alert alert-neutral">
         {% trans "Payment totals, discounts, and margin use the sale snapshots saved at checkout for the selected date." %}
     </div>
 </section>
@@ -63,7 +63,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Payment Breakdown" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Completed sales only, grouped by payment method." %}</p>
+            <p class="panel-sub">{% trans "Completed sales only, grouped by payment method." %}</p>
         </div>
     </header>
     <div class="table-wrap">
@@ -89,7 +89,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Sales For Date" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Includes completed and cancelled sales so exceptions are visible." %}</p>
+            <p class="panel-sub">{% trans "Includes completed and cancelled sales so exceptions are visible." %}</p>
         </div>
     </header>
     <div class="table-wrap">

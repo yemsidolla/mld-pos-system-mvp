@@ -31,6 +31,12 @@
  * at exactly 640px they would drop the legacy phone rules they replace. */
 @custom-variant phone (@media (width <= 640px));
 
+/* `rail:` == tablet/small-laptop width, where the sidebar shows as an icon
+ * rail rather than disappearing entirely. Below 900px the bottom nav takes
+ * over (unchanged); above 1280px the full sidebar returns. These must be
+ * utilities, not components, because they override utility widths. */
+@custom-variant rail (@media (901px <= width <= 1280px));
+
 @theme {
   /* Drop Tailwind's default palette — Melodu tokens only. */
   --*: initial;
@@ -334,7 +340,14 @@
     @apply mt-0;
   }
   .panel-header {
-    @apply mb-3.5 flex items-start justify-between gap-3.5;
+    /* phone: adopts dashboard.css:1960's intent DELIBERATELY. That legacy
+     * rule was dormant (nothing carried .panel-header until V8 Phase 3) and
+     * waking it half-way was the real hazard: `flex` sets display but not
+     * flex-direction, so legacy's `column` leaked through while the
+     * component's `items-start` overrode legacy's `align-items: stretch` —
+     * stacked children that do not stretch. Owning both here makes the
+     * phone layout coherent: title above its actions, full width. */
+    @apply mb-3.5 flex items-start justify-between gap-3.5 phone:flex-col phone:items-stretch;
   }
   .panel-title {
     @apply m-0 mb-1 text-base font-semibold text-text;
@@ -481,8 +494,28 @@
     @apply block px-3 py-[26px] text-center text-[13px] text-text-soft;
   }
 
+  /* ---- Sidebar accordion (V8). ---- */
+  /* Collapsed groups hide their list and turn the chevron. The rail and
+   * collapsed states hide group headers entirely, so groups are FORCED open
+   * there — otherwise a collapsed group would be unreachable with no visible
+   * control to reopen it. */
+  .nav-group[data-collapsed="true"] .nav-list {
+    @apply hidden;
+  }
+  .nav-group[data-collapsed="true"] .nav-chevron {
+    @apply -rotate-90;
+  }
+
   /* ---- Quiet inline link (TOC/footer links). ---- */
   .link-subtle {
     @apply text-[12.5px] font-semibold text-text-soft no-underline hover:text-accent hover:no-underline;
   }
 }
+
+/* The rail and collapsed states have no group headers, so any collapsed group
+ * must still show its items — outside @layer components so it beats the
+ * component rule above regardless of source order. */
+@media (901px <= width <= 1280px) {
+  .nav-group[data-collapsed="true"] .nav-list { display: grid; }
+}
+.sidebar-collapsed .nav-group[data-collapsed="true"] .nav-list { display: grid; }

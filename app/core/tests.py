@@ -1092,3 +1092,71 @@ class IconSetTests(SimpleTestCase):
             0,
             f"icon set is stale or hand-edited — run scripts/sync_icons.py\n{result.stderr}",
         )
+
+
+class SidebarNavigationTests(TestCase):
+    """Structure guards for the V8 accordion sidebar (DESIGN_SYSTEM §4).
+
+    The accordion is JS, but the markup contract it needs is not: without
+    per-group containers and real <button> toggles there is nothing for
+    nav.js to operate on, and the failure is silent — the sidebar simply
+    stops collapsing.
+    """
+
+    def setUp(self):
+        self.owner = get_user_model().objects.create_superuser(
+            "navowner", "navowner@example.com", "Pw12345678"
+        )
+
+    def test_nav_groups_render_as_collapsible_regions(self):
+        self.client.force_login(self.owner)
+        html = self.client.get(reverse("dashboard-home")).content.decode()
+        self.assertIn("data-nav-group=", html)
+        self.assertIn("data-nav-group-toggle", html)
+        # Each toggle must expose its state and target for assistive tech.
+        self.assertIn('aria-expanded="true"', html)
+        self.assertIn('aria-controls="navgroup-1"', html)
+
+    def test_diagnostics_move_to_the_utility_row(self):
+        """They stay reachable, just not in the everyday list."""
+        self.client.force_login(self.owner)
+        html = self.client.get(reverse("dashboard-home")).content.decode()
+        self.assertIn("utility-row", html)
+        for label in ("System Health", "Live Logs", "Style Guide"):
+            self.assertIn(f'aria-label="{label}"', html)
+
+    def test_diagnostics_are_not_in_the_main_nav_groups(self):
+        from core.context_processors import dashboard_context
+
+        request = RequestFactory().get("/dashboard/")
+        request.user = self.owner
+        ctx = dashboard_context(request)
+        grouped = {i["url_name"] for g in ctx["dashboard_nav_groups"] for i in g["items"]}
+        utility = {i["url_name"] for i in ctx["dashboard_utility_items"]}
+        self.assertEqual(utility, {"system-health", "live-logs", "styleguide"})
+        self.assertFalse(grouped & utility)
+        # nav_items still carries everything, so permission and active-link
+        # logic elsewhere is unaffected by the move.
+        self.assertTrue(utility <= {i["url_name"] for i in ctx["dashboard_nav_items"]})
+
+    def test_no_multiline_hash_comments_in_templates(self):
+        """Django only strips SINGLE-LINE {# #}; multi-line ones RENDER.
+
+        A multi-line {# ... #} is not a syntax error and not a test failure —
+        it silently prints the comment text into the page. This caught exactly
+        that in base.html during V8 Phase 4, so it is pinned here.
+        """
+        offenders = []
+        for path in Path(settings.BASE_DIR).joinpath("templates").rglob("*.html"):
+            for match in re.finditer(r"\{#(.*?)#\}", path.read_text(encoding="utf-8"), re.S):
+                if "\n" in match.group(1):
+                    offenders.append(f"{path.name}: {match.group(1)[:60].strip()!r}")
+        self.assertEqual(
+            offenders, [], "use {% comment %} for multi-line comments; {# #} renders"
+        )
+
+    def test_cashier_sees_no_utility_row(self):
+        cashier = get_user_model().objects.create_user("navcashier", "c@example.com", "Pw12345678")
+        self.client.force_login(cashier)
+        html = self.client.get(reverse("dashboard-home")).content.decode()
+        self.assertNotIn("utility-row", html)

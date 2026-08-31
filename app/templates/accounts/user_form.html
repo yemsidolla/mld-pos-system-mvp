@@ -14,7 +14,7 @@
         <header class="panel-header">
             <div>
                 <h2 class="panel-title">{{ target.username }}</h2>
-                <p class="m-0 text-text-soft">{% trans "Current role" %}: {{ target_role_label }}{% if target.is_superuser %} · {% trans "Django superuser" %}{% endif %}</p>
+                <p class="panel-sub">{% trans "Current role" %}: {{ target_role_label }}{% if target.is_superuser %} · {% trans "Django superuser" %}{% endif %}</p>
             </div>
         </header>
     {% endif %}

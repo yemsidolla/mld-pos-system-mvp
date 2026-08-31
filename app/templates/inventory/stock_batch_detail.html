@@ -24,7 +24,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Batch Detail" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Supplier, expiry, quantities, prices, codes, and receiving history." %}</p>
+            <p class="panel-sub">{% trans "Supplier, expiry, quantities, prices, codes, and receiving history." %}</p>
         </div>
     </header>
     <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3.5">
@@ -63,7 +63,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Recent Stock Movements" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Latest movement records for this batch." %}</p>
+            <p class="panel-sub">{% trans "Latest movement records for this batch." %}</p>
         </div>
         {% if dashboard_can_view_reports %}
             <a class="btn" href="{% url 'stock-movement-report' %}">{% trans "Open Movement Report" %}</a>

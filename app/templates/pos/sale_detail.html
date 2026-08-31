@@ -46,11 +46,11 @@
     </section>
 {% endif %}
 
-<section class="{% if sale.cancel_reason %}mt-4 {% endif %}rounded border border-border bg-surface p-[18px] shadow-panel">
+<section class="panel{% if sale.cancel_reason %} mt-4{% endif %}">
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Exception Tracking" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Cancellation and receipt reprint events recorded in the audit log." %}</p>
+            <p class="panel-sub">{% trans "Cancellation and receipt reprint events recorded in the audit log." %}</p>
         </div>
     </header>
     <div class="table-wrap">
@@ -81,7 +81,7 @@
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Sale Items" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Each item is linked to the exact stock batch sold." %}</p>
+            <p class="panel-sub">{% trans "Each item is linked to the exact stock batch sold." %}</p>
         </div>
     </header>
     <div class="table-wrap">
@@ -121,7 +121,7 @@
         <header class="panel-header">
             <div>
                 <h2 class="panel-title">{% trans "Cancel Sale" %}</h2>
-                <p class="m-0 text-text-soft">{% trans "Cancellation restores stock to the original batches and requires a reason." %}</p>
+                <p class="panel-sub">{% trans "Cancellation restores stock to the original batches and requires a reason." %}</p>
             </div>
         </header>
         <form class="form-stack" method="post" action="{% url 'sale-cancel' sale.id %}">

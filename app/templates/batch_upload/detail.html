@@ -25,15 +25,15 @@
 {% if job.status != "PREVIEW" %}
     <section class="panel">
         <h2 class="panel-title">{% trans "Committed Summary" %}</h2>
-        <p class="m-0 text-text-soft">{{ job.summary }}</p>
+        <p class="panel-sub">{{ job.summary }}</p>
     </section>
 {% endif %}
 
-<section class="{% if job.status != 'PREVIEW' %}mt-4 {% endif %}rounded border border-border bg-surface p-[18px] shadow-panel">
+<section class="panel{% if job.status != 'PREVIEW' %} mt-4{% endif %}">
     <header class="panel-header">
         <div>
             <h2 class="panel-title">{% trans "Rows" %}</h2>
-            <p class="m-0 text-text-soft">{% trans "Edit incorrect rows or delete rows that should be skipped before commit." %}</p>
+            <p class="panel-sub">{% trans "Edit incorrect rows or delete rows that should be skipped before commit." %}</p>
         </div>
     </header>
     {% for item in row_view_models %}
