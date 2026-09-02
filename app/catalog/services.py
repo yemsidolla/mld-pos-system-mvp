@@ -16,6 +16,18 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from PIL import Image, ImageOps, UnidentifiedImageError
 
+try:  # pragma: no cover - depends on the wheel being installed
+    # Registers HEIC/HEIF with Pillow so Image.open() handles iPhone photos.
+    # Imported defensively: if the wheel is missing on some platform the app
+    # must still start, and HEIC simply stays unsupported rather than taking
+    # every image path down with an ImportError at startup.
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+    HEIF_SUPPORTED = True
+except Exception:  # pragma: no cover
+    HEIF_SUPPORTED = False
+
 ORIGINAL_MAX_EDGE = 1600
 THUMB_MAX_EDGE = 96
 ORIGINAL_WEBP_QUALITY = 82
@@ -79,6 +91,15 @@ def _open_image(source) -> Image.Image:
                 pass
         return image
     except UnidentifiedImageError as exc:
+        # Say WHAT was wrong. "Please upload a valid photo" is useless to
+        # someone holding a perfectly good iPhone picture.
+        name = (getattr(source, "name", "") or "").lower()
+        if name.endswith((".heic", ".heif")) and not HEIF_SUPPORTED:
+            raise ProductImageError(
+                "HEIC photos are not supported on this server yet. On iPhone, "
+                "either change Settings > Camera > Formats to Most Compatible, "
+                "or share the photo (which converts it to JPEG) and upload that."
+            ) from exc
         raise ProductImageError("Could not read the uploaded image. Please upload a valid photo.") from exc
     except Image.DecompressionBombError as exc:
         raise ProductImageError("Could not read the uploaded image. Please upload a valid photo.") from exc

@@ -261,6 +261,23 @@ if ! bounded "$T_STATIC" docker compose ${DCF[@]+"${DCF[@]}"} exec -T web python
   alert CRITICAL "Deploy of ${TARGET:0:8}: collectstatic FAILED/timed out after swap — TILL LIKELY BROKEN. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
 fi
 
+# Restart AFTER collectstatic, and this is not optional.
+# ManifestStaticFilesStorage reads staticfiles.json ONCE and caches it in the
+# running process. collectstatic rewrites that file on disk, but the container
+# that started before it keeps serving the PREVIOUS hashed filenames — so a
+# deploy that changes any static asset ships stale CSS/JS while every check
+# here passes: the container is healthy, the ports are bound, the probe
+# returns ok. Observed doing exactly this on the V8 deploy (2026-09-02), where
+# production served tailwind.a02c4501125a.css while the manifest already said
+# a4c12a1ea295. Silent, and invisible to the health probe.
+#
+# `restart` not `up -d`: the container is already the new image, we only need
+# the process to re-read the manifest. It also cannot change the published
+# ports, which the guard above just verified.
+if ! bounded "$T_SWAP" docker compose ${DCF[@]+"${DCF[@]}"} restart web >>"$LOG" 2>&1; then
+  alert CRITICAL "Deploy of ${TARGET:0:8}: restart after collectstatic FAILED/timed out — TILL MAY BE DOWN or serving stale assets. Recover: $RECOVER"; back_to_main; quarantine_set "$TARGET"; DONE=1; exit 1
+fi
+
 if healthy; then
   if git checkout -q -B main "$TARGET" 2>>"$LOG"; then
     rm -f "$QUARANTINE" "$ALERT_FILE" 2>/dev/null

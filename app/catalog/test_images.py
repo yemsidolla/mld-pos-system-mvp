@@ -17,7 +17,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db import connection
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from PIL import Image, ImageDraw
 
@@ -686,3 +686,35 @@ class ProductImageThumbMigrationTests(TransactionTestCase):
 
         call_command("migrate", "catalog", "0005_product_image_thumb", verbosity=0)
         self.assertTrue(self._has_image_thumb_column())
+
+
+class HeicSupportTests(SimpleTestCase):
+    """iPhones shoot HEIC by default and staff photograph products on phones.
+
+    Before pillow-heif those uploads failed with "Please upload a valid
+    photo", which is actively misleading — the photo IS valid, the server
+    just could not decode it.
+    """
+
+    def test_heif_opener_is_registered(self):
+        from catalog.services import HEIF_SUPPORTED
+
+        self.assertTrue(
+            HEIF_SUPPORTED,
+            "pillow-heif is not installed; HEIC uploads from iPhones will fail",
+        )
+
+    def test_pillow_recognises_heif(self):
+        from PIL import Image
+
+        self.assertIn("HEIF", Image.registered_extensions().values())
+
+    def test_unreadable_heic_names_the_format(self):
+        """If support is ever lost, the error must still be actionable."""
+        from catalog import services
+
+        corrupt = SimpleUploadedFile("photo.heic", b"not really heic", content_type="image/heic")
+        with mock.patch.object(services, "HEIF_SUPPORTED", False):
+            with self.assertRaises(services.ProductImageError) as ctx:
+                services.process_product_image(corrupt, source_name="photo.heic")
+        self.assertIn("HEIC", str(ctx.exception))
