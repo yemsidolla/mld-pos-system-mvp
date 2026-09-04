@@ -9,6 +9,7 @@ from io import BytesIO
 from tempfile import TemporaryDirectory
 from unittest import mock
 
+from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
@@ -534,13 +535,26 @@ class ProductImageUploadFormTests(TestCase):
 
 @override_settings(**MEDIA_SETTINGS)
 class ProductImageAdminTests(TestCase):
-    def test_admin_uses_product_form_and_image_thumb_readonly(self):
+    def test_admin_uses_product_admin_form_and_image_thumb_readonly(self):
         from catalog.admin import ProductAdmin
+        from catalog.forms import ProductAdminForm
         from django.contrib.admin.sites import AdminSite
 
         admin = ProductAdmin(Product, AdminSite())
-        self.assertIs(admin.form, ProductForm)
+        self.assertIs(admin.form, ProductAdminForm)
+        # Same processing pipeline as the dashboard (clean_image, save,
+        # cleanup-on-replace) — only the widget differs, since ClearableFileInput's
+        # own template needs styling the admin never loads.
+        self.assertTrue(issubclass(ProductAdminForm, ProductForm))
         self.assertIn("image_thumb", admin.readonly_fields)
+
+    def test_admin_form_uses_the_plain_file_widget(self):
+        """ProductImageWidget's template 404s outside the dashboard shell."""
+        from catalog.forms import ProductAdminForm, ProductImageWidget
+
+        widget = ProductAdminForm().fields["image"].widget
+        self.assertNotIsInstance(widget, ProductImageWidget)
+        self.assertIsInstance(widget, forms.ClearableFileInput)
 
 
 @override_settings(**MEDIA_SETTINGS)
