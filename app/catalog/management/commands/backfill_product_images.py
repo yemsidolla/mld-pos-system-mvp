@@ -28,6 +28,8 @@ class Command(BaseCommand):
     help = (
         "Downscale Product.image originals and generate image_thumb derivatives. "
         "Default is dry-run. Pass --apply --confirm to write (irreversible). "
+        "Add --force to reprocess rows already marked done (needed after "
+        "changing a derivative's target size or quality). "
         "Quiesce product create/edit while this runs: a concurrent non-image "
         "edit can still overwrite a backfilled image name with a stale value."
     )
@@ -43,10 +45,23 @@ class Command(BaseCommand):
             action="store_true",
             help="Acknowledge that replacing stored originals is irreversible. Required with --apply.",
         )
+        parser.add_argument(
+            "--force",
+            action="store_true",
+            help=(
+                "Reprocess every product with an image, including ones "
+                "product_image_needs_processing() would skip as already-webp. "
+                "Use after changing a derivative's target size (THUMB_MAX_EDGE, "
+                "ORIGINAL_MAX_EDGE, quality) — otherwise existing rows keep "
+                "their old-sized derivative forever, since only NEW uploads "
+                "pick up a constant change."
+            ),
+        )
 
     def handle(self, *args, **options):
         apply = options["apply"]
         confirm = options["confirm"]
+        force = options["force"]
 
         self.stdout.write(
             self.style.WARNING(
@@ -75,7 +90,7 @@ class Command(BaseCommand):
             # file after decoding so a large catalogue cannot exhaust FDs (R6).
             would_fail = 0
             for product in products.iterator(chunk_size=50):
-                if not product_image_needs_processing(product):
+                if not force and not product_image_needs_processing(product):
                     skipped += 1
                     continue
                 candidate_count += 1
@@ -118,7 +133,7 @@ class Command(BaseCommand):
         # one row at a time so we do not hold every FieldFile open.
         candidate_pks: list[int] = []
         for product in products.iterator(chunk_size=50):
-            if product_image_needs_processing(product):
+            if force or product_image_needs_processing(product):
                 candidate_pks.append(product.pk)
             else:
                 skipped += 1

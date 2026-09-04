@@ -603,6 +603,34 @@ class ProductImageBackfillTests(TestCase):
         self.assertEqual(self.product.image.size, image_size)
         self.assertEqual(self.product.image_thumb.size, thumb_size)
 
+    def test_force_reprocesses_a_product_already_marked_done(self):
+        """This is the whole reason --force exists.
+
+        product_image_needs_processing() treats "has a .webp thumb" as
+        finished, so after THUMB_MAX_EDGE changes, a plain re-run of this
+        command would skip every already-processed row and their thumbs
+        would stay the OLD size forever — a change that only visibly takes
+        effect on the next unrelated edit of each product.
+        """
+        call_command("backfill_product_images", apply=True, confirm=True)
+        self.product.refresh_from_db()
+        self.assertTrue(product_image_needs_processing(self.product) is False)
+        first_thumb_name = self.product.image_thumb.name
+
+        # Without --force, the already-processed product is skipped (the
+        # existing idempotence guarantee — test_apply_is_idempotent covers
+        # this from the read side; assert it once more from the skip count).
+        call_command("backfill_product_images", apply=True, confirm=True)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.image_thumb.name, first_thumb_name)
+
+        # With --force, it is reprocessed even though needs_processing()
+        # would say no — this is the behaviour the flag exists to provide.
+        call_command("backfill_product_images", apply=True, confirm=True, force=True)
+        self.product.refresh_from_db()
+        self.assertTrue(bool(self.product.image_thumb))
+        self.assertTrue(self.product.image.name.lower().endswith(".webp"))
+
     def test_backfill_does_not_bump_updated_at(self):
         """F10: backfill must preserve updated_at."""
         self.product.refresh_from_db()

@@ -29,9 +29,17 @@ except Exception:  # pragma: no cover
     HEIF_SUPPORTED = False
 
 ORIGINAL_MAX_EDGE = 1600
-THUMB_MAX_EDGE = 96
+# 320, not the original 96: this one derivative now serves BOTH the 46px
+# table thumbnail (downscaled, still crisp) and the V8 card grid, which
+# renders it into a ~175-215px box. At 96px that box was a 2-4x upscale and
+# visibly soft, worst on the phones staff actually use. A second stored size
+# was considered and rejected — the model, the write/cleanup/backfill
+# pipeline, and the templates all treat "the small derivative" as singular,
+# and one right-sized image serves both call sites without adding a field.
+THUMB_MAX_EDGE = 320
 ORIGINAL_WEBP_QUALITY = 82
-THUMB_WEBP_QUALITY = 80
+THUMB_WEBP_QUALITY = 82  # was 80; bumped to match ORIGINAL now that this
+# derivative is displayed near 1:1 rather than always shrunk further.
 
 # Only keys under these prefixes may be deleted by product-image cleanup.
 # Never delete barcodes/, qrcodes/, store/, or any other media tree.

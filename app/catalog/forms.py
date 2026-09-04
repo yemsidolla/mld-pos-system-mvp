@@ -267,6 +267,22 @@ class ProductForm(forms.ModelForm):
         }
 
 
+
+class ProductAdminForm(ProductForm):
+    """ProductForm, but with the plain Django file widget for /admin/.
+
+    ProductImageWidget's template (widgets/product_image.html) needs
+    tailwind.css and media.js, and Django admin loads neither — rendered
+    there it would just be an unstyled bare <input>, which is at least
+    honest, but the drop-zone chrome (empty preview box, instruction text
+    meant for the styled version) would render with no styling at all and
+    look broken rather than merely plain. Falling back to Django's own
+    ClearableFileInput keeps /admin/ functional and native-looking instead.
+    """
+
+    class Meta(ProductForm.Meta):
+        widgets = {**ProductForm.Meta.widgets, "image": forms.ClearableFileInput}
+
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
