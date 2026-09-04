@@ -383,8 +383,33 @@
   /* ---- Data table (§4.7). Cell styling is scoped to the table class so
    * rows lose their per-cell class strings; alignment overrides stay
    * utilities on the cell (utilities beat components). ---- */
+  /* Horizontal-scroll affordance (mobile/tablet). .table-wrap already
+   * scrolls correctly on a narrow screen, but nothing hinted that it could:
+   * the last column was simply sliced off flush against the edge. This is
+   * the classic CSS-only "scroll shadow" technique — no JS, no per-page
+   * wiring, works on every table that shares this class.
+   *
+   * Mechanics: two solid covers are pinned to the CONTENT
+   * (background-attachment: local), sitting on top of two shadow gradients
+   * pinned to the CONTAINER (background-attachment: scroll). At rest
+   * (scrollLeft 0) the left cover exactly overlaps the left shadow, hiding
+   * it — correct, there is nothing to scroll back to. As the user scrolls
+   * right, the content-attached cover slides away with the content and
+   * uncovers the shadow, which stays put relative to the viewport — so a
+   * shadow appears on whichever edge still has more columns, and vanishes
+   * once scrolled all the way to it. When a table fits without scrolling,
+   * both covers stay glued over both shadows the whole time, so nothing
+   * renders — this self-adapts with no conditional logic anywhere. */
   .table-wrap {
-    @apply overflow-x-auto [-webkit-overflow-scrolling:touch];
+    @apply overflow-x-auto [-webkit-overflow-scrolling:touch] bg-surface bg-no-repeat;
+    background-image:
+      linear-gradient(to right, var(--color-surface) 30%, transparent),
+      linear-gradient(to left, var(--color-surface) 30%, transparent),
+      linear-gradient(to right, rgba(17, 24, 39, 0.16), transparent),
+      linear-gradient(to left, rgba(17, 24, 39, 0.16), transparent);
+    background-position: left, right, left, right;
+    background-size: 24px 100%, 24px 100%, 10px 100%, 10px 100%;
+    background-attachment: local, local, scroll, scroll;
   }
   .data-table {
     @apply w-full min-w-[720px] border-collapse;
