@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .forms import ProductForm
+from .forms import ProductAdminForm
 from .models import AnimalTypeOption, Brand, Category, Product, ProductTag, Supplier, SupplierProductCost
 
 
@@ -46,8 +46,9 @@ class AnimalTypeOptionAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    # Same processing path as the dashboard ProductForm (WebP original + thumb).
-    form = ProductForm
+    # Same processing path as the dashboard ProductForm (WebP original +
+    # thumb) but the plain file widget — see ProductAdminForm for why.
+    form = ProductAdminForm
     list_display = (
         "product_code",
         "name",
