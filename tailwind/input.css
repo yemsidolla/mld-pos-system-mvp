@@ -495,13 +495,9 @@
   }
 
   /* ---- Sidebar accordion (V8). ---- */
-  /* Collapsed groups hide their list and turn the chevron. The rail and
-   * collapsed states hide group headers entirely, so groups are FORCED open
-   * there — otherwise a collapsed group would be unreachable with no visible
-   * control to reopen it. */
-  .nav-group[data-collapsed="true"] .nav-list {
-    @apply hidden;
-  }
+  /* The chevron turn lives here safely: nothing else on that element sets
+   * `rotate`. The LIST-HIDE rule does NOT live here — see the unlayered
+   * block at the end of this file for why. */
   .nav-group[data-collapsed="true"] .nav-chevron {
     @apply -rotate-90;
   }
@@ -512,9 +508,28 @@
   }
 }
 
-/* The rail and collapsed states have no group headers, so any collapsed group
- * must still show its items — outside @layer components so it beats the
- * component rule above regardless of source order. */
+/* Sidebar accordion collapse — UNLAYERED, not @layer components.
+ *
+ * `.nav-list` carries the literal utility class `grid` in the template
+ * (class="nav-list grid gap-1"). Cascade layers rank by LAYER first,
+ * specificity second: any rule in the utilities layer beats any rule in
+ * components regardless of how specific the components selector is. A
+ * `.nav-group[data-collapsed="true"] .nav-list { @apply hidden }` rule
+ * placed in @layer components therefore LOST to that `grid` utility's
+ * `display: grid` on the same element — the toggle set data-collapsed
+ * correctly and rotated the chevron, but the list never actually hid.
+ * Found 2026-09-04 clicking the accordion in a real browser; every
+ * automated check up to that point verified the MARKUP, not the computed
+ * style, so it shipped invisibly.
+ *
+ * Fix: declare it unlayered so it competes with the force-open overrides
+ * below on ordinary specificity/source-order terms instead of losing
+ * outright. Collapse comes first and loses to whichever force-open rule
+ * matches, which is the correct outcome — a collapsed group must still
+ * show its items in the rail and fully-collapsed sidebar, where there is
+ * no visible header left to reopen it. */
+.nav-group[data-collapsed="true"] .nav-list { display: none; }
+
 @media (901px <= width <= 1280px) {
   .nav-group[data-collapsed="true"] .nav-list { display: grid; }
 }
